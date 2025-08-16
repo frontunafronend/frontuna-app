@@ -1,0 +1,672 @@
+import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatStepperModule } from '@angular/material/stepper';
+
+import { AuthService } from '@app/services/auth/auth.service';
+import { SeoService } from '@app/services/seo/seo.service';
+import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics.service';
+
+@Component({
+  selector: 'app-signup',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatCheckboxModule,
+    MatProgressSpinnerModule,
+    MatStepperModule
+  ],
+  template: `
+    <div class="auth-container">
+      <div class="auth-card-container">
+        <mat-card class="auth-card">
+          <mat-card-header class="auth-header">
+            <div class="auth-logo">
+                              <img src="assets/images/logo/cat-logo.png" alt="Happy Cat with Fish Logo" />
+            </div>
+            <mat-card-title>Create Your Account</mat-card-title>
+            <mat-card-subtitle>Join thousands of developers using Frontuna.ai</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="auth-form">
+              <div class="name-fields">
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>First Name</mat-label>
+                  <input matInput 
+                         type="text" 
+                         formControlName="firstName"
+                         placeholder="First name"
+                         autocomplete="given-name">
+                  <mat-error *ngIf="signupForm.get('firstName')?.hasError('required')">
+                    First name is required
+                  </mat-error>
+                  <mat-error *ngIf="signupForm.get('firstName')?.hasError('minlength')">
+                    Must be at least 2 characters
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Last Name</mat-label>
+                  <input matInput 
+                         type="text" 
+                         formControlName="lastName"
+                         placeholder="Last name"
+                         autocomplete="family-name">
+                  <mat-error *ngIf="signupForm.get('lastName')?.hasError('required')">
+                    Last name is required
+                  </mat-error>
+                  <mat-error *ngIf="signupForm.get('lastName')?.hasError('minlength')">
+                    Must be at least 2 characters
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Email Address</mat-label>
+                <input matInput 
+                       type="email" 
+                       formControlName="email"
+                       placeholder="Enter your email"
+                       autocomplete="email">
+                <mat-icon matPrefix>email</mat-icon>
+                <mat-error *ngIf="signupForm.get('email')?.hasError('required')">
+                  Email is required
+                </mat-error>
+                <mat-error *ngIf="signupForm.get('email')?.hasError('email')">
+                  Please enter a valid email address
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Password</mat-label>
+                <input matInput 
+                       [type]="hidePassword ? 'password' : 'text'"
+                       formControlName="password"
+                       placeholder="Create a strong password"
+                       autocomplete="new-password">
+                <mat-icon matPrefix>lock</mat-icon>
+                <button mat-icon-button 
+                        matSuffix 
+                        type="button"
+                        (click)="hidePassword = !hidePassword">
+                  <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                <mat-error *ngIf="signupForm.get('password')?.hasError('required')">
+                  Password is required
+                </mat-error>
+                <mat-error *ngIf="signupForm.get('password')?.hasError('minlength')">
+                  Password must be at least 8 characters
+                </mat-error>
+                <mat-error *ngIf="signupForm.get('password')?.hasError('pattern')">
+                  Password must contain uppercase, lowercase, number, and special character
+                </mat-error>
+              </mat-form-field>
+
+              <div class="password-strength">
+                <div class="strength-bar">
+                  <div class="strength-fill" [ngClass]="passwordStrength"></div>
+                </div>
+                <span class="strength-text">{{ passwordStrengthText }}</span>
+              </div>
+
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Confirm Password</mat-label>
+                <input matInput 
+                       [type]="hideConfirmPassword ? 'password' : 'text'"
+                       formControlName="confirmPassword"
+                       placeholder="Confirm your password"
+                       autocomplete="new-password">
+                <mat-icon matPrefix>lock</mat-icon>
+                <button mat-icon-button 
+                        matSuffix 
+                        type="button"
+                        (click)="hideConfirmPassword = !hideConfirmPassword">
+                  <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                <mat-error *ngIf="signupForm.get('confirmPassword')?.hasError('required')">
+                  Please confirm your password
+                </mat-error>
+                <mat-error *ngIf="signupForm.get('confirmPassword')?.hasError('passwordMismatch')">
+                  Passwords do not match
+                </mat-error>
+              </mat-form-field>
+
+              <div class="form-checkboxes">
+                <mat-checkbox formControlName="agreeToTerms" required>
+                  I agree to the 
+                  <a routerLink="/legal/terms" target="_blank">Terms of Service</a> 
+                  and 
+                  <a routerLink="/legal/privacy" target="_blank">Privacy Policy</a>
+                </mat-checkbox>
+                <mat-error *ngIf="signupForm.get('agreeToTerms')?.hasError('required') && signupForm.get('agreeToTerms')?.touched">
+                  You must agree to the terms
+                </mat-error>
+
+                <mat-checkbox formControlName="subscribeToNewsletter">
+                  Send me product updates and tips (optional)
+                </mat-checkbox>
+              </div>
+
+              <button mat-raised-button 
+                      color="primary" 
+                      type="submit"
+                      class="auth-submit-btn"
+                      [disabled]="signupForm.invalid || isLoading()">
+                @if (isLoading()) {
+                  <mat-spinner diameter="20"></mat-spinner>
+                  <span>Creating Account...</span>
+                } @else {
+                  <mat-icon>person_add</mat-icon>
+                  <span>Create Account</span>
+                }
+              </button>
+            </form>
+
+            <div class="divider">
+              <span>or</span>
+            </div>
+
+            <div class="social-login">
+              <button mat-stroked-button 
+                      class="social-btn google-btn"
+                      (click)="signupWithGoogle()"
+                      [disabled]="isLoading()">
+                <img src="assets/images/social/google.svg" alt="Google" />
+                Continue with Google
+              </button>
+
+              <button mat-stroked-button 
+                      class="social-btn github-btn"
+                      (click)="signupWithGithub()"
+                      [disabled]="isLoading()">
+                <img src="assets/images/social/github.svg" alt="GitHub" />
+                Continue with GitHub
+              </button>
+            </div>
+          </mat-card-content>
+
+          <mat-card-actions class="auth-actions">
+            <p class="login-prompt">
+              Already have an account?
+              <a routerLink="/auth/login" class="login-link">Sign in instead</a>
+            </p>
+          </mat-card-actions>
+        </mat-card>
+
+        <div class="auth-benefits">
+          <h3>Start your journey with</h3>
+          <div class="benefit-list">
+            <div class="benefit-item">
+              <div class="benefit-icon">
+                <mat-icon>auto_awesome</mat-icon>
+              </div>
+              <div class="benefit-content">
+                <h4>Free Trial</h4>
+                <p>Generate 10 components free, no credit card required</p>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <div class="benefit-icon">
+                <mat-icon>speed</mat-icon>
+              </div>
+              <div class="benefit-content">
+                <h4>Instant Setup</h4>
+                <p>Start generating components immediately after signup</p>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <div class="benefit-icon">
+                <mat-icon>support</mat-icon>
+              </div>
+              <div class="benefit-content">
+                <h4>Expert Support</h4>
+                <p>Get help from our team of frontend experts</p>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <div class="benefit-icon">
+                <mat-icon>security</mat-icon>
+              </div>
+              <div class="benefit-content">
+                <h4>Secure & Private</h4>
+                <p>Your code and data are always protected</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .auth-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .auth-card-container {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4rem;
+      max-width: 1100px;
+      width: 100%;
+      align-items: start;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 450px;
+      padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .auth-logo {
+      margin-bottom: 1rem;
+    }
+
+    .auth-logo img {
+      height: 40px;
+      width: auto;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .name-fields {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .half-width {
+      flex: 1;
+    }
+
+    .password-strength {
+      margin-top: -1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .strength-bar {
+      height: 4px;
+      background: #e0e0e0;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+
+    .strength-fill {
+      height: 100%;
+      transition: all 0.3s ease;
+      border-radius: 2px;
+    }
+
+    .strength-fill.weak {
+      width: 25%;
+      background: #f44336;
+    }
+
+    .strength-fill.fair {
+      width: 50%;
+      background: #ff9800;
+    }
+
+    .strength-fill.good {
+      width: 75%;
+      background: #2196f3;
+    }
+
+    .strength-fill.strong {
+      width: 100%;
+      background: #4caf50;
+    }
+
+    .strength-text {
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    .form-checkboxes {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-checkboxes mat-checkbox {
+      font-size: 0.9rem;
+    }
+
+    .form-checkboxes a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .form-checkboxes a:hover {
+      text-decoration: underline;
+    }
+
+    .auth-submit-btn {
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .divider {
+      position: relative;
+      text-align: center;
+      margin: 2rem 0;
+      color: #666;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e0e0e0;
+    }
+
+    .divider span {
+      background: white;
+      padding: 0 1rem;
+      position: relative;
+    }
+
+    .social-login {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .social-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      font-weight: 500;
+    }
+
+    .social-btn img {
+      width: 20px;
+      height: 20px;
+    }
+
+    .auth-actions {
+      text-align: center;
+      padding-top: 1rem;
+    }
+
+    .login-prompt {
+      margin: 0;
+      color: #666;
+    }
+
+    .login-link {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+
+    .login-link:hover {
+      text-decoration: underline;
+    }
+
+    .auth-benefits {
+      color: white;
+      max-width: 350px;
+    }
+
+    .auth-benefits h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .benefit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .benefit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .benefit-icon {
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #4ecdc4;
+      flex-shrink: 0;
+    }
+
+    .benefit-content h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .benefit-content p {
+      margin: 0;
+      opacity: 0.9;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+      .auth-card-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .auth-benefits {
+        order: -1;
+        max-width: none;
+      }
+
+      .auth-card {
+        max-width: 100%;
+      }
+
+      .name-fields {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .auth-container {
+        padding: 1rem 0.5rem;
+      }
+
+      .auth-card {
+        padding: 1.5rem;
+      }
+
+      .social-login {
+        gap: 0.75rem;
+      }
+
+      .social-btn {
+        font-size: 0.9rem;
+        padding: 0.6rem;
+      }
+    }
+  `]
+})
+export class SignupComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly seoService = inject(SeoService);
+  private readonly analyticsService = inject(GoogleAnalyticsService);
+
+  public hidePassword = true;
+  public hideConfirmPassword = true;
+  public readonly isLoading = this.authService.isLoading;
+
+  public passwordStrength = 'weak';
+  public passwordStrengthText = 'Weak';
+
+  public signupForm: FormGroup = this.fb.group({
+    firstName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+    lastName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [
+      Validators.required, 
+      Validators.minLength(8),
+      Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+    ]],
+    confirmPassword: ['', [Validators.required]],
+    agreeToTerms: [false, [Validators.requiredTrue]],
+    subscribeToNewsletter: [false]
+  }, { validators: this.passwordMatchValidator });
+
+  ngOnInit(): void {
+    this.seoService.setPageSeo({
+      title: 'Sign Up - Frontuna.ai',
+      description: 'Create your free Frontuna.ai account and start generating frontend components with AI. No credit card required.',
+      url: 'https://frontuna.ai/auth/signup',
+      robots: 'noindex, nofollow'
+    });
+
+    this.analyticsService.trackPageView({
+      page_title: 'Signup - Frontuna.ai',
+      page_location: window.location.href
+    });
+
+    // Watch password changes for strength indicator
+    this.signupForm.get('password')?.valueChanges.subscribe(password => {
+      this.updatePasswordStrength(password);
+    });
+  }
+
+  passwordMatchValidator(control: AbstractControl): { [key: string]: boolean } | null {
+    const password = control.get('password');
+    const confirmPassword = control.get('confirmPassword');
+    
+    if (password && confirmPassword && password.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    }
+    
+    if (confirmPassword?.hasError('passwordMismatch')) {
+      confirmPassword.setErrors(null);
+    }
+    
+    return null;
+  }
+
+  updatePasswordStrength(password: string): void {
+    if (!password) {
+      this.passwordStrength = 'weak';
+      this.passwordStrengthText = 'Weak';
+      return;
+    }
+
+    let score = 0;
+    
+    // Length check
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    
+    // Character variety checks
+    if (/[a-z]/.test(password)) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[@$!%*?&]/.test(password)) score++;
+
+    switch (true) {
+      case score <= 2:
+        this.passwordStrength = 'weak';
+        this.passwordStrengthText = 'Weak';
+        break;
+      case score <= 4:
+        this.passwordStrength = 'fair';
+        this.passwordStrengthText = 'Fair';
+        break;
+      case score <= 5:
+        this.passwordStrength = 'good';
+        this.passwordStrengthText = 'Good';
+        break;
+      default:
+        this.passwordStrength = 'strong';
+        this.passwordStrengthText = 'Strong';
+    }
+  }
+
+  onSubmit(): void {
+    if (this.signupForm.valid) {
+      const formValue = this.signupForm.value;
+      
+      this.authService.signup(formValue).subscribe({
+        next: () => {
+          this.analyticsService.trackSignup('email');
+        },
+        error: (error) => {
+          console.error('Signup failed:', error);
+          this.analyticsService.trackError(`Signup failed: ${error.message}`);
+        }
+      });
+    }
+  }
+
+  signupWithGoogle(): void {
+    // TODO: Implement Google OAuth
+    console.log('Google signup not implemented yet');
+    this.analyticsService.trackEvent({
+      action: 'social_signup_attempt',
+      category: 'authentication',
+      label: 'google'
+    });
+  }
+
+  signupWithGithub(): void {
+    // TODO: Implement GitHub OAuth
+    console.log('GitHub signup not implemented yet');
+    this.analyticsService.trackEvent({
+      action: 'social_signup_attempt',
+      category: 'authentication',
+      label: 'github'
+    });
+  }
+}

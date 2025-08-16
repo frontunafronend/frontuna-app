@@ -1,0 +1,129 @@
+import { ApplicationConfig, importProvidersFrom, APP_INITIALIZER } from '@angular/core';
+import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideServiceWorker } from '@angular/service-worker';
+
+// Material modules
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
+// Third party modules
+import { provideLottieOptions } from 'ngx-lottie';
+import { provideToastr } from 'ngx-toastr';
+
+// import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+
+// App modules
+import { routes } from './app.routes';
+import { authInterceptor } from './interceptors/auth.interceptor';
+import { errorInterceptor } from './interceptors/error.interceptor';
+import { loadingInterceptor } from './interceptors/loading.interceptor';
+import { environment } from '../environments/environment';
+import { AuthService } from './services/auth/auth.service';
+import { AuthMockService } from './services/auth/auth-mock.service';
+
+// AI Services
+import { AICopilotService } from './services/ai/ai-copilot.service';
+import { AICodeGeneratorService } from './services/ai/ai-code-generator.service';
+import { AICopilotStateService } from './services/ai/ai-copilot-state.service';
+
+// Lottie player factory
+export function playerFactory() {
+  return import('lottie-web');
+}
+
+// Auth initialization factory
+export function initializeAuth(authService: AuthService | AuthMockService) {
+  return () => authService.initializeForApp();
+}
+
+// Auth service factory - use mock service when mock data is enabled
+export function authServiceFactory() {
+  return environment.features.enableMockData ? new AuthMockService() : undefined;
+}
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // Conditional Auth Service Provider
+    ...(environment.features.enableMockData ? [
+      {
+        provide: AuthService,
+        useClass: AuthMockService
+      }
+    ] : []),
+    
+    // AI Services
+    AICopilotService,
+    AICodeGeneratorService,
+    AICopilotStateService,
+    
+    // App Initializer for Authentication
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeAuth,
+      deps: [AuthService],
+      multi: true
+    },
+    
+    // Router
+    provideRouter(
+      routes,
+      withEnabledBlockingInitialNavigation(),
+      withInMemoryScrolling({
+        scrollPositionRestoration: 'top',
+        anchorScrolling: 'enabled'
+      })
+    ),
+    
+    // HTTP Client with interceptors
+    provideHttpClient(
+      withInterceptors([
+        authInterceptor,
+        loadingInterceptor,
+        errorInterceptor
+      ])
+    ),
+    
+    // Animations
+    provideAnimations(),
+    
+    // Service Worker
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: environment.production,
+      registrationStrategy: 'registerWhenStable:30000'
+    }),
+    
+    // Angular Material
+    importProvidersFrom(
+      MatSnackBarModule,
+      MatDialogModule,
+      MatProgressSpinnerModule
+    ),
+    
+    // Charts
+    // provideCharts(withDefaultRegisterables()),
+    
+    // Toastr notifications
+    provideToastr({
+      timeOut: 3000,
+      positionClass: 'toast-bottom-right',
+      preventDuplicates: true,
+      progressBar: true,
+      progressAnimation: 'increasing',
+      newestOnTop: true,
+      maxOpened: 3,
+      autoDismiss: true,
+      closeButton: true,
+      tapToDismiss: true
+    }),
+    
+    // Lottie animations
+    provideLottieOptions({
+      player: playerFactory
+    }),
+    
+
+  ]
+};

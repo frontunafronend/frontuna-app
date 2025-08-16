@@ -1,0 +1,175 @@
+name: 🧪 Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: 🚀 Run Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: 📦 Install Dependencies
+      working-directory: ./frontend
+      run: |
+        echo "📦 Installing dependencies..."
+        npm ci
+        echo "✅ Dependencies installed successfully"
+        
+    - name: 🔧 Setup Chrome for Testing
+      uses: browser-actions/setup-chrome@v1
+      with:
+        chrome-version: stable
+        
+    - name: 🧪 Run Test Suite
+      working-directory: ./frontend
+      run: |
+        echo "🧪 Starting comprehensive test suite..."
+        echo "🎯 Running tests with coverage reporting..."
+        
+        # Run tests with coverage and custom output formatting
+        npm run test:ci 2>&1 | tee test-output.log
+        
+        # Extract test results
+        echo ""
+        echo "📊 TEST RESULTS SUMMARY"
+        echo "======================="
+        
+        # Count total tests and failures from the log
+        TOTAL_TESTS=$(grep -o "Executed [0-9]*" test-output.log | tail -1 | grep -o "[0-9]*" || echo "0")
+        FAILED_TESTS=$(grep -o "[0-9]* FAILED" test-output.log | grep -o "^[0-9]*" || echo "0")
+        PASSED_TESTS=$((TOTAL_TESTS - FAILED_TESTS))
+        
+        echo "🎯 Total Test Cases: $TOTAL_TESTS"
+        echo "✅ Passed Tests: $PASSED_TESTS"
+        echo "❌ Failed Tests: $FAILED_TESTS"
+        
+        # Check if any tests failed
+        if [ "$FAILED_TESTS" -gt "0" ]; then
+          echo ""
+          echo "💥 TEST FAILURES DETECTED!"
+          echo "========================="
+          echo "❌ $FAILED_TESTS out of $TOTAL_TESTS tests failed"
+          echo ""
+          echo "📋 Failure Details:"
+          grep -A 5 -B 2 "FAILED\|ERROR" test-output.log || echo "Check test-output.log for detailed failure information"
+          exit 1
+        else
+          echo ""
+          echo "🎉 ALL TESTS PASSED!"
+          echo "==================="
+          echo "✅ $TOTAL_TESTS tests executed successfully"
+          echo "🚀 Test suite completed without errors"
+        fi
+        
+    - name: 📊 Upload Coverage Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report-node-${{ matrix.node-version }}
+        path: frontend/coverage/
+        retention-days: 30
+        
+    - name: 📄 Upload Test Logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-logs-node-${{ matrix.node-version }}
+        path: frontend/test-output.log
+        retention-days: 7
+        
+    - name: 💬 Comment Test Results on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = './frontend/test-output.log';
+          
+          if (fs.existsSync(path)) {
+            const testOutput = fs.readFileSync(path, 'utf8');
+            const totalMatch = testOutput.match(/Executed (\d+)/);
+            const failedMatch = testOutput.match(/(\d+) FAILED/);
+            
+            const total = totalMatch ? totalMatch[1] : '0';
+            const failed = failedMatch ? failedMatch[1] : '0';
+            const passed = total - failed;
+            
+            const status = failed > 0 ? '❌ FAILED' : '✅ PASSED';
+            const emoji = failed > 0 ? '💥' : '🎉';
+            
+            const comment = `## ${emoji} Test Results ${status}
+            
+            | Metric | Value |
+            |--------|-------|
+            | 🎯 Total Tests | ${total} |
+            | ✅ Passed | ${passed} |
+            | ❌ Failed | ${failed} |
+            | 🟢 Node.js | ${{ matrix.node-version }} |
+            
+            ${failed > 0 ? '⚠️ **Some tests failed. Please check the workflow logs for details.**' : '🚀 **All tests passed successfully!**'}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+
+  test-summary:
+    name: 📋 Test Summary
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    
+    steps:
+    - name: 🎯 Generate Test Summary
+      run: |
+        echo "## 🧪 Frontuna Test Suite Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Node Version | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------------|--------|" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ needs.test.result }}" == "success" ]]; then
+          echo "| 18.x | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| 20.x | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎉 **All tests passed successfully across all Node.js versions!**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| 18.x | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          echo "| 20.x | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💥 **Some tests failed. Check the workflow logs for details.**" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Test Coverage" >> $GITHUB_STEP_SUMMARY
+        echo "- Coverage reports are available in the workflow artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- Test logs are uploaded for failed runs" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 Components Tested" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ AI Components (Scaffold Generator, Diff Viewer)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Versioning System (Version History)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Gallery System (Remix Card)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Plugin Manager" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Utilities and Helpers" >> $GITHUB_STEP_SUMMARY

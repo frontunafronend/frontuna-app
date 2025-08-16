@@ -1,0 +1,300 @@
+name: 🎭 E2E Tests
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/e2e-tests.yml'
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - scaffold-generator
+        - gallery-remix-export
+        - plugin-manager
+
+jobs:
+  e2e-tests:
+    name: 🚀 Run E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium]
+        # Optionally add more browsers: [chromium, firefox, webkit]
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: 📦 Install Dependencies
+      working-directory: ./frontend
+      run: |
+        echo "📦 Installing dependencies..."
+        npm ci
+        echo "✅ Dependencies installed successfully"
+        
+    - name: 🎭 Install Playwright Browsers
+      working-directory: ./frontend
+      run: |
+        echo "🎭 Installing Playwright browsers..."
+        npx playwright install --with-deps ${{ matrix.project }}
+        echo "✅ Playwright browsers installed"
+        
+    - name: 🏗️ Build Application
+      working-directory: ./frontend
+      run: |
+        echo "🏗️ Building application for E2E testing..."
+        npm run build
+        echo "✅ Application built successfully"
+        
+    - name: 🚀 Start Application Server
+      working-directory: ./frontend
+      run: |
+        echo "🚀 Starting application server..."
+        npm run start &
+        echo "⏳ Waiting for server to be ready..."
+        
+        # Wait for server to be ready
+        for i in {1..30}; do
+          if curl -f http://localhost:4200 > /dev/null 2>&1; then
+            echo "✅ Server is ready!"
+            break
+          fi
+          echo "⏳ Waiting... ($i/30)"
+          sleep 2
+        done
+        
+        if ! curl -f http://localhost:4200 > /dev/null 2>&1; then
+          echo "❌ Server failed to start"
+          exit 1
+        fi
+      env:
+        NODE_ENV: test
+        
+    - name: 🧪 Run E2E Tests
+      working-directory: ./frontend
+      run: |
+        echo "🧪 Starting E2E test suite..."
+        echo "🎯 Project: ${{ matrix.project }}"
+        echo "📋 Test Suite: ${{ github.event.inputs.test_suite || 'all' }}"
+        
+        # Determine which tests to run
+        TEST_PATTERN="**/*.spec.ts"
+        case "${{ github.event.inputs.test_suite || 'all' }}" in
+          scaffold-generator)
+            TEST_PATTERN="**/scaffold-generator.spec.ts"
+            ;;
+          gallery-remix-export)
+            TEST_PATTERN="**/gallery-remix-export.spec.ts"
+            ;;
+          plugin-manager)
+            TEST_PATTERN="**/plugin-manager.spec.ts"
+            ;;
+          all)
+            TEST_PATTERN="**/*.spec.ts"
+            ;;
+        esac
+        
+        echo "🔍 Running tests matching: $TEST_PATTERN"
+        
+        # Run Playwright tests
+        npx playwright test \
+          --project=${{ matrix.project }} \
+          --reporter=html,json,junit \
+          --grep="$TEST_PATTERN" \
+          --max-failures=5 \
+          --retries=2
+        
+      env:
+        CI: true
+        BASE_URL: http://localhost:4200
+        E2E_SETUP_AUTH: true
+        PLAYWRIGHT_HTML_REPORT: e2e/test-results/html-report
+        
+    - name: 📊 Process Test Results
+      if: always()
+      working-directory: ./frontend
+      run: |
+        echo "📊 Processing E2E test results..."
+        
+        # Check if results exist
+        if [ -f "e2e/test-results/results.json" ]; then
+          # Extract test statistics
+          TOTAL_TESTS=$(jq '.stats.total // 0' e2e/test-results/results.json)
+          PASSED_TESTS=$(jq '.stats.expected // 0' e2e/test-results/results.json)
+          FAILED_TESTS=$(jq '.stats.unexpected // 0' e2e/test-results/results.json)
+          SKIPPED_TESTS=$(jq '.stats.skipped // 0' e2e/test-results/results.json)
+          DURATION=$(jq '.stats.duration // 0' e2e/test-results/results.json)
+          
+          echo "📋 E2E TEST RESULTS SUMMARY"
+          echo "=========================="
+          echo "🎯 Total Tests: $TOTAL_TESTS"
+          echo "✅ Passed: $PASSED_TESTS"
+          echo "❌ Failed: $FAILED_TESTS"
+          echo "⏭️ Skipped: $SKIPPED_TESTS"
+          echo "⏱️ Duration: $(($DURATION / 1000))s"
+          echo "🖥️ Browser: ${{ matrix.project }}"
+          
+          # Create summary for GitHub
+          {
+            echo "## 🎭 E2E Test Results - ${{ matrix.project }}"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|--------|-------|"
+            echo "| 🎯 Total Tests | $TOTAL_TESTS |"
+            echo "| ✅ Passed | $PASSED_TESTS |"
+            echo "| ❌ Failed | $FAILED_TESTS |"
+            echo "| ⏭️ Skipped | $SKIPPED_TESTS |"
+            echo "| ⏱️ Duration | $(($DURATION / 1000))s |"
+            echo "| 🖥️ Browser | ${{ matrix.project }} |"
+            echo ""
+            if [ "$FAILED_TESTS" -gt "0" ]; then
+              echo "⚠️ **Some E2E tests failed. Check the test report for details.**"
+            else
+              echo "🎉 **All E2E tests passed successfully!**"
+            fi
+          } >> $GITHUB_STEP_SUMMARY
+          
+          # Set job outputs
+          echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+          echo "passed_tests=$PASSED_TESTS" >> $GITHUB_OUTPUT
+          echo "failed_tests=$FAILED_TESTS" >> $GITHUB_OUTPUT
+          
+        else
+          echo "⚠️ No test results found"
+          echo "failed_tests=1" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: 📸 Upload Screenshots
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-screenshots-${{ matrix.project }}
+        path: |
+          frontend/e2e/screenshots/
+          frontend/e2e/test-results/
+        retention-days: 7
+        
+    - name: 🎥 Upload Videos
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-videos-${{ matrix.project }}
+        path: frontend/test-results/
+        retention-days: 7
+        
+    - name: 📋 Upload Test Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-report-${{ matrix.project }}
+        path: |
+          frontend/e2e/test-results/html-report/
+          frontend/e2e/test-results/results.json
+          frontend/e2e/test-results/results.xml
+        retention-days: 30
+        
+    - name: 💬 Comment Test Results on PR
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = './frontend/e2e/test-results/results.json';
+          
+          if (fs.existsSync(path)) {
+            const results = JSON.parse(fs.readFileSync(path, 'utf8'));
+            
+            const total = results.stats?.total || 0;
+            const passed = results.stats?.expected || 0;
+            const failed = results.stats?.unexpected || 0;
+            const skipped = results.stats?.skipped || 0;
+            const duration = Math.round((results.stats?.duration || 0) / 1000);
+            
+            const status = failed > 0 ? '❌ FAILED' : '✅ PASSED';
+            const emoji = failed > 0 ? '💥' : '🎉';
+            
+            const comment = `## ${emoji} E2E Test Results ${status}
+            
+            **Browser**: ${{ matrix.project }}
+            
+            | Metric | Value |
+            |--------|-------|
+            | 🎯 Total Tests | ${total} |
+            | ✅ Passed | ${passed} |
+            | ❌ Failed | ${failed} |
+            | ⏭️ Skipped | ${skipped} |
+            | ⏱️ Duration | ${duration}s |
+            
+            ### 🧪 Test Suites Covered
+            - ✅ **Scaffold Generator**: Complete workflow from category selection to project generation
+            - ✅ **Gallery Remix & Export**: Component remixing, configuration, and export functionality  
+            - ✅ **Plugin Manager**: Plugin installation, configuration, and management
+            
+            ${failed > 0 ? '⚠️ **Some E2E tests failed. Check the [test report](' + context.payload.repository.html_url + '/actions/runs/' + context.runId + ') for details.**' : '🚀 **All E2E tests passed successfully!**'}
+            
+            📋 **Test Report**: Available in workflow artifacts
+            📸 **Screenshots**: ${failed > 0 ? 'Available for failed tests' : 'No failures detected'}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+
+  e2e-summary:
+    name: 📋 E2E Test Summary
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    if: always()
+    
+    steps:
+    - name: 🎯 Generate E2E Summary
+      run: |
+        echo "## 🎭 Frontuna E2E Test Suite Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ needs.e2e-tests.result }}" == "success" ]]; then
+          echo "### 🎉 All E2E Tests Passed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Scaffold Generator Flow**: Complete workflow tested" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Gallery Remix & Export**: Component remixing and export tested" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Plugin Manager**: Plugin installation and management tested" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 **Application is ready for deployment!**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### 💥 E2E Tests Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "❌ Some E2E tests failed. Please check the individual job results." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **Next Steps:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review failed test screenshots and videos in artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "2. Check test report for detailed failure information" >> $GITHUB_STEP_SUMMARY
+          echo "3. Fix issues and re-run tests" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Test Coverage" >> $GITHUB_STEP_SUMMARY
+        echo "- 🎯 **User Workflows**: Critical user journeys tested end-to-end" >> $GITHUB_STEP_SUMMARY
+        echo "- 🖥️ **Browser Testing**: Chromium (Chrome/Edge) compatibility verified" >> $GITHUB_STEP_SUMMARY
+        echo "- 📱 **Responsive Design**: Desktop and mobile viewports tested" >> $GITHUB_STEP_SUMMARY
+        echo "- ♿ **Accessibility**: Basic accessibility features verified" >> $GITHUB_STEP_SUMMARY

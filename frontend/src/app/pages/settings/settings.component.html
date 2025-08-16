@@ -1,0 +1,392 @@
+<div class="settings-layout">
+  <div class="settings-header">
+    <h1>
+      <mat-icon>settings</mat-icon>
+      Settings
+    </h1>
+    <p>Manage your account preferences and application settings</p>
+  </div>
+
+  <div class="settings-content">
+    <mat-tab-group class="settings-tabs" animationDuration="300ms">
+      
+      <!-- Profile Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>person</mat-icon>
+          Profile
+        </ng-template>
+        
+        <div class="tab-content">
+          <mat-card class="settings-card">
+            <mat-card-header>
+              <mat-card-title>Personal Information</mat-card-title>
+              <mat-card-subtitle>Update your personal details</mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <form [formGroup]="profileForm" class="settings-form">
+                <div class="avatar-section">
+                  <div class="current-avatar">
+                    <div class="avatar-circle">
+                      <mat-icon>person</mat-icon>
+                    </div>
+                  </div>
+                  <div class="avatar-actions">
+                    <button mat-stroked-button>
+                      <mat-icon>upload</mat-icon>
+                      Upload Photo
+                    </button>
+                    <button mat-button color="warn">Remove</button>
+                  </div>
+                </div>
+                
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>First Name</mat-label>
+                    <input matInput formControlName="firstName" placeholder="Enter your first name">
+                    <mat-icon matSuffix>person</mat-icon>
+                  </mat-form-field>
+                </div>
+                
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Last Name</mat-label>
+                    <input matInput formControlName="lastName" placeholder="Enter your last name">
+                    <mat-icon matSuffix>person</mat-icon>
+                  </mat-form-field>
+                </div>
+                
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Email</mat-label>
+                    <input matInput formControlName="email" placeholder="Enter your email" type="email">
+                    <mat-icon matSuffix>email</mat-icon>
+                  </mat-form-field>
+                </div>
+                
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Company</mat-label>
+                    <input matInput formControlName="company" placeholder="Enter your company (optional)">
+                    <mat-icon matSuffix>business</mat-icon>
+                  </mat-form-field>
+                </div>
+                
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Time Zone</mat-label>
+                    <mat-select formControlName="timezone">
+                      <mat-option value="UTC">UTC</mat-option>
+                      <mat-option value="America/New_York">Eastern Time</mat-option>
+                      <mat-option value="America/Chicago">Central Time</mat-option>
+                      <mat-option value="America/Denver">Mountain Time</mat-option>
+                      <mat-option value="America/Los_Angeles">Pacific Time</mat-option>
+                      <mat-option value="Europe/London">London</mat-option>
+                      <mat-option value="Europe/Paris">Paris</mat-option>
+                      <mat-option value="Asia/Tokyo">Tokyo</mat-option>
+                    </mat-select>
+                    <mat-icon matSuffix>schedule</mat-icon>
+                  </mat-form-field>
+                </div>
+                
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" (click)="saveProfile()">
+                    <mat-icon>save</mat-icon>
+                    Save Changes
+                  </button>
+                  <button mat-button (click)="resetProfile()">Reset</button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+      
+      <!-- Preferences Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>tune</mat-icon>
+          Preferences
+        </ng-template>
+        
+        <div class="tab-content">
+          <mat-card class="settings-card">
+            <mat-card-header>
+              <mat-card-title>Application Preferences</mat-card-title>
+              <mat-card-subtitle>Customize your experience</mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <div class="preference-section">
+                <h4>Theme & Appearance</h4>
+                <div class="preference-item">
+                  <div class="preference-info">
+                    <span class="preference-title">Dark Mode</span>
+                    <span class="preference-desc">Use dark theme across the application</span>
+                  </div>
+                  <mat-slide-toggle [(ngModel)]="preferences.darkMode" (change)="updatePreference('darkMode', $event.checked)">
+                  </mat-slide-toggle>
+                </div>
+                
+                <div class="preference-item">
+                  <div class="preference-info">
+                    <span class="preference-title">Compact Mode</span>
+                    <span class="preference-desc">Show more content with reduced spacing</span>
+                  </div>
+                  <mat-slide-toggle [(ngModel)]="preferences.compactMode" (change)="updatePreference('compactMode', $event.checked)">
+                  </mat-slide-toggle>
+                </div>
+              </div>
+              
+              <mat-divider></mat-divider>
+              
+              <div class="preference-section">
+                <h4>Code Generation</h4>
+                <div class="preference-item">
+                  <div class="preference-info">
+                    <span class="preference-title">Default Framework</span>
+                    <span class="preference-desc">Your preferred framework for new components</span>
+                  </div>
+                  <mat-form-field appearance="outline" class="preference-select">
+                    <mat-select [(ngModel)]="preferences.defaultFramework" (selectionChange)="updatePreference('defaultFramework', $event.value)">
+                      <mat-option value="react">React</mat-option>
+                      <mat-option value="angular">Angular</mat-option>
+                      <mat-option value="vue">Vue</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                
+                <div class="preference-item">
+                  <div class="preference-info">
+                    <span class="preference-title">Auto-save Components</span>
+                    <span class="preference-desc">Automatically save generated components to library</span>
+                  </div>
+                  <mat-slide-toggle [(ngModel)]="preferences.autoSave" (change)="updatePreference('autoSave', $event.checked)">
+                  </mat-slide-toggle>
+                </div>
+                
+                <div class="preference-item">
+                  <div class="preference-info">
+                    <span class="preference-title">Include TypeScript</span>
+                    <span class="preference-desc">Generate TypeScript by default</span>
+                  </div>
+                  <mat-slide-toggle [(ngModel)]="preferences.typescript" (change)="updatePreference('typescript', $event.checked)">
+                  </mat-slide-toggle>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+      
+      <!-- Notifications Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>notifications</mat-icon>
+          Notifications
+        </ng-template>
+        
+        <div class="tab-content">
+          <mat-card class="settings-card">
+            <mat-card-header>
+              <mat-card-title>Notification Settings</mat-card-title>
+              <mat-card-subtitle>Choose what notifications you receive</mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <div class="preference-section">
+                <h4>Email Notifications</h4>
+                <div class="preference-item">
+                  <div class="preference-info">
+                    <span class="preference-title">Generation Complete</span>
+                    <span class="preference-desc">Get notified when component generation finishes</span>
+                  </div>
+                  <mat-slide-toggle [(ngModel)]="notifications.generationComplete">
+                  </mat-slide-toggle>
+                </div>
+                
+                <div class="preference-item">
+                  <div class="preference-info">
+                    <span class="preference-title">Weekly Summary</span>
+                    <span class="preference-desc">Receive weekly usage summary</span>
+                  </div>
+                  <mat-slide-toggle [(ngModel)]="notifications.weeklySummary">
+                  </mat-slide-toggle>
+                </div>
+                
+                <div class="preference-item">
+                  <div class="preference-info">
+                    <span class="preference-title">Plan Updates</span>
+                    <span class="preference-desc">Get notified about billing and plan changes</span>
+                  </div>
+                  <mat-slide-toggle [(ngModel)]="notifications.planUpdates">
+                  </mat-slide-toggle>
+                </div>
+              </div>
+              
+              <mat-divider></mat-divider>
+              
+              <div class="preference-section">
+                <h4>Push Notifications</h4>
+                <div class="preference-item">
+                  <div class="preference-info">
+                    <span class="preference-title">Browser Notifications</span>
+                    <span class="preference-desc">Show notifications in your browser</span>
+                  </div>
+                  <mat-slide-toggle [(ngModel)]="notifications.browserNotifications">
+                  </mat-slide-toggle>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+      
+      <!-- Privacy & Security Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>security</mat-icon>
+          Security
+        </ng-template>
+        
+        <div class="tab-content">
+          <mat-card class="settings-card">
+            <mat-card-header>
+              <mat-card-title>Privacy & Security</mat-card-title>
+              <mat-card-subtitle>Manage your account security</mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <div class="security-section">
+                <h4>Password</h4>
+                <p>Keep your account secure with a strong password</p>
+                <button mat-stroked-button (click)="changePassword()">
+                  <mat-icon>lock</mat-icon>
+                  Change Password
+                </button>
+              </div>
+              
+              <mat-divider></mat-divider>
+              
+              <div class="security-section">
+                <h4>Two-Factor Authentication</h4>
+                <p>Add an extra layer of security to your account</p>
+                <div class="security-status">
+                  <mat-icon [style.color]="twoFactorEnabled ? '#4caf50' : '#f44336'">
+                    {{ twoFactorEnabled ? 'check_circle' : 'error' }}
+                  </mat-icon>
+                  <span>{{ twoFactorEnabled ? 'Enabled' : 'Disabled' }}</span>
+                  <button mat-raised-button [color]="twoFactorEnabled ? 'warn' : 'primary'" (click)="toggleTwoFactor()">
+                    {{ twoFactorEnabled ? 'Disable' : 'Enable' }} 2FA
+                  </button>
+                </div>
+              </div>
+              
+              <mat-divider></mat-divider>
+              
+              <div class="security-section">
+                <h4>API Keys</h4>
+                <p>Manage your API keys for integrations</p>
+                <div class="api-keys">
+                  <div class="api-key-item" *ngFor="let key of apiKeys">
+                    <div class="api-key-info">
+                      <strong>{{ key.name }}</strong>
+                      <span class="api-key-id">{{ key.id }}</span>
+                      <span class="api-key-created">Created {{ key.created | date:'short' }}</span>
+                    </div>
+                    <button mat-button color="warn" (click)="deleteApiKey(key.id)">
+                      <mat-icon>delete</mat-icon>
+                      Delete
+                    </button>
+                  </div>
+                  <button mat-stroked-button (click)="createApiKey()">
+                    <mat-icon>add</mat-icon>
+                    Create New API Key
+                  </button>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+      
+      <!-- Data & Export Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>storage</mat-icon>
+          Data
+        </ng-template>
+        
+        <div class="tab-content">
+          <mat-card class="settings-card">
+            <mat-card-header>
+              <mat-card-title>Data Management</mat-card-title>
+              <mat-card-subtitle>Export, import, and manage your data</mat-card-subtitle>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <div class="data-section">
+                <h4>Export Your Data</h4>
+                <p>Download all your components and data</p>
+                <div class="export-options">
+                  <button mat-stroked-button (click)="exportData('components')">
+                    <mat-icon>download</mat-icon>
+                    Export Components
+                  </button>
+                  <button mat-stroked-button (click)="exportData('settings')">
+                    <mat-icon>download</mat-icon>
+                    Export Settings
+                  </button>
+                  <button mat-stroked-button (click)="exportData('all')">
+                    <mat-icon>download</mat-icon>
+                    Export All Data
+                  </button>
+                </div>
+              </div>
+              
+              <mat-divider></mat-divider>
+              
+              <div class="data-section">
+                <h4>Import Data</h4>
+                <p>Import components from other tools</p>
+                <button mat-stroked-button (click)="importData()">
+                  <mat-icon>upload</mat-icon>
+                  Import Components
+                </button>
+              </div>
+              
+              <mat-divider></mat-divider>
+              
+              <div class="data-section danger-zone">
+                <h4>Danger Zone</h4>
+                <div class="danger-item">
+                  <div class="danger-info">
+                    <strong>Clear All Components</strong>
+                    <p>Permanently delete all your generated components</p>
+                  </div>
+                  <button mat-stroked-button color="warn" (click)="clearAllComponents()">
+                    <mat-icon>delete_sweep</mat-icon>
+                    Clear Components
+                  </button>
+                </div>
+                
+                <div class="danger-item">
+                  <div class="danger-info">
+                    <strong>Delete Account</strong>
+                    <p>Permanently delete your account and all associated data</p>
+                  </div>
+                  <button mat-stroked-button color="warn" (click)="deleteAccount()">
+                    <mat-icon>delete_forever</mat-icon>
+                    Delete Account
+                  </button>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+      
+    </mat-tab-group>
+  </div>
+</div>

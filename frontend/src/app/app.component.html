@@ -1,0 +1,36 @@
+<!-- Loading Spinner -->
+@if (isLoading()) {
+  <div class="global-loading">
+    <div class="loading-content">
+      <div class="loading-spinner">
+        <div class="spinner-ring"></div>
+      </div>
+      <p>Loading...</p>
+    </div>
+  </div>
+}
+
+<!-- Header -->
+@if (shouldShowHeader()) {
+  <app-header></app-header>
+}
+
+<!-- Main Content -->
+<main class="main-content" [class.with-header]="shouldShowHeader()">
+  <router-outlet></router-outlet>
+</main>
+
+<!-- Footer -->
+@if (shouldShowHeader()) {
+  <app-footer></app-footer>
+}
+
+<!-- Scroll to Top Button -->
+<button class="scroll-to-top" 
+        [class.visible]="showScrollTop()"
+        (click)="scrollToTop()"
+        mat-fab
+        color="primary"
+        aria-label="Scroll to top">
+  <mat-icon>keyboard_arrow_up</mat-icon>
+</button>

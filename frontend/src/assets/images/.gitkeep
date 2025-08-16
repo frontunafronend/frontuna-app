@@ -1,0 +1,9 @@
+# This file ensures the assets/images directory is committed to git
+# Place your image assets in subdirectories:
+# - logo/
+# - frameworks/
+# - team/
+# - testimonials/
+# - badges/
+# - social/
+# - icons/

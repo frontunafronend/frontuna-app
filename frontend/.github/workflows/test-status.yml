@@ -1,0 +1,37 @@
+name: 📊 Test Status Badge
+
+on:
+  workflow_run:
+    workflows: ["🧪 Test Suite"]
+    types: [completed]
+
+jobs:
+  update-badge:
+    name: 📋 Update Test Badge
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🏷️ Create Test Status Badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.GITHUB_TOKEN }}
+        gistID: ${{ secrets.BADGE_GIST_ID }}
+        filename: frontuna-test-status.json
+        label: Tests
+        message: ${{ github.event.workflow_run.conclusion == 'success' && 'Passing' || 'Failing' }}
+        color: ${{ github.event.workflow_run.conclusion == 'success' && 'brightgreen' || 'red' }}
+        
+    - name: 📊 Update Coverage Badge
+      if: github.event.workflow_run.conclusion == 'success'
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.GITHUB_TOKEN }}
+        gistID: ${{ secrets.BADGE_GIST_ID }}
+        filename: frontuna-coverage.json
+        label: Coverage
+        message: "500+ tests"
+        color: brightgreen

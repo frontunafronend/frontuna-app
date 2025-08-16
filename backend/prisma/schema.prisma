@@ -1,0 +1,86 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         String   @default("user")
+  createdAt    DateTime @default(now())
+  components   Component[]
+  usageLogs    UsageLog[]
+  subscriptions Subscription[]
+  
+  @@index([createdAt(sort: Desc)])
+  @@index([role])
+}
+
+model Component {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  style     String   // material | bootstrap | html
+  framework String   // "angular"
+  version   Int      @default(1)
+  codeTs    String
+  codeHtml  String
+  codeScss  String
+  meta      Json?
+  createdAt DateTime @default(now())
+  versions  ComponentVersion[]
+  
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([framework])
+  @@index([style])
+  @@index([name])
+  @@unique([userId, name])
+}
+
+model ComponentVersion {
+  id          String   @id @default(uuid())
+  componentId String
+  component   Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
+  v           Int
+  codeTs      String
+  codeHtml    String
+  codeScss    String
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([componentId, v])
+}
+
+model UsageLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokensIn  Int
+  tokensOut Int
+  route     String
+  createdAt DateTime @default(now())
+  
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([route])
+}
+
+model Subscription {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan        String   // free | pro
+  status      String   // active | canceled
+  startsAt    DateTime
+  renewsAt    DateTime?
+  stripeId    String?
+  
+  @@index([userId])
+  @@index([plan, status])
+  @@index([stripeId])
+}

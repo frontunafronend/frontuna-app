@@ -1,0 +1,37 @@
+{
+  "name": "Frontuna.com - AI Component Generator",
+  "short_name": "Frontuna",
+  "description": "Generate frontend components instantly using AI",
+  "theme_color": "#ffc107",
+  "background_color": "#2c2c2c",
+  "display": "standalone",
+  "scope": "./",
+  "start_url": "./",
+  "icons": [
+    {
+      "src": "assets/images/logo/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/images/logo/favicon-32x32.png", 
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/images/logo/favicon-192x192.png", 
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/images/logo/favicon-512x512.png", 
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/images/logo/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
