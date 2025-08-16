@@ -30,7 +30,9 @@
   "private": true,
   "overrides": {
     "@typescript-eslint/utils": "7.11.0",
-    "@typescript-eslint/type-utils": "7.11.0"
+    "@typescript-eslint/type-utils": "7.11.0",
+    "@typescript-eslint/eslint-plugin": "7.11.0",
+    "@typescript-eslint/parser": "7.11.0"
   },
   "dependencies": {
     "@angular/animations": "^17.0.0",
@@ -68,11 +70,11 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^17.0.0",
-    "@angular-eslint/builder": "20.1.1",
-    "@angular-eslint/eslint-plugin": "20.1.1",
-    "@angular-eslint/eslint-plugin-template": "20.1.1",
-    "@angular-eslint/schematics": "20.1.1",
-    "@angular-eslint/template-parser": "20.1.1",
+    "@angular-eslint/builder": "17.5.2",
+    "@angular-eslint/eslint-plugin": "17.5.2",
+    "@angular-eslint/eslint-plugin-template": "17.5.2",
+    "@angular-eslint/schematics": "17.5.2",
+    "@angular-eslint/template-parser": "17.5.2",
     "@angular/cli": "^17.0.0",
     "@angular/compiler-cli": "^17.0.0",
     "@playwright/test": "^1.54.2",

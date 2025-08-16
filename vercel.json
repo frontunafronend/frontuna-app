@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm ci && npm run build -- --configuration=production",
+  "buildCommand": "cd frontend && npm ci --legacy-peer-deps && npm run build -- --configuration=production",
   "outputDirectory": "frontend/dist",
   "framework": "angular",
   "rewrites": [
