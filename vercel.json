@@ -6,7 +6,6 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ],
-  "ignoreCommand": "echo Using Vercel build",
   "functions": {
     "api/**.ts": {
       "runtime": "nodejs20.x"
