@@ -339,6 +339,8 @@ import { AuthService } from '@app/services/auth/auth.service';
       position: relative;
       overflow: hidden;
       min-height: 90vh;
+      width: 100%;
+      max-width: 100vw;
     }
 
     .hero-section::before {
@@ -355,6 +357,9 @@ import { AuthService } from '@app/services/auth/auth.service';
     .hero-content {
       position: relative;
       z-index: 2;
+      width: 100%;
+      max-width: 100%;
+      padding: 0 1rem;
     }
 
     .hero-title {
@@ -367,6 +372,9 @@ import { AuthService } from '@app/services/auth/auth.service';
       color: #ffffff;
       text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
       letter-spacing: -0.02em;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      max-width: 100%;
     }
 
     .gradient-text {
@@ -1178,56 +1186,190 @@ import { AuthService } from '@app/services/auth/auth.service';
       }
     }
 
+    /* Global mobile container fix */
+    * {
+      box-sizing: border-box;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 100%;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
     @media (max-width: 768px) {
+      /* Force mobile viewport constraints */
+      html, body {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100vw;
+      }
+
+      .hero-section {
+        padding: 1rem 0;
+        min-height: auto;
+        overflow-x: hidden;
+      }
+
+      .container {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+        max-width: 100vw;
+        overflow-x: hidden;
+      }
+
+      .row {
+        margin-left: 0;
+        margin-right: 0;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .col-lg-6 {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+      }
+
+      .hero-content {
+        padding: 0 0.5rem;
+        text-align: center;
+      }
+
       .hero-title {
-        font-size: 2.5rem;
+        font-size: 2rem;
+        line-height: 1.1;
+        margin-bottom: 1rem;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+      }
+
+      .hero-description {
+        font-size: 1rem;
+        line-height: 1.4;
+        margin-bottom: 1.5rem;
+        padding: 0 0.5rem;
       }
 
       .hero-stats {
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding: 0 0.5rem;
+      }
+
+      .stat-item {
+        width: 100%;
+        max-width: 200px;
+        margin: 0 auto;
+      }
+
+      .stat-number {
+        font-size: 1.5rem;
+      }
+
+      .stat-label {
+        font-size: 0.8rem;
       }
 
       .hero-actions {
         flex-direction: column;
+        gap: 0.75rem;
+        align-items: center;
+        padding: 0 0.5rem;
+      }
+
+      .cta-button, .secondary-button {
+        width: 100%;
+        max-width: 280px;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+      }
+
+      .hero-features {
+        margin-top: 1.5rem;
+        padding: 0 0.5rem;
+      }
+
+      .hero-features mat-chip-set {
+        justify-content: center;
+      }
+
+      .hero-features mat-chip {
+        margin: 0.25rem;
+        font-size: 0.8rem;
       }
 
       .step-item {
         flex-direction: column;
         text-align: center;
+        gap: 1rem;
       }
 
       .cta-actions {
         flex-direction: column;
         align-items: center;
+        gap: 0.75rem;
+      }
+
+      .cta-button-large, .cta-button-outline {
+        width: 100%;
+        max-width: 280px;
+      }
+
+      .section-header {
+        padding: 0 1rem;
       }
 
       .section-header h2 {
-        font-size: 2rem;
+        font-size: 1.75rem;
         white-space: normal;
         word-break: normal;
         line-height: 1.2;
+        margin-bottom: 0.75rem;
+      }
+
+      .section-header p {
+        font-size: 1rem;
+        padding: 0 0.5rem;
       }
 
       /* Scale down cat for mobile */
+      .hero-visual {
+        height: 300px;
+        margin-top: 1rem;
+        order: 1;
+      }
+
       .cat-mascot-image {
-        width: 320px;
-        height: 400px;
+        width: 200px;
+        height: 250px;
+        max-width: 90vw;
       }
 
       .mascot-scene {
-        width: 360px;
-        height: 480px;
+        width: 220px;
+        height: 280px;
+        max-width: 95vw;
       }
 
-      .hero-visual {
-        height: 560px;
+      .speech-bubble {
+        top: -60px;
+        max-width: 180px;
+        font-size: 0.8rem;
+        padding: 8px 12px;
       }
 
       /* Testimonials responsive */
       .testimonials-section .row {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: 1rem;
+        padding: 0 1rem;
       }
 
       .testimonial-author {
@@ -1237,7 +1379,8 @@ import { AuthService } from '@app/services/auth/auth.service';
       }
 
       .testimonial-text {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+        line-height: 1.4;
       }
 
       .testimonial-card {
@@ -1247,26 +1390,43 @@ import { AuthService } from '@app/services/auth/auth.service';
       /* Features responsive */
       .features-grid {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: 1rem;
         padding: 0 1rem;
       }
 
+      .feature-card {
+        padding: 1rem;
+      }
+
       .feature-icon {
-        width: 70px;
-        height: 70px;
+        width: 60px;
+        height: 60px;
         margin-bottom: 1rem;
       }
       
       /* Hide floating cards on mobile to prevent overflow */
       .floating-card {
-        display: none;
+        display: none !important;
+      }
+
+      .floating-elements {
+        display: none !important;
       }
       
       /* Adjust frameworks grid for mobile */
       .frameworks-grid {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: 1rem;
         padding: 0 1rem;
+      }
+
+      .framework-item {
+        padding: 1rem;
+      }
+
+      .framework-logo {
+        width: 120px;
+        height: 120px;
       }
       
       /* Testimonials mobile adjustments */
@@ -1274,11 +1434,39 @@ import { AuthService } from '@app/services/auth/auth.service';
         padding: 0 1rem;
       }
 
+      /* CTA section mobile */
+      .cta-section {
+        padding: 3rem 0;
+        overflow-x: hidden;
+      }
+
+      .cta-content {
+        padding: 0 1rem;
+      }
+
+      .cta-content h2 {
+        font-size: 1.75rem;
+        line-height: 1.2;
+        margin-bottom: 0.75rem;
+      }
+
+      .cta-content p {
+        font-size: 1rem;
+        line-height: 1.4;
+        margin-bottom: 1.5rem;
+        padding: 0 0.5rem;
+      }
+
+      .cta-cat-image {
+        width: 80px;
+        height: auto;
+      }
+
       .feature-icon mat-icon {
         font-family: 'Material Icons' !important;
-        font-size: 2rem !important;
-        width: 2rem !important;
-        height: 2rem !important;
+        font-size: 1.75rem !important;
+        width: 1.75rem !important;
+        height: 1.75rem !important;
         font-weight: normal !important;
         font-style: normal !important;
         line-height: 1 !important;
@@ -1288,6 +1476,36 @@ import { AuthService } from '@app/services/auth/auth.service';
         direction: ltr !important;
         -webkit-font-feature-settings: 'liga' !important;
         -webkit-font-smoothing: antialiased !important;
+      }
+    }
+
+    /* Extra small screens */
+    @media (max-width: 480px) {
+      .hero-title {
+        font-size: 1.75rem;
+      }
+
+      .hero-description {
+        font-size: 0.9rem;
+      }
+
+      .section-header h2 {
+        font-size: 1.5rem;
+      }
+
+      .cta-button, .secondary-button {
+        font-size: 0.9rem;
+        padding: 0.65rem 1.25rem;
+      }
+
+      .cat-mascot-image {
+        width: 160px;
+        height: 200px;
+      }
+
+      .mascot-scene {
+        width: 180px;
+        height: 220px;
       }
     }
   `]

@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -153,90 +153,74 @@ import { NotificationService } from '@app/services/notification/notification.ser
       </div>
     </mat-toolbar>
 
-    <!-- Mobile Menu -->
-    @if (isMobileMenuOpen()) {
-      <div class="mobile-menu d-lg-none">
-        <div class="mobile-menu-content">
-          <nav class="mobile-nav">
-            <a routerLink="/about" 
+    <!-- Bootstrap-style Mobile Menu -->
+    <div class="mobile-menu-collapse" [class.show]="isMobileMenuOpen()">
+      <div class="mobile-menu-container">
+        <nav class="mobile-nav">
+          <a routerLink="/about" 
+             (click)="closeMobileMenu()"
+             class="mobile-nav-link">
+            About
+          </a>
+          @if (currentUser()) {
+            <a routerLink="/dashboard/components" 
                (click)="closeMobileMenu()"
                class="mobile-nav-link">
-              About
+              Components
             </a>
-            @if (currentUser()) {
-              <a routerLink="/dashboard/generate" 
-                 (click)="closeMobileMenu()"
-                 class="mobile-nav-link">
-                Components
-              </a>
-            }
-            <a routerLink="/how-it-works" 
-               (click)="closeMobileMenu()"
-               class="mobile-nav-link">
-              How It Works
-            </a>
-            <a routerLink="/tutorials" 
-               (click)="closeMobileMenu()"
-               class="mobile-nav-link">
-              Tutorials
-            </a>
-            <a routerLink="/contact" 
-               (click)="closeMobileMenu()"
-               class="mobile-nav-link">
-              Contact
-            </a>
-            
-            @if (currentUser()) {
-              <hr class="mobile-divider">
-              <a routerLink="/dashboard" 
-                 (click)="closeMobileMenu()"
-                 class="mobile-nav-link">
-                <mat-icon>dashboard</mat-icon>
-                Dashboard
-              </a>
-              <a routerLink="/library" 
-                 (click)="closeMobileMenu()"
-                 class="mobile-nav-link">
-                <mat-icon>folder</mat-icon>
-                Library
-              </a>
-              <a routerLink="/billing" 
-                 (click)="closeMobileMenu()"
-                 class="mobile-nav-link">
-                <mat-icon>payment</mat-icon>
-                Billing
-              </a>
-              <!-- @if (isAdmin()) {
-                <a routerLink="/admin" 
-                   (click)="closeMobileMenu()"
-                   class="mobile-nav-link">
-                  <mat-icon>admin_panel_settings</mat-icon>
-                  Admin
-                </a>
-              } -->
-            }
-          </nav>
-
-          @if (!currentUser()) {
-            <div class="mobile-auth-actions">
-              <a routerLink="/auth/login" 
-                 mat-button 
-                 (click)="closeMobileMenu()"
-                 class="w-100 mb-2">
-                Sign In
-              </a>
-              <a routerLink="/auth/signup" 
-                 mat-raised-button 
-                 color="accent"
-                 (click)="closeMobileMenu()"
-                 class="w-100">
-                Get Started
-              </a>
-            </div>
           }
-        </div>
+          <a routerLink="/how-it-works" 
+             (click)="closeMobileMenu()"
+             class="mobile-nav-link">
+            How It Works
+          </a>
+          <a routerLink="/tutorials" 
+             (click)="closeMobileMenu()"
+             class="mobile-nav-link">
+            Tutorials
+          </a>
+          <a routerLink="/contact" 
+             (click)="closeMobileMenu()"
+             class="mobile-nav-link">
+            Contact
+          </a>
+          
+          @if (currentUser()) {
+            <div class="mobile-divider"></div>
+            <a routerLink="/dashboard" 
+               (click)="closeMobileMenu()"
+               class="mobile-nav-link">
+              <mat-icon>dashboard</mat-icon>
+              Dashboard
+            </a>
+            <a routerLink="/library" 
+               (click)="closeMobileMenu()"
+               class="mobile-nav-link">
+              <mat-icon>folder</mat-icon>
+              Library
+            </a>
+            <a routerLink="/billing" 
+               (click)="closeMobileMenu()"
+               class="mobile-nav-link">
+              <mat-icon>payment</mat-icon>
+              Billing
+            </a>
+          } @else {
+            <div class="mobile-divider"></div>
+            <a routerLink="/auth/login" 
+               (click)="closeMobileMenu()"
+               class="mobile-nav-link mobile-auth-link">
+              Sign In
+            </a>
+            <a routerLink="/auth/signup" 
+               (click)="closeMobileMenu()"
+               class="mobile-nav-link mobile-auth-link primary">
+              Get Started
+            </a>
+          }
+        </nav>
       </div>
-    }
+    </div>
 
     <!-- User Menu -->
     <mat-menu #userMenu="matMenu">
@@ -657,46 +641,96 @@ import { NotificationService } from '@app/services/notification/notification.ser
       color: rgba(255, 255, 255, 0.9) !important;
     }
 
-    .mobile-menu {
-      position: fixed;
-      top: 70px;
-      left: 0;
-      right: 0;
-      background: white;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      z-index: 999;
-      max-height: calc(100vh - 70px);
-      overflow-y: auto;
+    /* Bootstrap-style Mobile Menu */
+    .mobile-menu-collapse {
+      display: none;
+      background: #ffffff;
+      border-top: 1px solid #e9ecef;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
-    .mobile-menu-content {
+    .mobile-menu-collapse.show {
+      display: block;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .mobile-menu-container {
       padding: 1rem;
+      max-width: 100%;
     }
 
     .mobile-nav {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0;
     }
 
     .mobile-nav-link {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
       color: #333;
       text-decoration: none;
-      border-radius: 0.25rem;
-      transition: background-color 0.3s ease;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      font-size: 1rem;
+      border-bottom: 1px solid #f8f9fa;
     }
 
     .mobile-nav-link:hover {
       background-color: #f8f9fa;
+      color: #007bff;
+    }
+
+    .mobile-nav-link:active {
+      background-color: #e9ecef;
+    }
+
+    .mobile-nav-link mat-icon {
+      color: #6c757d;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .mobile-nav-link:hover mat-icon {
+      color: #007bff;
     }
 
     .mobile-divider {
-      margin: 1rem 0;
-      border-color: #e9ecef;
+      height: 1px;
+      background-color: #e9ecef;
+      margin: 0.5rem 0;
+    }
+
+    .mobile-auth-link {
+      font-weight: 600;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .mobile-auth-link.primary {
+      background-color: #007bff;
+      color: white !important;
+      border-radius: 0.375rem;
+      margin: 0.5rem 0;
+    }
+
+    .mobile-auth-link.primary:hover {
+      background-color: #0056b3;
+      color: white !important;
     }
 
     /* Responsive adjustments */
@@ -732,15 +766,50 @@ import { NotificationService } from '@app/services/notification/notification.ser
       }
     }
 
-    @media (max-width: 860px) {
-      .navbar-nav {
-        gap: 0.8rem;
-        display: flex !important;
-        flex-direction: row !important;
+    @media (max-width: 900px) {
+      /* Start hiding desktop nav on larger mobile/small tablet screens */
+      .desktop-nav-wrapper {
+        display: none !important;
       }
       
-      .nav-link {
-        font-size: 0.8rem;
+      .navbar-nav {
+        display: none !important;
+      }
+      
+      .mobile-menu-toggle {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      /* Hide authenticated menu items on mobile - they'll be in the mobile menu */
+      .authenticated-menu .nav-button {
+        display: none !important;
+      }
+      
+      /* Keep only notification and user menu buttons */
+      .authenticated-menu {
+        gap: 0.4rem;
+      }
+      
+      .notification-button,
+      .user-menu-button {
+        display: flex !important;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .header-toolbar .container-fluid {
+        padding: 0 1rem;
+      }
+      
+      .authenticated-menu {
+        gap: 0.3rem;
+      }
+      
+      .nav-button {
+        padding: 0.35rem 0.7rem !important;
+        font-size: 0.75rem;
       }
     }
 
@@ -762,26 +831,39 @@ import { NotificationService } from '@app/services/notification/notification.ser
         font-size: 0.85rem;
       }
       
+      /* Completely hide desktop navigation on tablets and smaller */
       .desktop-nav-wrapper {
-        flex: 1;
-        display: flex;
-        justify-content: center;
+        display: none !important;
       }
       
       .navbar-nav {
-        gap: 0.5rem;
+        display: none !important;
+      }
+      
+      /* Show mobile menu toggle on tablets and smaller */
+      .mobile-menu-toggle {
         display: flex !important;
-        flex-direction: row !important;
         align-items: center;
         justify-content: center;
       }
       
-      .nav-link {
-        font-size: 0.75rem;
+      .user-actions {
+        gap: 0.5rem;
       }
       
-      .mobile-menu-toggle {
-        display: none;
+      /* Hide authenticated menu nav buttons on mobile - they'll be in the mobile menu */
+      .authenticated-menu .nav-button {
+        display: none !important;
+      }
+      
+      /* Adjust authenticated menu for mobile - keep only notification and user menu */
+      .authenticated-menu {
+        gap: 0.25rem;
+      }
+      
+      .notification-button,
+      .user-menu-button {
+        display: flex !important;
       }
     }
 
@@ -791,11 +873,11 @@ import { NotificationService } from '@app/services/notification/notification.ser
       }
       
       .navbar-brand {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
       }
       
       .brand-text {
-        font-size: 0.9em;
+        font-size: 0.85rem;
       }
       
       .logo-svg {
@@ -808,25 +890,35 @@ import { NotificationService } from '@app/services/notification/notification.ser
       }
       
       .user-actions {
-        gap: 0.5rem;
+        gap: 0.25rem;
       }
       
-      /* Hide desktop nav on very small screens only */
-      .navbar-nav {
-        display: none;
+      /* Further compress authenticated menu on small screens */
+      .authenticated-menu {
+        gap: 0.15rem;
       }
       
-      .mobile-menu-toggle {
-        display: block;
+      /* Nav buttons are hidden on mobile, so these styles aren't needed */
+      .authenticated-menu .nav-button {
+        display: none !important;
+      }
+      
+      .user-menu-button {
+        padding: 0.3rem 0.6rem !important;
+      }
+      
+      .user-avatar {
+        width: 24px;
+        height: 24px;
+        font-size: 1rem;
+      }
+      
+      .user-name {
+        font-size: 0.8rem;
       }
     }
 
-    .mobile-auth-actions {
-      margin-top: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
+
 
     .user-menu-header {
       padding: 1rem;
@@ -941,17 +1033,48 @@ import { NotificationService } from '@app/services/notification/notification.ser
         height: 60px;
       }
 
-      .mobile-menu {
-        top: 60px;
-      }
-
-      .logo {
+      .logo-svg {
         height: 28px;
       }
 
       .brand-text {
-        font-size: 1.25rem;
+        font-size: 1.1rem;
       }
+    }
+    
+    /* Additional breakpoint for very small screens */
+    @media (max-width: 360px) {
+      .header-toolbar .container-fluid {
+        padding: 0 0.5rem;
+      }
+      
+      .navbar-brand {
+        font-size: 1rem;
+      }
+      
+      .brand-text {
+        font-size: 0.8rem;
+      }
+      
+      .logo-svg {
+        height: 20px;
+      }
+      
+      .get-started-btn {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.75rem;
+      }
+      
+      .user-actions {
+        gap: 0.15rem;
+      }
+      
+      .nav-button {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.7rem;
+      }
+      
+
     }
   `]
 })
@@ -962,8 +1085,8 @@ export class HeaderComponent {
   // Logo fallback state
   useTextLogo = false;
   
-  // Mobile menu state
-  private _isMobileMenuOpen = false;
+  // Simple mobile menu state
+  private readonly _isMobileMenuOpen = signal(false);
 
   // Computed properties
   public readonly currentUser = this.authService.currentUser;
@@ -972,18 +1095,18 @@ export class HeaderComponent {
   // Mock data - replace with actual notification service
   public readonly notifications = computed(() => [] as any[]);
   public readonly notificationCount = computed(() => this.notifications().filter((n: any) => !n.isRead).length);
-  public readonly isMobileMenuOpen = computed(() => this._isMobileMenuOpen);
+  public readonly isMobileMenuOpen = this._isMobileMenuOpen.asReadonly();
 
   logout(): void {
     this.authService.logout();
   }
 
   toggleMobileMenu(): void {
-    this._isMobileMenuOpen = !this._isMobileMenuOpen;
+    this._isMobileMenuOpen.set(!this._isMobileMenuOpen());
   }
 
   closeMobileMenu(): void {
-    this._isMobileMenuOpen = false;
+    this._isMobileMenuOpen.set(false);
   }
 
   markAllAsRead(): void {
@@ -995,4 +1118,6 @@ export class HeaderComponent {
     // TODO: Implement notification click handler
     console.log('Notification clicked:', notification);
   }
+
+
 }

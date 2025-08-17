@@ -19,5 +19,5 @@ Disallow: /library
 # Disallow API endpoints
 Disallow: /api/
 
-# Allow sitemap (when created)
-# Sitemap: https://frontuna.com/sitemap.xml
+# Sitemap
+Sitemap: https://www.frontuna.com/sitemap.xml

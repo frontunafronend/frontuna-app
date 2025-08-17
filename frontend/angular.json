@@ -36,6 +36,7 @@
               "src/manifest.json",
               "src/browserconfig.xml",
               "src/robots.txt",
+              "src/sitemap.xml",
               {
                 "glob": "**/*",
                 "input": "node_modules/monaco-editor",
