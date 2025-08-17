@@ -61,5 +61,8 @@ export const environment = {
     support: 'mailto:support@frontuna.com',
     github: 'https://github.com/frontuna-ai',
     discord: 'https://discord.gg/frontuna'
-  }
+  },
+  
+  // SEO Configuration
+  seoIndexDefault: true // Development: Allow indexing by default
 };

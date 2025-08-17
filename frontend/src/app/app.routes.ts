@@ -7,7 +7,8 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
-    title: 'Frontuna.com - AI-Powered Frontend Component Generator'
+    title: 'Frontuna.com - AI-Powered Frontend Component Generator',
+    data: { seoIndex: true } // Landing page should be indexed
   },
   {
     path: 'about',
@@ -47,7 +48,8 @@ export const routes: Routes = [
     path: 'dashboard',
     loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [AuthGuard],
-    title: 'Dashboard - Frontuna.com'
+    title: 'Dashboard - Frontuna.com',
+    data: { seoIndex: false } // Protected dashboard should not be indexed
   },
   {
     path: 'dashboard/generate',
@@ -107,7 +109,8 @@ export const routes: Routes = [
     path: 'dashboard/gallery',
     loadComponent: () => import('./pages/dashboard/gallery/gallery.component').then(m => m.GalleryPageComponent),
     canActivate: [AuthGuard],
-    title: 'Component Gallery - Frontuna.com'
+    title: 'Component Gallery - Frontuna.com',
+    data: { seoIndex: false } // Gallery should not be indexed
   },
 
   // Library and other protected routes
@@ -121,13 +124,15 @@ export const routes: Routes = [
     path: 'settings',
     loadComponent: () => import('./pages/settings/settings.component').then(m => m.SettingsComponent),
     canActivate: [AuthGuard],
-    title: 'Settings - Frontuna.com'
+    title: 'Settings - Frontuna.com',
+    data: { seoIndex: false } // Settings should not be indexed
   },
   {
     path: 'billing',
     loadComponent: () => import('./pages/billing/billing.component').then(m => m.BillingComponent),
     canActivate: [AuthGuard],
-    title: 'Billing - Frontuna.com'
+    title: 'Billing - Frontuna.com',
+    data: { seoIndex: false } // Billing should not be indexed
   },
 
   // Admin routes
@@ -135,7 +140,8 @@ export const routes: Routes = [
     path: 'admin',
     loadComponent: () => import('./pages/admin/admin-dashboard.component').then(m => m.AdminDashboardComponent),
     canActivate: [AdminGuard],
-    title: 'Admin Dashboard - Frontuna.com'
+    title: 'Admin Dashboard - Frontuna.com',
+    data: { seoIndex: false } // Admin should not be indexed
   },
 
     // Content pages

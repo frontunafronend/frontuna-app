@@ -29,6 +29,9 @@ import { AICopilotService } from './services/ai/ai-copilot.service';
 import { AICodeGeneratorService } from './services/ai/ai-code-generator.service';
 import { AICopilotStateService } from './services/ai/ai-copilot-state.service';
 
+// SEO Service
+import { SeoService } from './services/seo/seo.service';
+
 // Lottie player factory
 export function playerFactory() {
   return import('lottie-web');
@@ -37,6 +40,15 @@ export function playerFactory() {
 // Auth initialization factory
 export function initializeAuth(authService: AuthService | AuthMockService) {
   return () => authService.initializeForApp();
+}
+
+// SEO initialization factory
+export function initializeSeo(seoService: SeoService) {
+  return () => {
+    // SEO service will automatically start listening to router events
+    console.log('🔍 SEO Service initialized');
+    return Promise.resolve();
+  };
 }
 
 // Auth service factory - use mock service when mock data is enabled
@@ -59,11 +71,22 @@ export const appConfig: ApplicationConfig = {
     AICodeGeneratorService,
     AICopilotStateService,
     
+    // SEO Service
+    SeoService,
+    
     // App Initializer for Authentication
     {
       provide: APP_INITIALIZER,
       useFactory: initializeAuth,
       deps: [AuthService],
+      multi: true
+    },
+    
+    // App Initializer for SEO
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeSeo,
+      deps: [SeoService],
       multi: true
     },
     

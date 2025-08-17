@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /how-it-works
+Allow: /how-to-use
+Allow: /best-practices
+Allow: /tutorials
+
+# Disallow protected/unfinished sections
+Disallow: /dashboard
+Disallow: /gallery
+Disallow: /settings
+Disallow: /billing
+Disallow: /admin
+Disallow: /auth
+Disallow: /library
+
+# Disallow API endpoints
+Disallow: /api/
+
+# Allow sitemap (when created)
+# Sitemap: https://frontuna.com/sitemap.xml

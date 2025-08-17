@@ -1,256 +1,308 @@
 import { Injectable, inject } from '@angular/core';
-import { Meta, Title } from '@angular/platform-browser';
 import { Router, NavigationEnd } from '@angular/router';
+import { DOCUMENT } from '@angular/common';
+import { Title, Meta } from '@angular/platform-browser';
 import { filter } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SeoService {
-  private readonly meta = inject(Meta);
-  private readonly title = inject(Title);
-  private readonly router = inject(Router);
+  private document = inject(DOCUMENT);
+  private router = inject(Router);
+  private titleService = inject(Title);
+  private metaService = inject(Meta);
 
   constructor() {
-    this.initializeRouteTracking();
+    this.initializeRouterListener();
   }
 
   /**
-   * Set page title
+   * Set page indexability by search engines
+   * @param isIndexable - true to allow indexing, false to prevent indexing
    */
-  setTitle(title: string): void {
-    this.title.setTitle(title);
-  }
-
-  /**
-   * Set meta description
-   */
-  setDescription(description: string): void {
-    this.meta.updateTag({ name: 'description', content: description });
-  }
-
-  /**
-   * Set meta keywords
-   */
-  setKeywords(keywords: string): void {
-    this.meta.updateTag({ name: 'keywords', content: keywords });
-  }
-
-  /**
-   * Set Open Graph meta tags
-   */
-  setOpenGraphTags(data: {
-    title: string;
-    description: string;
-    url: string;
-    image?: string;
-    type?: string;
-  }): void {
-    this.meta.updateTag({ property: 'og:title', content: data.title });
-    this.meta.updateTag({ property: 'og:description', content: data.description });
-    this.meta.updateTag({ property: 'og:url', content: data.url });
-    this.meta.updateTag({ property: 'og:type', content: data.type || 'website' });
-    
-    if (data.image) {
-      this.meta.updateTag({ property: 'og:image', content: data.image });
-    }
-  }
-
-  /**
-   * Set Twitter Card meta tags
-   */
-  setTwitterCardTags(data: {
-    title: string;
-    description: string;
-    image?: string;
-    card?: string;
-  }): void {
-    this.meta.updateTag({ name: 'twitter:card', content: data.card || 'summary_large_image' });
-    this.meta.updateTag({ name: 'twitter:title', content: data.title });
-    this.meta.updateTag({ name: 'twitter:description', content: data.description });
-    
-    if (data.image) {
-      this.meta.updateTag({ name: 'twitter:image', content: data.image });
-    }
-  }
-
-  /**
-   * Set canonical URL
-   */
-  setCanonicalUrl(url: string): void {
-    const existingLink = document.querySelector('link[rel="canonical"]');
-    if (existingLink) {
-      existingLink.setAttribute('href', url);
-    } else {
-      const link = document.createElement('link');
-      link.setAttribute('rel', 'canonical');
-      link.setAttribute('href', url);
-      document.head.appendChild(link);
-    }
-  }
-
-  /**
-   * Set robots meta tag
-   */
-  setRobots(content: string): void {
-    this.meta.updateTag({ name: 'robots', content });
-  }
-
-  /**
-   * Add structured data (JSON-LD)
-   */
-  addStructuredData(data: any): void {
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.text = JSON.stringify(data);
-    document.head.appendChild(script);
-  }
-
-  /**
-   * Set complete page SEO data
-   */
-  setPageSeo(data: {
-    title: string;
-    description: string;
-    keywords?: string;
-    url: string;
-    image?: string;
-    robots?: string;
-    structuredData?: any;
-  }): void {
-    // Basic meta tags
-    this.setTitle(data.title);
-    this.setDescription(data.description);
-    this.setCanonicalUrl(data.url);
-    
-    if (data.keywords) {
-      this.setKeywords(data.keywords);
-    }
-    
-    if (data.robots) {
-      this.setRobots(data.robots);
+  setIndexable(isIndexable: boolean): void {
+    // Remove existing robots meta tag if present
+    const existingRobotsTag = this.document.querySelector('meta[name="robots"]');
+    if (existingRobotsTag) {
+      existingRobotsTag.remove();
     }
 
-    // Open Graph tags
-    this.setOpenGraphTags({
-      title: data.title,
-      description: data.description,
-      url: data.url,
-      image: data.image
-    });
-
-    // Twitter Card tags
-    this.setTwitterCardTags({
-      title: data.title,
-      description: data.description,
-      image: data.image
-    });
-
-    // Structured data
-    if (data.structuredData) {
-      this.addStructuredData(data.structuredData);
+    // Add noindex meta tag if page should not be indexed
+    if (!isIndexable) {
+      const robotsTag = this.document.createElement('meta');
+      robotsTag.name = 'robots';
+      robotsTag.content = 'noindex,nofollow';
+      this.document.head.appendChild(robotsTag);
     }
+
+    console.log(`🤖 SEO: Page indexability set to ${isIndexable ? 'INDEXABLE' : 'NO-INDEX'}`);
   }
 
   /**
-   * Set default meta tags
+   * Initialize router listener to handle SEO settings on route changes
    */
-  setDefaultMetaTags(): void {
-    const defaultData = {
-      title: 'Frontuna.com - AI-Powered Frontend Component Generator',
-      description: 'Generate frontend components instantly using AI. Create React, Angular, Vue components from natural language prompts.',
-      keywords: 'AI, frontend, components, generator, React, Angular, Vue, SaaS',
-      url: 'https://frontuna.com',
-      image: 'https://frontuna.com/assets/images/og-image.png',
-      robots: 'index, follow'
-    };
-
-    this.setPageSeo(defaultData);
-  }
-
-  /**
-   * Initialize route tracking for automatic SEO updates
-   */
-  private initializeRouteTracking(): void {
+  private initializeRouterListener(): void {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event) => {
         if (event instanceof NavigationEnd) {
-          this.updateSeoForRoute(event.url);
+          this.handleRouteChange(event.url);
         }
       });
   }
 
   /**
-   * Update SEO based on current route
+   * Handle route changes and apply SEO settings based on route data
+   * @param url - Current route URL
    */
-  private updateSeoForRoute(url: string): void {
-    const routeData = this.getRouteSpecificSeoData(url);
-    if (routeData) {
-      this.setPageSeo(routeData);
+  private handleRouteChange(url: string): void {
+    // Get the activated route data
+    const route = this.router.routerState.root;
+    let activatedRoute = route;
+    
+    // Find the deepest activated route
+    while (activatedRoute.firstChild) {
+      activatedRoute = activatedRoute.firstChild;
+    }
+
+    // Get seoIndex from route data
+    const routeData = activatedRoute.snapshot.data;
+    const seoIndex = routeData['seoIndex'];
+
+    // Determine indexability
+    let isIndexable: boolean;
+    
+    if (seoIndex !== undefined) {
+      // Use explicit route setting
+      isIndexable = seoIndex;
+    } else {
+      // Use environment default
+      isIndexable = environment.seoIndexDefault ?? false;
+    }
+
+    // Apply SEO settings
+    this.setIndexable(isIndexable);
+
+    // Log for debugging
+    console.log(`🔍 SEO Route: ${url} → ${isIndexable ? 'INDEXABLE' : 'NO-INDEX'}`, {
+      routeData: routeData,
+      seoIndex: seoIndex,
+      defaultSetting: environment.seoIndexDefault,
+      finalDecision: isIndexable
+    });
+  }
+
+  /**
+   * Manually set SEO for specific pages (useful for dynamic content)
+   * @param isIndexable - Whether the page should be indexed
+   * @param reason - Optional reason for logging
+   */
+  setPageIndexability(isIndexable: boolean, reason?: string): void {
+    this.setIndexable(isIndexable);
+    
+    if (reason) {
+      console.log(`🎯 SEO Manual Override: ${isIndexable ? 'INDEXABLE' : 'NO-INDEX'} - ${reason}`);
     }
   }
 
   /**
-   * Get SEO data based on route
+   * Get current indexability status
+   * @returns true if page is indexable, false if no-index is set
    */
-  private getRouteSpecificSeoData(url: string): any {
-    const baseUrl = 'https://frontuna.com';
-    
-    const routeMap: { [key: string]: any } = {
-      '/': {
-        title: 'Frontuna.com - AI-Powered Frontend Component Generator',
-        description: 'Generate frontend components instantly using AI. Create React, Angular, Vue components from natural language prompts.',
-        keywords: 'AI, frontend, components, generator, React, Angular, Vue, SaaS',
-        url: baseUrl,
-        image: `${baseUrl}/assets/images/og-image.png`
-      },
-      '/dashboard': {
-        title: 'Dashboard - Frontuna.com',
-        description: 'Generate and manage your frontend components with AI-powered tools.',
-        keywords: 'dashboard, component generator, AI tools',
-        url: `${baseUrl}/dashboard`,
-        robots: 'noindex, nofollow' // Private page
-      },
-      '/library': {
-        title: 'Component Library - Frontuna.com',
-        description: 'Browse and manage your saved frontend components generated by AI.',
-        keywords: 'component library, saved components, code library',
-        url: `${baseUrl}/library`,
-        robots: 'noindex, nofollow' // Private page
-      },
-      '/about': {
-        title: 'About - Frontuna.com',
-        description: 'Learn about Frontuna.com, the AI-powered platform for generating frontend components.',
-        keywords: 'about, AI platform, frontend development, component generation',
-        url: `${baseUrl}/about`
-      },
-      '/contact': {
-        title: 'Contact Us - Frontuna.com',
-        description: 'Get in touch with the Frontuna.com team for support, questions, or partnership opportunities.',
-        keywords: 'contact, support, partnership, help',
-        url: `${baseUrl}/contact`
-      },
-      '/how-it-works': {
-        title: 'How It Works - Frontuna.com',
-        description: 'Learn how Frontuna.com uses artificial intelligence to generate high-quality frontend components from simple prompts.',
-        keywords: 'how it works, AI component generation, tutorial, guide',
-        url: `${baseUrl}/how-it-works`
-      },
-      '/best-practices': {
-        title: 'Frontend Component Best Practices - Frontuna.com',
-        description: 'Discover best practices for creating maintainable, accessible, and performant frontend components.',
-        keywords: 'best practices, frontend development, component design, accessibility',
-        url: `${baseUrl}/best-practices`
-      },
-      '/tutorials': {
-        title: 'Tutorials - Frontuna.com',
-        description: 'Step-by-step tutorials on using Frontuna.com to generate and customize frontend components.',
-        keywords: 'tutorials, guides, component generation, frontend development',
-        url: `${baseUrl}/tutorials`
-      }
-    };
+  isCurrentPageIndexable(): boolean {
+    const robotsTag = this.document.querySelector('meta[name="robots"]');
+    return !robotsTag || !robotsTag.getAttribute('content')?.includes('noindex');
+  }
 
-    return routeMap[url] || null;
+  // ===== LEGACY METHODS FOR BACKWARD COMPATIBILITY =====
+
+  /**
+   * Set page title
+   * @param title - Page title
+   */
+  setTitle(title: string): void {
+    this.titleService.setTitle(title);
+    console.log(`📄 SEO: Title set to "${title}"`);
+  }
+
+  /**
+   * Set page description
+   * @param description - Page description
+   */
+  setDescription(description: string): void {
+    this.metaService.updateTag({ name: 'description', content: description });
+    console.log(`📝 SEO: Description set`);
+  }
+
+  /**
+   * Set page keywords
+   * @param keywords - Page keywords
+   */
+  setKeywords(keywords: string): void {
+    this.metaService.updateTag({ name: 'keywords', content: keywords });
+    console.log(`🏷️ SEO: Keywords set`);
+  }
+
+  /**
+   * Set Open Graph tags
+   * @param tags - Open Graph tags object
+   */
+  setOpenGraphTags(tags: { [key: string]: string }): void {
+    Object.keys(tags).forEach(key => {
+      this.metaService.updateTag({ property: `og:${key}`, content: tags[key] });
+    });
+    console.log(`📱 SEO: Open Graph tags set`, tags);
+  }
+
+  /**
+   * Set comprehensive page SEO (legacy method)
+   * @param seoData - SEO data object
+   */
+  setPageSeo(seoData: {
+    title?: string;
+    description?: string;
+    keywords?: string;
+    url?: string; // Added for backward compatibility
+    image?: string; // Added for backward compatibility
+    robots?: string; // Added for backward compatibility
+    ogTitle?: string;
+    ogDescription?: string;
+    ogImage?: string;
+    ogUrl?: string;
+    twitterCard?: string;
+    twitterTitle?: string;
+    twitterDescription?: string;
+    twitterImage?: string;
+    canonical?: string;
+    noIndex?: boolean;
+  }): void {
+    // Set title
+    if (seoData.title) {
+      this.setTitle(seoData.title);
+    }
+
+    // Set description
+    if (seoData.description) {
+      this.setDescription(seoData.description);
+    }
+
+    // Set keywords
+    if (seoData.keywords) {
+      this.setKeywords(seoData.keywords);
+    }
+
+    // Set Open Graph tags
+    const ogTags: { [key: string]: string } = {};
+    if (seoData.ogTitle) ogTags['title'] = seoData.ogTitle;
+    if (seoData.ogDescription) ogTags['description'] = seoData.ogDescription;
+    if (seoData.ogImage) ogTags['image'] = seoData.ogImage;
+    if (seoData.ogUrl) ogTags['url'] = seoData.ogUrl;
+    
+    if (Object.keys(ogTags).length > 0) {
+      this.setOpenGraphTags(ogTags);
+    }
+
+    // Set Twitter Card tags
+    if (seoData.twitterCard) {
+      this.metaService.updateTag({ name: 'twitter:card', content: seoData.twitterCard });
+    }
+    if (seoData.twitterTitle) {
+      this.metaService.updateTag({ name: 'twitter:title', content: seoData.twitterTitle });
+    }
+    if (seoData.twitterDescription) {
+      this.metaService.updateTag({ name: 'twitter:description', content: seoData.twitterDescription });
+    }
+    if (seoData.twitterImage) {
+      this.metaService.updateTag({ name: 'twitter:image', content: seoData.twitterImage });
+    }
+
+    // Set canonical URL (from canonical or url property)
+    if (seoData.canonical) {
+      this.setCanonicalUrl(seoData.canonical);
+    } else if (seoData.url) {
+      this.setCanonicalUrl(seoData.url);
+    }
+
+    // Handle image property (map to ogImage)
+    if (seoData.image && !seoData.ogImage) {
+      this.setOpenGraphTags({ image: seoData.image });
+    }
+
+    // Handle robots property
+    if (seoData.robots) {
+      if (seoData.robots.includes('noindex')) {
+        this.setIndexable(false);
+      } else {
+        this.setIndexable(true);
+      }
+    }
+
+    // Set indexability
+    if (seoData.noIndex !== undefined) {
+      this.setIndexable(!seoData.noIndex);
+    }
+
+    console.log(`🎯 SEO: Comprehensive page SEO set`, seoData);
+  }
+
+  /**
+   * Set canonical URL
+   * @param url - Canonical URL
+   */
+  setCanonicalUrl(url: string): void {
+    // Remove existing canonical link
+    const existingCanonical = this.document.querySelector('link[rel="canonical"]');
+    if (existingCanonical) {
+      existingCanonical.remove();
+    }
+
+    // Add new canonical link
+    const canonicalLink = this.document.createElement('link');
+    canonicalLink.rel = 'canonical';
+    canonicalLink.href = url;
+    this.document.head.appendChild(canonicalLink);
+    
+    console.log(`🔗 SEO: Canonical URL set to "${url}"`);
+  }
+
+  /**
+   * Remove all SEO meta tags (useful for cleanup)
+   */
+  clearSeoTags(): void {
+    // Remove common SEO meta tags
+    const tagsToRemove = [
+      'meta[name="description"]',
+      'meta[name="keywords"]',
+      'meta[property^="og:"]',
+      'meta[name^="twitter:"]',
+      'link[rel="canonical"]'
+    ];
+
+    tagsToRemove.forEach(selector => {
+      const elements = this.document.querySelectorAll(selector);
+      elements.forEach(element => element.remove());
+    });
+
+    console.log(`🧹 SEO: Meta tags cleared`);
+  }
+
+  /**
+   * Set default meta tags for the application
+   */
+  setDefaultMetaTags(): void {
+    // Set default meta tags
+    this.metaService.addTags([
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { name: 'author', content: 'Frontuna.com' },
+      { name: 'generator', content: 'Angular 17' },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:site_name', content: 'Frontuna.com' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:site', content: '@frontuna' }
+    ]);
+
+    console.log(`🏷️ SEO: Default meta tags set`);
   }
 }
