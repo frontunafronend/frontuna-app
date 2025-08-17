@@ -1,36 +1,6 @@
 {
-  "version": 2,
-  "buildCommand": "cd frontend && npm ci --legacy-peer-deps && npm run build -- --configuration=production",
-  "outputDirectory": "frontend/dist",
+  "buildCommand": "npm ci && npm run build -- --configuration=production",
+  "outputDirectory": "dist",
   "framework": "angular",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ],
-  "functions": {
-    "api/**.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
-    }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
 }
