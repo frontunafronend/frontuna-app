@@ -10,6 +10,7 @@ export const routes: Routes = [
     title: 'Frontuna.com - AI-Powered Frontend Component Generator',
     data: { seoIndex: true } // Landing page should be indexed
   },
+
   {
     path: 'about',
     loadComponent: () => import('./pages/about/about.component').then(m => m.AboutComponent),

@@ -51,13 +51,7 @@ export function initializeSeo(seoService: SeoService) {
   };
 }
 
-export function initializeAnalytics(analyticsService: GoogleAnalyticsService) {
-  return () => {
-    // Analytics service will auto-initialize in constructor
-    console.log('🔍 Analytics: Initialization function called');
-    return Promise.resolve();
-  };
-}
+// Analytics service will auto-initialize in constructor (removed APP_INITIALIZER to prevent blocking)
 
 
 
@@ -93,13 +87,7 @@ export const appConfig: ApplicationConfig = {
       multi: true
     },
     
-    // App Initializer for Analytics
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeAnalytics,
-      deps: [GoogleAnalyticsService],
-      multi: true
-    },
+    // Analytics service auto-initializes in constructor (no APP_INITIALIZER needed)
     
     // Router
     provideRouter(

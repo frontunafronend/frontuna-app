@@ -15,11 +15,18 @@ export class GoogleAnalyticsService {
   private isInitialized = false;
 
   constructor() {
-    if (environment.googleAnalytics.enabled && environment.googleAnalytics.trackingId) {
-      this.initialize();
-      this.initializeRouteTracking();
-    } else {
-      console.warn('🔍 Google Analytics: Disabled or missing tracking ID');
+    try {
+      if (environment.googleAnalytics?.enabled && environment.googleAnalytics?.trackingId) {
+        // Use setTimeout to make initialization non-blocking
+        setTimeout(() => {
+          this.initialize();
+          this.initializeRouteTracking();
+        }, 0);
+      } else {
+        console.warn('🔍 Google Analytics: Disabled or missing tracking ID');
+      }
+    } catch (error) {
+      console.error('🔍 Google Analytics: Initialization error:', error);
     }
   }
 
@@ -27,17 +34,22 @@ export class GoogleAnalyticsService {
    * Initialize Google Analytics 4
    */
   initialize(): void {
-    if (!environment.googleAnalytics.enabled || !environment.googleAnalytics.trackingId) {
-      console.warn('🔍 Google Analytics: Not enabled or missing tracking ID');
+    try {
+      if (!environment.googleAnalytics?.enabled || !environment.googleAnalytics?.trackingId) {
+        console.warn('🔍 Google Analytics: Not enabled or missing tracking ID');
+        return;
+      }
+
+      if (this.isInitialized) {
+        console.log('🔍 Google Analytics: Already initialized');
+        return;
+      }
+
+      console.log('🔍 Google Analytics: Initializing with ID:', environment.googleAnalytics.trackingId);
+    } catch (error) {
+      console.error('🔍 Google Analytics: Error during initialization check:', error);
       return;
     }
-
-    if (this.isInitialized) {
-      console.log('🔍 Google Analytics: Already initialized');
-      return;
-    }
-
-    console.log('🔍 Google Analytics: Initializing with ID:', environment.googleAnalytics.trackingId);
 
     // Load Google Analytics script
     const script = document.createElement('script');
