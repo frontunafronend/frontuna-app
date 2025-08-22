@@ -193,12 +193,12 @@ export class ComponentGalleryService {
       .pipe(
         tap(response => {
           console.log('✅ Gallery Service: Components loaded from database:', response.components?.length || 0);
-          if (response.success && response.data?.components) {
+          if (response.components) {
             if (page === 1) {
-              this.componentsSubject.next(response.data.components);
+              this.componentsSubject.next(response.components);
             } else {
               const current = this.componentsSubject.value;
-              this.componentsSubject.next([...current, ...response.data.components]);
+              this.componentsSubject.next([...current, ...response.components]);
             }
           }
           this.isLoadingSignal.set(false);

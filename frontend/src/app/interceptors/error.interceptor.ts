@@ -11,9 +11,29 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError(error => {
-      // Handle 401 Unauthorized - redirect to login
+      // Handle 401 Unauthorized - but be more intelligent about it
       if (error.status === 401) {
-        authService.logout();
+        console.log('🔒 Received 401 error for:', req.url);
+        
+        // Only logout for specific auth-related endpoints, not all 401s
+        const isAuthEndpoint = req.url.includes('/auth/') || req.url.includes('/profile');
+        const isLoginEndpoint = req.url.includes('/login') || req.url.includes('/signup');
+        
+        // Don't logout on login/signup failures - those are expected
+        if (isLoginEndpoint) {
+          console.log('⚠️ Login/signup failed - not logging out');
+          return throwError(() => error);
+        }
+        
+        // Only logout for auth-related endpoints, not random API calls
+        if (isAuthEndpoint) {
+          console.log('🚪 Auth endpoint failed - logging out');
+          authService.logout();
+        } else {
+          console.log('⚠️ Non-auth endpoint failed with 401 - not logging out');
+          notificationService.showWarning('Session may have expired - please refresh if needed');
+        }
+        
         return throwError(() => error);
       }
 
