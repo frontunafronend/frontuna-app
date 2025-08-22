@@ -104,7 +104,7 @@ export class EnvironmentService {
     }
     
     // Production environment
-    return 'https://api.frontuna.com/api';
+    return 'https://frontuna-api.vercel.app/api';
   }
 
   /**
@@ -187,7 +187,7 @@ export class EnvironmentService {
       return 'https://api-staging.frontuna.com';
     }
     
-    return 'https://api.frontuna.com';
+    return 'https://frontuna-api.vercel.app';
   }
 
   /**
