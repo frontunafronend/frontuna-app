@@ -39,33 +39,75 @@ app.use(helmet({
   }
 }));
 
-// CORS configuration
+// CORS configuration with enhanced debugging and multiple fallbacks
 const corsOptions = {
   origin: function (origin, callback) {
+    // Enhanced allowed origins with multiple fallbacks
     const allowedOrigins = [
-      process.env.FRONTEND_URL || 'http://localhost:4200',
+      // Environment variable (priority)
+      process.env.FRONTEND_URL,
+      process.env.CORS_ORIGIN,
+      // Development
       'http://localhost:4200',
+      'http://127.0.0.1:4200',
+      // Production domains
       'https://frontuna.com',
       'https://www.frontuna.com',
       'https://frontuna.ai',
-      'https://www.frontuna.ai'
-    ];
+      'https://www.frontuna.ai',
+      // Vercel domains (common patterns)
+      'https://frontuna-app.vercel.app',
+      'https://frontuna-frontend.vercel.app'
+    ].filter(Boolean); // Remove undefined values
     
-    // Allow requests with no origin (mobile apps, etc.)
-    if (!origin) return callback(null, true);
+    // Log for debugging (only in development or if debug is enabled)
+    if (process.env.NODE_ENV !== 'production' || process.env.CORS_DEBUG === 'true') {
+      logger.info('🔍 CORS Debug:', {
+        requestOrigin: origin,
+        allowedOrigins,
+        frontendUrl: process.env.FRONTEND_URL,
+        corsOrigin: process.env.CORS_ORIGIN,
+        nodeEnv: process.env.NODE_ENV
+      });
+    }
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) {
+      logger.info('✅ CORS: Allowing request with no origin');
+      return callback(null, true);
+    }
+    
+    // Check if origin is allowed
+    if (allowedOrigins.includes(origin)) {
+      logger.info(`✅ CORS: Allowing origin: ${origin}`);
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      logger.warn(`❌ CORS: Rejecting origin: ${origin}`, { allowedOrigins });
+      callback(new Error(`CORS policy violation: Origin ${origin} is not allowed`));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  // Handle preflight requests
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
 
-app.use(cors(corsOptions));
+// Apply CORS middleware with debugging option
+if (process.env.CORS_DEBUG === 'permissive') {
+  // TEMPORARY: Ultra-permissive CORS for debugging
+  logger.warn('🚨 WARNING: Using permissive CORS policy for debugging!');
+  app.use(cors({
+    origin: true, // Allow all origins
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+  }));
+} else {
+  // Use the secure CORS configuration
+  app.use(cors(corsOptions));
+}
 
 // Rate limiting
 const limiter = rateLimit({
@@ -105,7 +147,7 @@ if (process.env.NODE_ENV !== 'test') {
   }));
 }
 
-// Health check endpoint
+// Health check endpoint with CORS debugging
 app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -115,6 +157,22 @@ app.get('/health', (req, res) => {
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version || '1.0.0',
       environment: process.env.NODE_ENV,
+      cors: {
+        frontendUrl: process.env.FRONTEND_URL,
+        corsOrigin: process.env.CORS_ORIGIN,
+        requestOrigin: req.headers.origin,
+        allowedOrigins: [
+          process.env.FRONTEND_URL,
+          process.env.CORS_ORIGIN,
+          'http://localhost:4200',
+          'https://frontuna.com',
+          'https://www.frontuna.com',
+          'https://frontuna.ai',
+          'https://www.frontuna.ai',
+          'https://frontuna-app.vercel.app',
+          'https://frontuna-frontend.vercel.app'
+        ].filter(Boolean)
+      },
       services: [
         {
           name: 'database',
@@ -127,6 +185,39 @@ app.get('/health', (req, res) => {
           responseTime: 0
         }
       ]
+    }
+  });
+});
+
+// CORS debugging endpoint
+app.get('/cors-debug', (req, res) => {
+  res.status(200).json({
+    success: true,
+    data: {
+      requestOrigin: req.headers.origin,
+      requestHeaders: req.headers,
+      environment: {
+        NODE_ENV: process.env.NODE_ENV,
+        FRONTEND_URL: process.env.FRONTEND_URL,
+        CORS_ORIGIN: process.env.CORS_ORIGIN,
+        CORS_DEBUG: process.env.CORS_DEBUG
+      },
+      allowedOrigins: [
+        process.env.FRONTEND_URL,
+        process.env.CORS_ORIGIN,
+        'http://localhost:4200',
+        'https://frontuna.com',
+        'https://www.frontuna.com',
+        'https://frontuna.ai',
+        'https://www.frontuna.ai',
+        'https://frontuna-app.vercel.app',
+        'https://frontuna-frontend.vercel.app'
+      ].filter(Boolean),
+      corsConfig: {
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+      }
     }
   });
 });
