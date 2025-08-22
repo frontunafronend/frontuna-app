@@ -100,9 +100,9 @@ try {
       exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year from now
     };
 
-    // Simple JWT format (header.payload.signature)
-    const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64url');
-    const payload = Buffer.from(JSON.stringify(demoPayload)).toString('base64url');
+    // Simple JWT format (header.payload.signature) - using base64 encoding
+    const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64');
+    const payload = Buffer.from(JSON.stringify(demoPayload)).toString('base64');
     const signature = 'demo-signature-' + Date.now();
     const demoJWT = `${header}.${payload}.${signature}`;
 
@@ -139,8 +139,8 @@ try {
       exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year from now
     };
 
-    const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64url');
-    const payload = Buffer.from(JSON.stringify(demoPayload)).toString('base64url');
+    const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64');
+    const payload = Buffer.from(JSON.stringify(demoPayload)).toString('base64');
     const signature = 'demo-signature-' + Date.now();
     const demoJWT = `${header}.${payload}.${signature}`;
 
