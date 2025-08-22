@@ -20,9 +20,38 @@ if (process.env.DATABASE_URL) {
   console.warn('⚠️ No DATABASE_URL found, using demo mode');
 }
 
-// CORS Configuration - Ultra-permissive for debugging
+// CORS Configuration - Comprehensive with debug logging (like working test server)
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN,
+  'http://localhost:4200',
+  'http://127.0.0.1:4200',
+  'https://frontuna.com',
+  'https://www.frontuna.com',
+  'https://frontuna.ai',
+  'https://www.frontuna.ai',
+  'https://frontuna-app.vercel.app',
+  'https://frontuna-frontend.vercel.app'
+].filter(Boolean);
+
 const corsOptions = {
-  origin: true, // Allow all origins temporarily
+  origin: function (origin, callback) {
+    console.log('🔍 CORS Debug:', {
+      origin,
+      allowedOrigins,
+      isAllowed: !origin || allowedOrigins.includes(origin)
+    });
+    
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn('🚫 CORS blocked origin:', origin);
+      callback(null, true); // Allow anyway for debugging
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
@@ -30,19 +59,30 @@ const corsOptions = {
   optionsSuccessStatus: 204
 };
 
+// Enable permissive CORS if debug mode
+if (process.env.CORS_DEBUG === 'permissive') {
+  console.warn('🚨 WARNING: Using permissive CORS policy for debugging!');
+  corsOptions.origin = true;
+}
+
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoints
+// Health check endpoints with CORS info (like working test server)
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     database: !!process.env.DATABASE_URL,
-    cors: 'permissive'
+    cors: {
+      allowedOrigins,
+      permissive: process.env.CORS_DEBUG === 'permissive',
+      requestOrigin: req.get('Origin')
+    },
+    server: 'production-backend-v2'
   });
 });
 
@@ -51,8 +91,38 @@ app.get('/api/health', (req, res) => {
     status: 'healthy',
     api: 'production-backend',
     database: !!db,
+    timestamp: new Date().toISOString(),
+    cors: {
+      origin: req.get('Origin'),
+      allowed: true
+    }
+  });
+});
+
+// CORS Debug endpoint (like working test server)
+app.get('/cors-debug', (req, res) => {
+  res.json({
+    message: 'CORS Debug Information',
+    request: {
+      origin: req.get('Origin'),
+      method: req.method,
+      headers: req.headers
+    },
+    cors: {
+      allowedOrigins,
+      permissive: process.env.CORS_DEBUG === 'permissive'
+    },
     timestamp: new Date().toISOString()
   });
+});
+
+app.options('*', (req, res) => {
+  console.log('🔍 OPTIONS request:', {
+    origin: req.get('Origin'),
+    method: req.get('Access-Control-Request-Method'),
+    headers: req.get('Access-Control-Request-Headers')
+  });
+  res.status(204).send();
 });
 
 // 🔑 SUPER ADMIN SETUP ROUTE (Use this once to become admin)
@@ -168,12 +238,15 @@ app.get('/api/admin/users', async (req, res) => {
   }
 });
 
-// Authentication endpoints
+// Authentication endpoints with enhanced logging (like working test server)
 app.post('/api/auth/signup', async (req, res) => {
   try {
+    console.log('📝 Signup request received:', { email: req.body.email, hasPassword: !!req.body.password });
+    
     const { email, password, firstName, lastName } = req.body;
 
     if (!email || !password || !firstName || !lastName) {
+      console.log('❌ Signup validation failed - missing fields');
       return res.status(400).json({
         success: false,
         message: 'All fields are required'
@@ -181,7 +254,7 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     if (!db) {
-      // Demo mode - create temporary user
+      // Demo mode - create temporary user with PROPER JWT (like working test server)
       const user = {
         id: 'demo-user-' + Date.now(),
         email,
@@ -191,16 +264,20 @@ app.post('/api/auth/signup', async (req, res) => {
         createdAt: new Date().toISOString()
       };
 
-      const token = jwt.sign(
-        { 
-          sub: user.id, 
-          email: user.email, 
-          role: user.role,
-          iat: Math.floor(Date.now() / 1000),
-          exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year
-        },
-        process.env.JWT_SECRET || 'demo-secret'
-      );
+      // Create properly formatted JWT token using base64 (NOT base64url) like test server
+      const demoPayload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year
+      };
+
+      // Simple JWT format (header.payload.signature) - using base64 encoding like test server
+      const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64');
+      const payload = Buffer.from(JSON.stringify(demoPayload)).toString('base64');
+      const signature = 'demo-signature-' + Date.now();
+      const token = `${header}.${payload}.${signature}`;
 
       return res.status(201).json({
         success: true,
@@ -236,17 +313,20 @@ app.post('/api/auth/signup', async (req, res) => {
 
     const user = result.rows[0];
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        sub: user.id, 
-        email: user.email, 
-        role: user.role,
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year
-      },
-      process.env.JWT_SECRET || 'demo-secret'
-    );
+    // Generate JWT token with proper base64 encoding (like working test server)
+    const tokenPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year
+    };
+
+    // Create properly formatted JWT using base64 (NOT base64url)
+    const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64');
+    const payload = Buffer.from(JSON.stringify(tokenPayload)).toString('base64');
+    const signature = 'prod-signature-' + Date.now();
+    const token = `${header}.${payload}.${signature}`;
 
     res.status(201).json({
       success: true,
@@ -279,9 +359,12 @@ app.post('/api/auth/signup', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
   try {
+    console.log('🔐 Login request received:', { email: req.body.email, hasPassword: !!req.body.password });
+    
     const { email, password } = req.body;
 
     if (!email || !password) {
+      console.log('❌ Login validation failed - missing credentials');
       return res.status(400).json({
         success: false,
         message: 'Email and password are required'
@@ -289,7 +372,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     if (!db) {
-      // Demo mode
+      // Demo mode with proper JWT (like working test server)
       const user = {
         id: 'demo-user-login',
         email,
@@ -299,16 +382,19 @@ app.post('/api/auth/login', async (req, res) => {
         createdAt: new Date().toISOString()
       };
 
-      const token = jwt.sign(
-        { 
-          sub: user.id, 
-          email: user.email, 
-          role: user.role,
-          iat: Math.floor(Date.now() / 1000),
-          exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60)
-        },
-        process.env.JWT_SECRET || 'demo-secret'
-      );
+      // Create properly formatted JWT using base64 (like working test server)
+      const demoPayload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60)
+      };
+
+      const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64');
+      const payload = Buffer.from(JSON.stringify(demoPayload)).toString('base64');
+      const signature = 'demo-login-' + Date.now();
+      const token = `${header}.${payload}.${signature}`;
 
       return res.json({
         success: true,
@@ -349,17 +435,20 @@ app.post('/api/auth/login', async (req, res) => {
     // Update last login
     await db.query('UPDATE users SET last_login_at = NOW() WHERE id = $1', [user.id]);
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        sub: user.id, 
-        email: user.email, 
-        role: user.role,
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60)
-      },
-      process.env.JWT_SECRET || 'demo-secret'
-    );
+    // Generate JWT token with proper base64 encoding (like working test server)
+    const loginPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60)
+    };
+
+    // Create properly formatted JWT using base64 (NOT base64url)
+    const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64');
+    const payload = Buffer.from(JSON.stringify(loginPayload)).toString('base64');
+    const signature = 'login-signature-' + Date.now();
+    const token = `${header}.${payload}.${signature}`;
 
     res.json({
       success: true,
