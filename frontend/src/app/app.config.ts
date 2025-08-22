@@ -2,7 +2,7 @@ import { ApplicationConfig, importProvidersFrom, APP_INITIALIZER } from '@angula
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideServiceWorker } from '@angular/service-worker';
+// import { provideServiceWorker } from '@angular/service-worker'; // Disabled to avoid MIME type errors
 
 // Material modules
 import { MatSnackBarModule } from '@angular/material/snack-bar';
@@ -117,11 +117,11 @@ export const appConfig: ApplicationConfig = {
     // Animations
     provideAnimations(),
     
-    // Service Worker
-    provideServiceWorker('ngsw-worker.js', {
-      enabled: environment.production,
-      registrationStrategy: 'registerWhenStable:30000'
-    }),
+    // Service Worker - Disabled to avoid MIME type errors
+    // provideServiceWorker('ngsw-worker.js', {
+    //   enabled: environment.production,
+    //   registrationStrategy: 'registerWhenStable:30000'
+    // }),
     
     // Angular Material
     importProvidersFrom(
