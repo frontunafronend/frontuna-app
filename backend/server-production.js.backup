@@ -1,5 +1,28 @@
 /**
  * 🤖 AI BUG GUARDIAN PROTECTED FILE
+ * Last analyzed: 2025-08-22T21:32:02.141Z
+ * Issues detected: 8
+ * 
+ * This file is protected against common bugs:
+ * - MISSING_DB_ERROR_HANDLING: HIGH
+ * - MOCK_DATA_WITHOUT_DB_FALLBACK: HIGH
+ * - HARDCODED_DEMO_RESPONSES: HIGH
+ * - API_WITHOUT_DB_INTEGRATION: HIGH
+ * - AI_USAGE_NOT_TRACKED: MEDIUM
+ * - INCOMPLETE_API_RESPONSE: MEDIUM
+ * - GENERIC_ERROR_MESSAGE: MEDIUM
+ * - STATIC_USER_DATA: HIGH
+ */
+
+
+// 🛡️ DATABASE GUARD: This code interacts with the database
+// CRITICAL RULES:
+// 1. ALWAYS wrap database queries in try-catch blocks
+// 2. ALWAYS provide fallback responses for demo mode
+// 3. NEVER expose raw database errors to frontend
+// 4. ALWAYS validate user input before database operations
+/**
+ * 🤖 AI BUG GUARDIAN PROTECTED FILE
  * Last analyzed: 2025-08-22T21:30:47.945Z
  * Issues detected: 8
  * 
@@ -87,7 +110,7 @@ if (process.env.DATABASE_URL && Pool) {
     });
     
   } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
+    console.error('❌ Database connection failed:', error instanceof Error ? error.message : error);
     console.log('🔄 Falling back to demo mode');
     dbConnected = false;
   }
@@ -162,7 +185,7 @@ async function createUsersTable() {
     
     console.log('✅ All database tables ready (users, preferences, notifications, ai_usage)');
   } catch (error) {
-    console.error('❌ Failed to create database tables:', error.message);
+    console.error('❌ Failed to create database tables:', error instanceof Error ? error.message : error);
   }
 }
 
@@ -917,7 +940,7 @@ app.put('/api/auth/profile', async (req, res) => {
     
     const { firstName, lastName, company, timezone, email } = req.body;
     
-    if (dbConnected && pool) {
+    if (dbConnected && db) {
       try {
         // Real database update
         const updateQuery = `
@@ -927,7 +950,7 @@ app.put('/api/auth/profile', async (req, res) => {
           RETURNING id, email, first_name, last_name, company, timezone, role, created_at, updated_at
         `;
         
-        const result = await pool.query(updateQuery, [
+        const result = await db.query(updateQuery, [
           firstName || null,
           lastName || null, 
           company || null,
@@ -1282,10 +1305,10 @@ app.get('/api/auth/profile', async (req, res) => {
       }
     }
     
-    if (dbConnected && pool) {
+    if (dbConnected && db) {
       try {
         // Real database lookup
-        const result = await pool.query(
+        const result = await db.query(
           'SELECT id, email, first_name, last_name, company, timezone, role, created_at, updated_at FROM users WHERE email = $1',
           [userEmail]
         );

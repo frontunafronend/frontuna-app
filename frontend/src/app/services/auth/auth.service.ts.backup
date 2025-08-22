@@ -1,5 +1,22 @@
 /**
  * 🤖 AI BUG GUARDIAN PROTECTED FILE
+ * Last analyzed: 2025-08-22T21:32:02.164Z
+ * Issues detected: 2
+ * 
+ * This file is protected against common bugs:
+ * - HARDCODED_DEMO_RESPONSES: HIGH
+ * - GENERIC_ERROR_MESSAGE: MEDIUM
+ */
+
+
+// 🛡️ AUTH GUARD: This code handles user authentication
+// CRITICAL RULES:
+// 1. NEVER add setTimeout before navigation after successful auth
+// 2. ALWAYS navigate immediately after login/signup success
+// 3. NEVER logout users automatically without explicit user action
+// 4. Token validation should be tolerant, not strict
+/**
+ * 🤖 AI BUG GUARDIAN PROTECTED FILE
  * Last analyzed: 2025-08-22T21:30:47.970Z
  * Issues detected: 2
  * 
@@ -651,11 +668,12 @@ export class AuthService {
     } catch (error) {
       console.warn('⚠️ Token decode failed, treating as valid for demo:', error instanceof Error ? error.message : error);
       
-      // Return a safe fallback payload for demo tokens
+      // Return a safe fallback payload for demo tokens - but try to get real user data
+      const currentUser = this.currentUserSubject.value;
       return {
-        sub: 'demo-user',
-        email: 'demo@example.com',
-        role: 'user' as UserRole,
+        sub: currentUser?.id || 'demo-user',
+        email: currentUser?.email || 'demo@example.com',
+        role: (currentUser?.role as UserRole) || 'user' as UserRole,
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year from now
       };

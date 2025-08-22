@@ -1,5 +1,21 @@
 /**
  * 🤖 AI BUG GUARDIAN PROTECTED FILE
+ * Last analyzed: 2025-08-22T21:38:46.998Z
+ * Issues detected: 1
+ * 
+ * This file is protected against common bugs:
+ * - GENERIC_ERROR_MESSAGE: MEDIUM
+ */
+
+
+// 🛡️ API GUARD: This code defines API endpoints
+// CRITICAL RULES:
+// 1. ALWAYS return consistent response format: { success, data, message }
+// 2. ALWAYS handle both database and demo modes
+// 3. ALWAYS provide meaningful error messages
+// 4. NEVER expose internal server errors to client
+/**
+ * 🤖 AI BUG GUARDIAN PROTECTED FILE
  * Last analyzed: 2025-08-22T21:32:02.236Z
  * Issues detected: 1
  * 

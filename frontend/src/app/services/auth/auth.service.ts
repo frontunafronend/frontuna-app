@@ -1,5 +1,22 @@
 /**
  * 🤖 AI BUG GUARDIAN PROTECTED FILE
+ * Last analyzed: 2025-08-22T21:38:46.934Z
+ * Issues detected: 2
+ * 
+ * This file is protected against common bugs:
+ * - HARDCODED_DEMO_RESPONSES: HIGH
+ * - GENERIC_ERROR_MESSAGE: MEDIUM
+ */
+
+
+// 🛡️ AUTH GUARD: This code handles user authentication
+// CRITICAL RULES:
+// 1. NEVER add setTimeout before navigation after successful auth
+// 2. ALWAYS navigate immediately after login/signup success
+// 3. NEVER logout users automatically without explicit user action
+// 4. Token validation should be tolerant, not strict
+/**
+ * 🤖 AI BUG GUARDIAN PROTECTED FILE
  * Last analyzed: 2025-08-22T21:32:02.164Z
  * Issues detected: 2
  * 
