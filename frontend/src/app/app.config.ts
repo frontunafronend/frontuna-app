@@ -30,6 +30,7 @@ import { AICopilotStateService } from './services/ai/ai-copilot-state.service';
 
 // SEO Service
 import { SeoService } from './services/seo/seo.service';
+import { GoogleAnalyticsService } from './services/analytics/google-analytics.service';
 
 // Lottie player factory
 export function playerFactory() {
@@ -50,6 +51,14 @@ export function initializeSeo(seoService: SeoService) {
   };
 }
 
+export function initializeAnalytics(analyticsService: GoogleAnalyticsService) {
+  return () => {
+    // Analytics service will auto-initialize in constructor
+    console.log('🔍 Analytics: Initialization function called');
+    return Promise.resolve();
+  };
+}
+
 
 
 export const appConfig: ApplicationConfig = {
@@ -65,6 +74,9 @@ export const appConfig: ApplicationConfig = {
     // SEO Service
     SeoService,
     
+    // Analytics Service
+    GoogleAnalyticsService,
+    
     // App Initializer for Authentication
     {
       provide: APP_INITIALIZER,
@@ -78,6 +90,14 @@ export const appConfig: ApplicationConfig = {
       provide: APP_INITIALIZER,
       useFactory: initializeSeo,
       deps: [SeoService],
+      multi: true
+    },
+    
+    // App Initializer for Analytics
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeAnalytics,
+      deps: [GoogleAnalyticsService],
       multi: true
     },
     

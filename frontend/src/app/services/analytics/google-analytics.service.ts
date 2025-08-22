@@ -15,35 +15,64 @@ export class GoogleAnalyticsService {
   private isInitialized = false;
 
   constructor() {
-    if (environment.googleAnalytics.enabled) {
+    if (environment.googleAnalytics.enabled && environment.googleAnalytics.trackingId) {
+      this.initialize();
       this.initializeRouteTracking();
+    } else {
+      console.warn('🔍 Google Analytics: Disabled or missing tracking ID');
     }
   }
 
   /**
-   * Initialize Google Analytics
+   * Initialize Google Analytics 4
    */
   initialize(): void {
     if (!environment.googleAnalytics.enabled || !environment.googleAnalytics.trackingId) {
+      console.warn('🔍 Google Analytics: Not enabled or missing tracking ID');
       return;
     }
+
+    if (this.isInitialized) {
+      console.log('🔍 Google Analytics: Already initialized');
+      return;
+    }
+
+    console.log('🔍 Google Analytics: Initializing with ID:', environment.googleAnalytics.trackingId);
 
     // Load Google Analytics script
     const script = document.createElement('script');
     script.async = true;
     script.src = `https://www.googletagmanager.com/gtag/js?id=${environment.googleAnalytics.trackingId}`;
+    script.onload = () => {
+      console.log('✅ Google Analytics: Script loaded successfully');
+    };
+    script.onerror = () => {
+      console.error('❌ Google Analytics: Failed to load script');
+    };
     document.head.appendChild(script);
 
-    // Initialize gtag
-    window.dataLayer = window.dataLayer || [];
-    gtag = function() { window.dataLayer.push(arguments); };
+    // Initialize gtag (exactly as provided by Google)
+    (window as any).dataLayer = (window as any).dataLayer || [];
+    gtag = function() { (window as any).dataLayer.push(arguments); };
     gtag('js', new Date());
-    gtag('config', environment.googleAnalytics.trackingId, {
+
+    // Configure GA4 with enhanced options
+    const config: any = {
       page_title: document.title,
-      page_location: window.location.href
-    });
+      page_location: window.location.href,
+      anonymize_ip: environment.googleAnalytics.anonymizeIp || true
+    };
+
+    // Add debug mode if enabled
+    if (environment.googleAnalytics.debugMode) {
+      config.debug_mode = true;
+      console.log('🔍 Google Analytics: Debug mode enabled');
+    }
+
+    gtag('config', environment.googleAnalytics.trackingId, config);
 
     this.isInitialized = true;
+    console.log('✅ Google Analytics: Initialized successfully');
   }
 
   /**

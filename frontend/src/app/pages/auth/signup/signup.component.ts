@@ -723,9 +723,17 @@ export class SignupComponent implements OnInit {
       robots: 'noindex, nofollow'
     });
 
+    // Track page view
     this.analyticsService.trackPageView({
       page_title: 'Signup - Frontuna.ai',
       page_location: window.location.href
+    });
+
+    // Track signup page visit
+    this.analyticsService.trackEvent({
+      action: 'page_visit',
+      category: 'signup',
+      label: 'signup_page_loaded'
     });
 
     // Watch password changes for strength indicator
@@ -907,23 +915,33 @@ export class SignupComponent implements OnInit {
   }
 
   signupWithGoogle(): void {
-    // TODO: Implement Google OAuth
-    console.log('Google signup not implemented yet');
+    // Track social signup attempt
     this.analyticsService.trackEvent({
       action: 'social_signup_attempt',
       category: 'authentication',
       label: 'google'
     });
+    
+    // TODO: Implement Google OAuth
+    console.log('Google signup not implemented yet');
+    
+    // Show user feedback
+    this.notificationService.showInfo('Google signup coming soon! Please use email signup for now.');
   }
 
   signupWithGithub(): void {
-    // TODO: Implement GitHub OAuth
-    console.log('GitHub signup not implemented yet');
+    // Track social signup attempt
     this.analyticsService.trackEvent({
       action: 'social_signup_attempt',
       category: 'authentication',
       label: 'github'
     });
+    
+    // TODO: Implement GitHub OAuth
+    console.log('GitHub signup not implemented yet');
+    
+    // Show user feedback
+    this.notificationService.showInfo('GitHub signup coming soon! Please use email signup for now.');
   }
 
   onImageError(event: Event): void {

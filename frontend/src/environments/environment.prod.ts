@@ -19,10 +19,13 @@ export const environment = {
     enableAnimations: true
   },
   
-  // Google Analytics
+  // Google Analytics 4
   googleAnalytics: {
-    trackingId: 'GA_TRACKING_ID', // TODO: Replace with your GA tracking ID
-    enabled: true
+    trackingId: 'G-QJ5BQ4LBZS', // Your actual GA4 Measurement ID
+    enabled: true,
+    debugMode: false, // Disable debug mode in production
+    anonymizeIp: true,
+    cookieFlags: 'SameSite=None;Secure'
   },
   
   // Authentication
