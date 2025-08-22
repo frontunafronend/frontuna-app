@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed } from '@angular/core';
+import { Component, OnInit, inject, computed, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -13,7 +13,12 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { AuthService } from '../../services/auth/auth.service';
+import { SettingsService, UserPreferences, NotificationSettings, ApiKey } from '../../services/api/settings.service';
+import { NotificationService } from '../../services/notification/notification.service';
+import { GlobalLoaderService } from '../../services/ui/global-loader.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-settings',
@@ -33,133 +38,335 @@ import { AuthService } from '../../services/auth/auth.service';
     MatDividerModule,
     MatTabsModule,
     MatChipsModule,
-    MatExpansionModule
+    MatExpansionModule,
+    MatDialogModule
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss'
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
+  private readonly settingsService = inject(SettingsService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly globalLoader = inject(GlobalLoaderService);
   private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
 
+  // Subscriptions
+  private subscriptions = new Subscription();
+
+  // Signals for reactive state
   public readonly currentUser = computed(() => this.authService.currentUser());
-
-  // Profile form
-  profileForm: FormGroup = this.fb.group({
-    firstName: [this.currentUser()?.firstName || '', Validators.required],
-    lastName: [this.currentUser()?.lastName || '', Validators.required],
-    email: [this.currentUser()?.email || '', [Validators.required, Validators.email]],
-    company: [this.currentUser()?.company || ''],
-    timezone: ['UTC']
-  });
-
-  // Preferences
-  preferences = {
+  public readonly isLoading = signal(false);
+  public readonly preferences = signal<UserPreferences>({
     darkMode: false,
     compactMode: false,
     defaultFramework: 'react',
     autoSave: true,
     typescript: true
-  };
-
-  // Notifications
-  notifications = {
+  });
+  public readonly notifications = signal<NotificationSettings>({
     generationComplete: true,
     weeklySummary: true,
     planUpdates: true,
-    browserNotifications: false
-  };
+    browserNotifications: false,
+    emailNotifications: true
+  });
+  public readonly apiKeys = signal<ApiKey[]>([]);
+  public readonly twoFactorEnabled = signal(false);
 
-  // Security
-  twoFactorEnabled = false;
-  apiKeys = [
-    { id: 'key_123', name: 'Production API', created: new Date(2024, 0, 15) },
-    { id: 'key_456', name: 'Development API', created: new Date(2024, 1, 20) }
-  ];
+  // Profile form
+  profileForm: FormGroup = this.fb.group({
+    firstName: ['', Validators.required],
+    lastName: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    company: [''],
+    timezone: ['UTC']
+  });
 
   ngOnInit(): void {
-    console.log('Settings component initialized');
+    console.log('Settings component initialized - connecting to real backend');
     this.loadUserSettings();
+    this.setupSubscriptions();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  private setupSubscriptions(): void {
+    // Subscribe to preferences changes
+    this.subscriptions.add(
+      this.settingsService.userPreferences$.subscribe(prefs => {
+        if (prefs) {
+          this.preferences.set(prefs);
+        }
+      })
+    );
+
+    // Subscribe to notification settings changes
+    this.subscriptions.add(
+      this.settingsService.notificationSettings$.subscribe(settings => {
+        if (settings) {
+          this.notifications.set(settings);
+        }
+      })
+    );
+
+    // Subscribe to API keys changes
+    this.subscriptions.add(
+      this.settingsService.apiKeys$.subscribe(keys => {
+        this.apiKeys.set(keys);
+      })
+    );
   }
 
   loadUserSettings(): void {
-    // Load user settings from service
     const user = this.currentUser();
     if (user) {
+      // Update profile form with user data
       this.profileForm.patchValue({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        company: user.company || ''
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        company: user.company || '',
+        timezone: (user as any).timezone || 'UTC'
       });
     }
+
+    // Load settings from backend
+    this.isLoading.set(true);
+    
+    // Load preferences, notifications, and API keys
+    this.settingsService.getUserPreferences().subscribe({
+      next: () => {
+        console.log('✅ User preferences loaded from real backend');
+      },
+      error: (error) => {
+        console.error('❌ Failed to load preferences:', error);
+        this.notificationService.showError('Failed to load preferences');
+      }
+    });
+
+    this.settingsService.getNotificationSettings().subscribe({
+      next: () => {
+        console.log('✅ Notification settings loaded from real backend');
+      },
+      error: (error) => {
+        console.error('❌ Failed to load notification settings:', error);
+      }
+    });
+
+    this.settingsService.getApiKeys().subscribe({
+      next: () => {
+        console.log('✅ API keys loaded from real backend');
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('❌ Failed to load API keys:', error);
+        this.isLoading.set(false);
+      }
+    });
   }
+
+  // ===== PROFILE MANAGEMENT =====
 
   saveProfile(): void {
     if (this.profileForm.valid) {
-      console.log('Saving profile:', this.profileForm.value);
-      // TODO: Implement profile save
-      alert('Profile saved successfully!');
+      this.globalLoader.show(this.globalLoader.forOperation('saving'));
+      
+      this.subscriptions.add(
+        this.settingsService.updateProfile(this.profileForm.value).subscribe({
+          next: (response) => {
+            console.log('✅ Profile saved to real backend:', response);
+            this.globalLoader.hide();
+            
+            // Profile updated successfully
+            console.log('✅ Profile updated in backend');
+          },
+          error: (error) => {
+            console.error('❌ Failed to save profile:', error);
+            this.globalLoader.hide();
+            this.notificationService.showError('Failed to save profile');
+          }
+        })
+      );
+    } else {
+      this.notificationService.showWarning('Please fill in all required fields');
     }
   }
 
   resetProfile(): void {
     this.loadUserSettings();
+    this.notificationService.showInfo('Profile form reset');
   }
 
-  updatePreference(key: string, value: any): void {
-    console.log(`Updating preference ${key}:`, value);
-    // TODO: Save preference to backend
+  // ===== PREFERENCES MANAGEMENT =====
+
+  updatePreference(key: keyof UserPreferences, value: any): void {
+    console.log(`🔄 Updating preference ${key}:`, value);
+    
+    this.subscriptions.add(
+      this.settingsService.updateSinglePreference(key, value).subscribe({
+        next: () => {
+          console.log(`✅ Preference ${key} updated in real backend`);
+        },
+        error: (error) => {
+          console.error(`❌ Failed to update preference ${key}:`, error);
+          // Revert the change in UI
+          const currentPrefs = this.preferences();
+          this.preferences.set({ ...currentPrefs, [key]: !value });
+        }
+      })
+    );
   }
+
+  // ===== SECURITY MANAGEMENT =====
 
   changePassword(): void {
-    console.log('Opening change password dialog');
-    // TODO: Implement password change dialog
-    alert('Password change functionality will be implemented');
+    // TODO: Open password change dialog
+    console.log('🔒 Opening change password dialog');
+    this.notificationService.showInfo('Password change dialog will open here');
   }
 
   toggleTwoFactor(): void {
-    this.twoFactorEnabled = !this.twoFactorEnabled;
-    console.log('2FA toggled:', this.twoFactorEnabled);
-    // TODO: Implement 2FA setup/disable
+    const currentStatus = this.twoFactorEnabled();
+    const newStatus = !currentStatus;
+    
+    this.subscriptions.add(
+      this.settingsService.toggle2FA(newStatus).subscribe({
+        next: () => {
+          console.log(`✅ 2FA ${newStatus ? 'enabled' : 'disabled'} in real backend`);
+          this.twoFactorEnabled.set(newStatus);
+        },
+        error: (error) => {
+          console.error('❌ Failed to toggle 2FA:', error);
+        }
+      })
+    );
   }
 
+  // ===== API KEY MANAGEMENT =====
+
   createApiKey(): void {
-    console.log('Creating new API key');
-    // TODO: Implement API key creation
-    alert('API key creation functionality will be implemented');
+    const keyName = prompt('Enter a name for your API key:');
+    if (keyName && keyName.trim()) {
+      this.subscriptions.add(
+        this.settingsService.createApiKey(keyName.trim()).subscribe({
+          next: (response) => {
+            console.log('✅ API key created in real backend:', response);
+            // Keys list will be updated via subscription
+          },
+          error: (error) => {
+            console.error('❌ Failed to create API key:', error);
+          }
+        })
+      );
+    }
   }
 
   deleteApiKey(keyId: string): void {
-    console.log('Deleting API key:', keyId);
-    this.apiKeys = this.apiKeys.filter(key => key.id !== keyId);
+    if (confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
+      this.subscriptions.add(
+        this.settingsService.deleteApiKey(keyId).subscribe({
+          next: () => {
+            console.log('✅ API key deleted from real backend');
+            // Keys list will be updated via subscription
+          },
+          error: (error) => {
+            console.error('❌ Failed to delete API key:', error);
+          }
+        })
+      );
+    }
   }
 
-  exportData(type: string): void {
-    console.log('Exporting data type:', type);
-    // TODO: Implement data export
-    alert(`${type} export functionality will be implemented`);
+  // ===== DATA MANAGEMENT =====
+
+  exportData(type: 'components' | 'settings' | 'all'): void {
+    console.log(`📥 Exporting ${type} data from real backend`);
+    
+    this.subscriptions.add(
+      this.settingsService.exportData(type).subscribe({
+        next: (blob) => {
+          // Create download link
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `frontuna-${type}-export-${new Date().toISOString().split('T')[0]}.json`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+          
+          console.log(`✅ ${type} data exported successfully`);
+        },
+        error: (error) => {
+          console.error(`❌ Failed to export ${type} data:`, error);
+        }
+      })
+    );
   }
 
   importData(): void {
-    console.log('Importing data');
-    // TODO: Implement data import
-    alert('Data import functionality will be implemented');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = (event: any) => {
+      const file = event.target.files[0];
+      if (file) {
+        console.log('📤 Importing data to real backend');
+        
+        this.subscriptions.add(
+          this.settingsService.importData(file).subscribe({
+            next: () => {
+              console.log('✅ Data imported successfully');
+              this.loadUserSettings(); // Refresh all settings
+            },
+            error: (error) => {
+              console.error('❌ Failed to import data:', error);
+            }
+          })
+        );
+      }
+    };
+    
+    input.click();
   }
+
+  // ===== DANGER ZONE =====
 
   clearAllComponents(): void {
     if (confirm('Are you sure you want to delete all your components? This action cannot be undone.')) {
-      console.log('Clearing all components');
-      // TODO: Implement clear components
-      alert('Clear components functionality will be implemented');
+      this.subscriptions.add(
+        this.settingsService.clearAllComponents().subscribe({
+          next: () => {
+            console.log('✅ All components cleared from real backend');
+          },
+          error: (error) => {
+            console.error('❌ Failed to clear components:', error);
+          }
+        })
+      );
     }
   }
 
   deleteAccount(): void {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data.')) {
-      console.log('Deleting account');
-      // TODO: Implement account deletion
-      alert('Account deletion functionality will be implemented');
+    const password = prompt('Enter your password to confirm account deletion:');
+    if (password) {
+      if (confirm('Are you ABSOLUTELY SURE you want to delete your account? This action cannot be undone and will permanently delete all your data.')) {
+        this.subscriptions.add(
+          this.settingsService.deleteAccount(password).subscribe({
+            next: () => {
+              console.log('✅ Account deleted from real backend');
+              // Logout and redirect
+              this.authService.logout();
+            },
+            error: (error) => {
+              console.error('❌ Failed to delete account:', error);
+            }
+          })
+        );
+      }
     }
   }
 }

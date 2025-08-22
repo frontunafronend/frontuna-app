@@ -125,7 +125,7 @@
                     <span class="preference-title">Dark Mode</span>
                     <span class="preference-desc">Use dark theme across the application</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="preferences.darkMode" (change)="updatePreference('darkMode', $event.checked)">
+                  <mat-slide-toggle [(ngModel)]="preferences().darkMode" (change)="updatePreference('darkMode', $event.checked)">
                   </mat-slide-toggle>
                 </div>
                 
@@ -134,7 +134,7 @@
                     <span class="preference-title">Compact Mode</span>
                     <span class="preference-desc">Show more content with reduced spacing</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="preferences.compactMode" (change)="updatePreference('compactMode', $event.checked)">
+                  <mat-slide-toggle [(ngModel)]="preferences().compactMode" (change)="updatePreference('compactMode', $event.checked)">
                   </mat-slide-toggle>
                 </div>
               </div>
@@ -149,7 +149,7 @@
                     <span class="preference-desc">Your preferred framework for new components</span>
                   </div>
                   <mat-form-field appearance="outline" class="preference-select">
-                    <mat-select [(ngModel)]="preferences.defaultFramework" (selectionChange)="updatePreference('defaultFramework', $event.value)">
+                    <mat-select [(ngModel)]="preferences().defaultFramework" (selectionChange)="updatePreference('defaultFramework', $event.value)">
                       <mat-option value="react">React</mat-option>
                       <mat-option value="angular">Angular</mat-option>
                       <mat-option value="vue">Vue</mat-option>
@@ -162,7 +162,7 @@
                     <span class="preference-title">Auto-save Components</span>
                     <span class="preference-desc">Automatically save generated components to library</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="preferences.autoSave" (change)="updatePreference('autoSave', $event.checked)">
+                  <mat-slide-toggle [(ngModel)]="preferences().autoSave" (change)="updatePreference('autoSave', $event.checked)">
                   </mat-slide-toggle>
                 </div>
                 
@@ -171,7 +171,7 @@
                     <span class="preference-title">Include TypeScript</span>
                     <span class="preference-desc">Generate TypeScript by default</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="preferences.typescript" (change)="updatePreference('typescript', $event.checked)">
+                  <mat-slide-toggle [(ngModel)]="preferences().typescript" (change)="updatePreference('typescript', $event.checked)">
                   </mat-slide-toggle>
                 </div>
               </div>
@@ -202,7 +202,7 @@
                     <span class="preference-title">Generation Complete</span>
                     <span class="preference-desc">Get notified when component generation finishes</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="notifications.generationComplete">
+                  <mat-slide-toggle [(ngModel)]="notifications().generationComplete">
                   </mat-slide-toggle>
                 </div>
                 
@@ -211,7 +211,7 @@
                     <span class="preference-title">Weekly Summary</span>
                     <span class="preference-desc">Receive weekly usage summary</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="notifications.weeklySummary">
+                  <mat-slide-toggle [(ngModel)]="notifications().weeklySummary">
                   </mat-slide-toggle>
                 </div>
                 
@@ -220,7 +220,7 @@
                     <span class="preference-title">Plan Updates</span>
                     <span class="preference-desc">Get notified about billing and plan changes</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="notifications.planUpdates">
+                  <mat-slide-toggle [(ngModel)]="notifications().planUpdates">
                   </mat-slide-toggle>
                 </div>
               </div>
@@ -234,7 +234,7 @@
                     <span class="preference-title">Browser Notifications</span>
                     <span class="preference-desc">Show notifications in your browser</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="notifications.browserNotifications">
+                  <mat-slide-toggle [(ngModel)]="notifications().browserNotifications">
                   </mat-slide-toggle>
                 </div>
               </div>
@@ -273,12 +273,12 @@
                 <h4>Two-Factor Authentication</h4>
                 <p>Add an extra layer of security to your account</p>
                 <div class="security-status">
-                  <mat-icon [style.color]="twoFactorEnabled ? '#4caf50' : '#f44336'">
-                    {{ twoFactorEnabled ? 'check_circle' : 'error' }}
+                  <mat-icon [style.color]="twoFactorEnabled() ? '#4caf50' : '#f44336'">
+                    {{ twoFactorEnabled() ? 'check_circle' : 'error' }}
                   </mat-icon>
-                  <span>{{ twoFactorEnabled ? 'Enabled' : 'Disabled' }}</span>
-                  <button mat-raised-button [color]="twoFactorEnabled ? 'warn' : 'primary'" (click)="toggleTwoFactor()">
-                    {{ twoFactorEnabled ? 'Disable' : 'Enable' }} 2FA
+                  <span>{{ twoFactorEnabled() ? 'Enabled' : 'Disabled' }}</span>
+                  <button mat-raised-button [color]="twoFactorEnabled() ? 'warn' : 'primary'" (click)="toggleTwoFactor()">
+                    {{ twoFactorEnabled() ? 'Disable' : 'Enable' }} 2FA
                   </button>
                 </div>
               </div>
@@ -289,7 +289,7 @@
                 <h4>API Keys</h4>
                 <p>Manage your API keys for integrations</p>
                 <div class="api-keys">
-                  <div class="api-key-item" *ngFor="let key of apiKeys">
+                  <div class="api-key-item" *ngFor="let key of apiKeys()">
                     <div class="api-key-info">
                       <strong>{{ key.name }}</strong>
                       <span class="api-key-id">{{ key.id }}</span>
