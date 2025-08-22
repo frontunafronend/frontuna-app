@@ -14,6 +14,17 @@ export class GoogleAnalyticsService {
   private readonly router = inject(Router);
   private isInitialized = false;
 
+  /**
+   * Safe gtag function call
+   */
+  private gtag(...args: any[]): void {
+    if (typeof (window as any).gtag === 'function') {
+      (window as any).gtag(...args);
+    } else {
+      console.warn('🔍 Google Analytics: gtag function not available');
+    }
+  }
+
   constructor() {
     try {
       if (environment.googleAnalytics?.enabled && environment.googleAnalytics?.trackingId) {
@@ -65,8 +76,8 @@ export class GoogleAnalyticsService {
 
     // Initialize gtag (exactly as provided by Google)
     (window as any).dataLayer = (window as any).dataLayer || [];
-    gtag = function() { (window as any).dataLayer.push(arguments); };
-    gtag('js', new Date());
+    (window as any).gtag = function() { (window as any).dataLayer.push(arguments); };
+    (window as any).gtag('js', new Date());
 
     // Configure GA4 with enhanced options
     const config: any = {
@@ -81,7 +92,7 @@ export class GoogleAnalyticsService {
       console.log('🔍 Google Analytics: Debug mode enabled');
     }
 
-    gtag('config', environment.googleAnalytics.trackingId, config);
+    this.gtag('config', environment.googleAnalytics.trackingId, config);
 
     this.isInitialized = true;
     console.log('✅ Google Analytics: Initialized successfully');
@@ -101,7 +112,7 @@ export class GoogleAnalyticsService {
 
     const data = { ...defaultData, ...pageData };
 
-    gtag('config', environment.googleAnalytics.trackingId, {
+    this.gtag('config', environment.googleAnalytics.trackingId, {
       page_title: data.page_title,
       page_location: data.page_location,
       page_referrer: data.page_referrer,
@@ -116,7 +127,7 @@ export class GoogleAnalyticsService {
   trackEvent(event: GAEvent): void {
     if (!this.isInitialized) return;
 
-    gtag('event', event.action, {
+    this.gtag('event', event.action, {
       event_category: event.category,
       event_label: event.label,
       value: event.value,
@@ -242,7 +253,7 @@ export class GoogleAnalyticsService {
   trackPurchase(transaction: GATransaction): void {
     if (!this.isInitialized) return;
 
-    gtag('event', 'purchase', {
+    this.gtag('event', 'purchase', {
       transaction_id: transaction.transaction_id,
       value: transaction.value,
       currency: transaction.currency,
@@ -256,7 +267,7 @@ export class GoogleAnalyticsService {
   setUserProperties(properties: Record<string, any>): void {
     if (!this.isInitialized) return;
 
-    gtag('config', environment.googleAnalytics.trackingId, {
+    this.gtag('config', environment.googleAnalytics.trackingId, {
       custom_map: properties
     });
   }
@@ -267,7 +278,7 @@ export class GoogleAnalyticsService {
   setUserId(userId: string): void {
     if (!this.isInitialized) return;
 
-    gtag('config', environment.googleAnalytics.trackingId, {
+    this.gtag('config', environment.googleAnalytics.trackingId, {
       user_id: userId
     });
   }
