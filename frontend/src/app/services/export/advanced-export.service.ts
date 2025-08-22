@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { map, catchError, delay, tap } from 'rxjs/operators';
 
-import { environment } from '@environments/environment';
+import { EnvironmentService } from '../core/environment.service';
 import { NotificationService } from '../notification/notification.service';
 
 export interface ExportConfig {
@@ -97,7 +97,8 @@ export interface GitHubGistConfig {
 export class AdvancedExportService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
-  private readonly baseUrl = `${environment.apiUrl}/export`;
+  private readonly environmentService = inject(EnvironmentService);
+  private readonly baseUrl = `${this.environmentService.apiUrl}/export`;
 
   /**
    * Export components with advanced options

@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, retry, map } from 'rxjs/operators';
 
-import { environment } from '@environments/environment';
+import { EnvironmentService } from '../core/environment.service';
 
 export interface RequestOptions {
   headers?: HttpHeaders | { [header: string]: string | string[] };
@@ -18,7 +18,8 @@ export interface RequestOptions {
 })
 export class BaseApiService {
   protected readonly http = inject(HttpClient);
-  protected readonly baseUrl = environment.apiUrl;
+  private readonly environmentService = inject(EnvironmentService);
+  protected readonly baseUrl = this.environmentService.apiUrl;
 
   /**
    * GET request

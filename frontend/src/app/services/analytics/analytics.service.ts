@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
 import { map, catchError, tap, delay } from 'rxjs/operators';
 
-import { environment } from '@environments/environment';
+import { EnvironmentService } from '../core/environment.service';
 import { NotificationService } from '../notification/notification.service';
 
 export interface AnalyticsEvent {
@@ -130,7 +130,8 @@ export interface AnalyticsConfig {
 export class AnalyticsService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
-  private readonly baseUrl = `${environment.apiUrl}/analytics`;
+  private readonly environmentService = inject(EnvironmentService);
+  private readonly baseUrl = `${this.environmentService.apiUrl}/analytics`;
 
   // State management
   private readonly eventsSubject = new BehaviorSubject<AnalyticsEvent[]>([]);

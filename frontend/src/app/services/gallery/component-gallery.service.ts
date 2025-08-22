@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
 import { map, catchError, tap, delay, debounceTime } from 'rxjs/operators';
 
-import { environment } from '@environments/environment';
+import { EnvironmentService } from '../core/environment.service';
 import { NotificationService } from '../notification/notification.service';
 
 export interface GalleryComponent {
@@ -119,8 +119,9 @@ export interface FavoriteComponent {
 export class ComponentGalleryService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
+  private readonly environmentService = inject(EnvironmentService);
   
-  private readonly baseUrl = `${environment.apiUrl}/gallery`;
+  private readonly baseUrl = `${this.environmentService.apiUrl}/gallery`;
   
   // State management
   private readonly componentsSubject = new BehaviorSubject<GalleryComponent[]>([]);

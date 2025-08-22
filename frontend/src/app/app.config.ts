@@ -32,6 +32,9 @@ import { AICopilotStateService } from './services/ai/ai-copilot-state.service';
 import { SeoService } from './services/seo/seo.service';
 import { GoogleAnalyticsService } from './services/analytics/google-analytics.service';
 
+// Core Services
+import { EnvironmentService } from './services/core/environment.service';
+
 // Lottie player factory
 export function playerFactory() {
   return import('lottie-web');
@@ -64,6 +67,9 @@ export const appConfig: ApplicationConfig = {
     AICopilotService,
     AICodeGeneratorService,
     AICopilotStateService,
+    
+    // Core Services
+    EnvironmentService,
     
     // SEO Service
     SeoService,

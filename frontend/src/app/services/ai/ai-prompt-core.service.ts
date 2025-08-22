@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
 import { map, catchError, tap, finalize, timeout, delay } from 'rxjs/operators';
 
-import { environment } from '@environments/environment';
+import { EnvironmentService } from '../core/environment.service';
 import { AIPrompt, AIResponse, AISuggestion, AIModel } from '@app/models/ai.model';
 import { NotificationService } from '../notification/notification.service';
 
@@ -13,8 +13,9 @@ import { NotificationService } from '../notification/notification.service';
 export class AIPromptCoreService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
+  private readonly environmentService = inject(EnvironmentService);
   
-  private readonly baseUrl = `${environment.apiUrl}/ai/prompt`;
+  private readonly baseUrl = `${this.environmentService.apiUrl}/ai/prompt`;
   
   // State management
   private readonly promptHistorySubject = new BehaviorSubject<AIPrompt[]>([]);

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, delay } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 
-import { environment } from '@environments/environment';
+import { EnvironmentService } from '../core/environment.service';
 import { AIDiff, DiffChange } from '@app/models/ai.model';
 import { NotificationService } from '../notification/notification.service';
 
@@ -65,8 +65,9 @@ export interface DiffResult {
 export class AIDiffService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
+  private readonly environmentService = inject(EnvironmentService);
   
-  private readonly baseUrl = `${environment.apiUrl}/ai/diff`;
+  private readonly baseUrl = `${this.environmentService.apiUrl}/ai/diff`;
   
   // State management
   private readonly currentDiffSubject = new BehaviorSubject<AIDiff | null>(null);

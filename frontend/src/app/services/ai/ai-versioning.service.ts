@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, delay } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 
-import { environment } from '@environments/environment';
+import { EnvironmentService } from '../core/environment.service';
 import { NotificationService } from '../notification/notification.service';
 
 export interface ComponentVersion {
@@ -105,8 +105,9 @@ export interface MergeConflict {
 export class AIVersioningService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
+  private readonly environmentService = inject(EnvironmentService);
   
-  private readonly baseUrl = `${environment.apiUrl}/ai/versioning`;
+  private readonly baseUrl = `${this.environmentService.apiUrl}/ai/versioning`;
   
   // State management
   private readonly versionsSubject = new BehaviorSubject<ComponentVersion[]>([]);

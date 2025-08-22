@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, BehaviorSubject, throwError, timer } from 'rxjs';
 import { map, catchError, tap, switchMap } from 'rxjs/operators';
 
-import { environment } from '@environments/environment';
+import { EnvironmentService } from '../core/environment.service';
 import { 
   User, 
   LoginRequest, 
@@ -27,8 +27,9 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly notificationService = inject(NotificationService);
   private readonly encryptionService = inject(EncryptionService);
+  private readonly environmentService = inject(EnvironmentService);
   
-  private readonly baseUrl = `${environment.apiUrl}/auth`;
+  private readonly baseUrl = `${this.environmentService.apiUrl}/auth`;
   
   // Reactive state using signals
   private readonly currentUserSubject = new BehaviorSubject<User | null>(null);
@@ -63,7 +64,7 @@ export class AuthService {
       console.log('🔐 Starting synchronous auth initialization...');
       
       // Check regular storage first for immediate state
-      const regularToken = localStorage.getItem(environment.auth.tokenKey);
+      const regularToken = localStorage.getItem(this.environmentService.config.auth.tokenKey);
       if (regularToken && this.isTokenValid(regularToken)) {
         console.log('✅ Found valid token in regular storage');
         this.setAuthenticationState(true);
@@ -156,7 +157,7 @@ export class AuthService {
   private async initializeAuthFallbackAsync(): Promise<void> {
     console.log('🔄 Using fallback authentication initialization');
     
-    const token = localStorage.getItem(environment.auth.tokenKey);
+    const token = localStorage.getItem(this.environmentService.config.auth.tokenKey);
     if (token && this.isTokenValid(token)) {
       console.log('✅ Valid token found in regular storage');
       this.setAuthenticationState(true);
@@ -283,13 +284,13 @@ export class AuthService {
       this.encryptionService.removeSecureItem('refresh_token');
       
       // Clear fallback storage
-      localStorage.removeItem(environment.auth.tokenKey);
-      localStorage.removeItem(environment.auth.refreshTokenKey);
+      localStorage.removeItem(this.environmentService.config.auth.tokenKey);
+      localStorage.removeItem(this.environmentService.config.auth.refreshTokenKey);
     } catch (error) {
       console.error('Error clearing auth state:', error);
       // Fallback to clearing regular storage
-      localStorage.removeItem(environment.auth.tokenKey);
-      localStorage.removeItem(environment.auth.refreshTokenKey);
+      localStorage.removeItem(this.environmentService.config.auth.tokenKey);
+      localStorage.removeItem(this.environmentService.config.auth.refreshTokenKey);
     }
   }
 
@@ -414,11 +415,11 @@ export class AuthService {
       if (this.encryptionService.isSecureStorageAvailable()) {
         return await this.encryptionService.getSecureItem('refresh_token');
       } else {
-        return localStorage.getItem(environment.auth.refreshTokenKey);
+        return localStorage.getItem(this.environmentService.config.auth.refreshTokenKey);
       }
     } catch (error) {
       console.error('Failed to get stored refresh token:', error);
-      return localStorage.getItem(environment.auth.refreshTokenKey);
+      return localStorage.getItem(this.environmentService.config.auth.refreshTokenKey);
     }
   }
 
@@ -482,8 +483,8 @@ export class AuthService {
    */
   private async handleAuthSuccessFallback(authResponse: AuthResponse): Promise<void> {
     // Store tokens in regular storage
-    localStorage.setItem(environment.auth.tokenKey, authResponse.accessToken);
-    localStorage.setItem(environment.auth.refreshTokenKey, authResponse.refreshToken);
+    localStorage.setItem(this.environmentService.config.auth.tokenKey, authResponse.accessToken);
+    localStorage.setItem(this.environmentService.config.auth.refreshTokenKey, authResponse.refreshToken);
     
     // Update state FIRST
     this.updateCurrentUser(authResponse.user);
@@ -511,14 +512,14 @@ export class AuthService {
         await this.encryptionService.setSecureItem('refresh_token', refreshToken);
       } else {
         // Fallback to regular storage
-        localStorage.setItem(environment.auth.tokenKey, accessToken);
-        localStorage.setItem(environment.auth.refreshTokenKey, refreshToken);
+        localStorage.setItem(this.environmentService.config.auth.tokenKey, accessToken);
+        localStorage.setItem(this.environmentService.config.auth.refreshTokenKey, refreshToken);
       }
     } catch (error) {
       console.error('Failed to store tokens securely:', error);
       // Fallback to regular storage
-      localStorage.setItem(environment.auth.tokenKey, accessToken);
-      localStorage.setItem(environment.auth.refreshTokenKey, refreshToken);
+      localStorage.setItem(this.environmentService.config.auth.tokenKey, accessToken);
+      localStorage.setItem(this.environmentService.config.auth.refreshTokenKey, refreshToken);
     }
   }
 
@@ -530,11 +531,11 @@ export class AuthService {
       if (this.encryptionService.isSecureStorageAvailable()) {
         return await this.encryptionService.getSecureItem('access_token');
       } else {
-        return localStorage.getItem(environment.auth.tokenKey);
+        return localStorage.getItem(this.environmentService.config.auth.tokenKey);
       }
     } catch (error) {
       console.error('Failed to get stored token:', error);
-      return localStorage.getItem(environment.auth.tokenKey);
+      return localStorage.getItem(this.environmentService.config.auth.tokenKey);
     }
   }
 
@@ -576,7 +577,7 @@ export class AuthService {
 
       const payload = this.decodeToken(token);
       const expiresAt = payload.exp * 1000;
-      const refreshAt = expiresAt - environment.auth.tokenExpirationBuffer;
+      const refreshAt = expiresAt - this.environmentService.config.auth.tokenExpirationBuffer;
       const delay = refreshAt - Date.now();
 
       if (delay > 0) {

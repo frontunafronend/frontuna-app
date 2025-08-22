@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { AISuggestion, AICodeEdit, AITestingResult } from '@app/models/ai.model';
-import { environment } from '@environments/environment';
+import { EnvironmentService } from '../core/environment.service';
 import { NotificationService } from '../notification/notification.service';
 
 @Injectable({
@@ -12,8 +12,9 @@ import { NotificationService } from '../notification/notification.service';
 export class AICopilotService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
+  private readonly environmentService = inject(EnvironmentService);
   
-  private readonly baseUrl = `${environment.apiUrl}/ai/copilot`;
+  private readonly baseUrl = `${this.environmentService.apiUrl}/ai/copilot`;
   
   private readonly suggestionsSubject = new BehaviorSubject<AISuggestion[]>([]);
   private readonly activeSuggestionSubject = new BehaviorSubject<AISuggestion | null>(null);
