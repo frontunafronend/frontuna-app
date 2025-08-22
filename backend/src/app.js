@@ -45,6 +45,8 @@ const corsOptions = {
     const allowedOrigins = [
       process.env.FRONTEND_URL || 'http://localhost:4200',
       'http://localhost:4200',
+      'https://frontuna.com',
+      'https://www.frontuna.com',
       'https://frontuna.ai',
       'https://www.frontuna.ai'
     ];
