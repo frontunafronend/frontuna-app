@@ -17,7 +17,9 @@
     "backup": "bash scripts/backup.sh",
     "etl": "ts-node --transpile-only scripts/mongo-to-neon.ts",
     "audit": "ts-node --transpile-only scripts/audit-data.ts",
-    "docs": "swagger-jsdoc -d swaggerDef.js src/routes/*.js -o docs/swagger.json"
+    "docs": "swagger-jsdoc -d swaggerDef.js src/routes/*.js -o docs/swagger.json",
+    "copilot-guard": "node ai-copilot-guard.js",
+    "copilot-scan": "node ai-copilot-guard.js"
   },
   "keywords": [
     "ai",
