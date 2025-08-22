@@ -1,23 +1,37 @@
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { Pool } = require('pg');
 require('dotenv').config();
+
+// Optional dependencies - only load if available
+let bcrypt, Pool;
+try {
+  bcrypt = require('bcryptjs');
+  Pool = require('pg').Pool;
+} catch (error) {
+  console.warn('⚠️ Optional dependencies not available:', error.message);
+}
 
 // Initialize Express app
 const app = express();
 
-// Database connection (Neon PostgreSQL)
+// Database connection (Neon PostgreSQL) - Safe initialization
 let db;
-if (process.env.DATABASE_URL) {
-  db = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-  });
-  console.log('🗄️ Connected to Neon PostgreSQL database');
+let dbConnected = false;
+
+if (process.env.DATABASE_URL && Pool) {
+  try {
+    db = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    });
+    dbConnected = true;
+    console.log('🗄️ Connected to Neon PostgreSQL database');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    console.log('🔄 Falling back to demo mode');
+  }
 } else {
-  console.warn('⚠️ No DATABASE_URL found, using demo mode');
+  console.warn('⚠️ No DATABASE_URL or pg module found, using demo mode');
 }
 
 // CORS Configuration - Comprehensive with debug logging (like working test server)
@@ -76,7 +90,8 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    database: !!process.env.DATABASE_URL,
+    database: dbConnected,
+    databaseUrl: !!process.env.DATABASE_URL,
     cors: {
       allowedOrigins,
       permissive: process.env.CORS_DEBUG === 'permissive',
@@ -300,7 +315,13 @@ app.post('/api/auth/signup', async (req, res) => {
       });
     }
 
-    // Hash password
+    // Hash password (safe bcrypt usage)
+    if (!bcrypt) {
+      return res.status(500).json({
+        success: false,
+        message: 'Password hashing not available'
+      });
+    }
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -423,7 +444,13 @@ app.post('/api/auth/login', async (req, res) => {
 
     const user = result.rows[0];
 
-    // Verify password
+    // Verify password (safe bcrypt usage)
+    if (!bcrypt) {
+      return res.status(500).json({
+        success: false,
+        message: 'Password verification not available'
+      });
+    }
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
       return res.status(401).json({
