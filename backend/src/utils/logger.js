@@ -52,47 +52,50 @@ if (process.env.NODE_ENV !== 'production') {
   );
 }
 
-// File transports for all environments
-const logDir = path.join(__dirname, '../../logs');
+// File transports - disabled for serverless environments like Vercel
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  const logDir = path.join(__dirname, '../../logs');
 
-// Error log - only error level
-transports.push(
-  new DailyRotateFile({
-    level: 'error',
-    filename: path.join(logDir, 'error-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    maxSize: '20m',
-    maxFiles: '14d',
-    format: format
-  })
-);
+  // Error log - only error level (only in non-serverless environments)
+  transports.push(
+    new DailyRotateFile({
+      level: 'error',
+      filename: path.join(logDir, 'error-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '14d',
+      format: format
+    })
+  );
+}
 
-// Combined log - all levels
-transports.push(
-  new DailyRotateFile({
-    level: process.env.LOG_LEVEL || 'info',
-    filename: path.join(logDir, 'combined-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    maxSize: '20m',
-    maxFiles: '30d',
-    format: format
-  })
-);
+  // Combined log - all levels
+  transports.push(
+    new DailyRotateFile({
+      level: process.env.LOG_LEVEL || 'info',
+      filename: path.join(logDir, 'combined-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '30d',
+      format: format
+    })
+  );
 
-// HTTP access log
-transports.push(
-  new DailyRotateFile({
-    level: 'http',
-    filename: path.join(logDir, 'access-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    maxSize: '20m',
-    maxFiles: '30d',
-    format: format
-  })
-);
+  // HTTP access log
+  transports.push(
+    new DailyRotateFile({
+      level: 'http',
+      filename: path.join(logDir, 'access-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '30d',
+      format: format
+    })
+  );
+}
 
 // Create logger instance
 const logger = winston.createLogger({
