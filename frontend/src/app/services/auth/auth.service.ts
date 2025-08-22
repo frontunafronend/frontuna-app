@@ -561,7 +561,7 @@ export class AuthService {
       
       return isValid;
     } catch (error) {
-      console.warn('⚠️ Token validation failed, treating as valid for demo:', error.message);
+      console.warn('⚠️ Token validation failed, treating as valid for demo:', error instanceof Error ? error.message : error);
       // Be tolerant - assume token is valid if we can't validate it
       return true;
     }
@@ -614,12 +614,13 @@ export class AuthService {
 
       return payload;
     } catch (error) {
-      console.warn('⚠️ Token decode failed, treating as valid for demo:', error.message);
+      console.warn('⚠️ Token decode failed, treating as valid for demo:', error instanceof Error ? error.message : error);
       
       // Return a safe fallback payload for demo tokens
       return {
         sub: 'demo-user',
         email: 'demo@example.com',
+        role: 'user',
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year from now
       };
@@ -668,7 +669,7 @@ export class AuthService {
         // Don't logout immediately - let the user continue until they make a request
       }
     } catch (error) {
-      console.warn('⚠️ Failed to schedule token refresh, but continuing:', error.message);
+      console.warn('⚠️ Failed to schedule token refresh, but continuing:', error instanceof Error ? error.message : error);
       // Don't logout on scheduling errors - be more tolerant
     }
   }

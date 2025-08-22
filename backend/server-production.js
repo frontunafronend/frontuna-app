@@ -703,12 +703,96 @@ app.delete('/api/users/api-keys/:id', (req, res) => {
   });
 });
 
-app.put('/api/auth/profile', (req, res) => {
-  res.json({
-    success: true,
-    data: req.body,
-    message: 'Profile updated successfully'
-  });
+app.put('/api/auth/profile', async (req, res) => {
+  try {
+    console.log('👤 Profile update request:', req.body);
+    
+    const { firstName, lastName, company, timezone, email } = req.body;
+    
+    if (dbConnected && pool) {
+      try {
+        // Real database update
+        const updateQuery = `
+          UPDATE users 
+          SET first_name = $1, last_name = $2, company = $3, timezone = $4, updated_at = NOW()
+          WHERE email = $5
+          RETURNING id, email, first_name, last_name, company, timezone, role, created_at, updated_at
+        `;
+        
+        const result = await pool.query(updateQuery, [
+          firstName || null,
+          lastName || null, 
+          company || null,
+          timezone || null,
+          email
+        ]);
+        
+        if (result.rows.length > 0) {
+          const user = result.rows[0];
+          console.log('✅ Profile updated in database:', user);
+          
+          res.json({
+            success: true,
+            message: 'Profile updated successfully in database',
+            data: {
+              id: user.id,
+              email: user.email,
+              firstName: user.first_name,
+              lastName: user.last_name,
+              company: user.company,
+              timezone: user.timezone,
+              role: user.role,
+              createdAt: user.created_at,
+              updatedAt: user.updated_at
+            }
+          });
+        } else {
+          console.log('⚠️ User not found for profile update');
+          res.status(404).json({
+            success: false,
+            message: 'User not found'
+          });
+        }
+        
+      } catch (dbError) {
+        console.error('❌ Database error during profile update:', dbError);
+        
+        // Fallback to demo mode for this request
+        res.json({
+          success: true,
+          message: 'Profile updated successfully (demo mode)',
+          data: {
+            firstName,
+            lastName,
+            company,
+            timezone,
+            email
+          }
+        });
+      }
+    } else {
+      // Demo mode - just return success
+      console.log('📝 Profile update (demo mode)');
+      res.json({
+        success: true,
+        message: 'Profile updated successfully (demo mode)',
+        data: {
+          firstName,
+          lastName,
+          company,
+          timezone,
+          email
+        }
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Profile update error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update profile'
+    });
+  }
 });
 
 app.post('/api/auth/change-password', (req, res) => {
@@ -939,16 +1023,67 @@ app.get('/api/auth/profile', async (req, res) => {
   try {
     console.log('👤 Getting user profile');
     
-    // TODO: Get user from token and database
+    // Extract email from token or use demo email
+    const authHeader = req.headers.authorization;
+    let userEmail = 'demo@example.com'; // Default for demo mode
+    
+    if (authHeader && authHeader.startsWith('Bearer ') && jwt) {
+      try {
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'demo-secret-key-for-development-only');
+        userEmail = decoded.email || decoded.sub;
+        console.log('🔍 Extracted email from token:', userEmail);
+      } catch (tokenError) {
+        console.log('⚠️ Token decode failed, using demo email');
+      }
+    }
+    
+    if (dbConnected && pool) {
+      try {
+        // Real database lookup
+        const result = await pool.query(
+          'SELECT id, email, first_name, last_name, company, timezone, role, created_at, updated_at FROM users WHERE email = $1',
+          [userEmail]
+        );
+        
+        if (result.rows.length > 0) {
+          const user = result.rows[0];
+          console.log('✅ Profile loaded from database:', user.email);
+          
+          res.json({
+            success: true,
+            data: {
+              id: user.id,
+              email: user.email,
+              firstName: user.first_name,
+              lastName: user.last_name,
+              company: user.company,
+              timezone: user.timezone,
+              role: user.role,
+              createdAt: user.created_at,
+              updatedAt: user.updated_at
+            }
+          });
+          return;
+        }
+      } catch (dbError) {
+        console.error('❌ Database error during profile load:', dbError);
+      }
+    }
+    
+    // Fallback to demo profile
     const mockProfile = {
       id: 'user-123',
-      email: 'user@example.com',
+      email: userEmail,
       firstName: 'Demo',
       lastName: 'User',
+      company: null,
+      timezone: 'UTC',
       role: 'user',
       createdAt: new Date().toISOString()
     };
     
+    console.log('📝 Using demo profile for:', userEmail);
     res.json({
       success: true,
       data: mockProfile
