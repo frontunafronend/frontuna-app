@@ -24,14 +24,50 @@ if (process.env.DATABASE_URL && Pool) {
       connectionString: process.env.DATABASE_URL,
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
     });
-    dbConnected = true;
-    console.log('🗄️ Connected to Neon PostgreSQL database');
+    
+    // Test the connection and create tables if needed
+    db.query('SELECT NOW()', (err, result) => {
+      if (err) {
+        console.error('❌ Database connection test failed:', err.message);
+        dbConnected = false;
+      } else {
+        console.log('🗄️ Connected to Neon PostgreSQL database at:', result.rows[0].now);
+        dbConnected = true;
+        
+        // Create users table if it doesn't exist
+        createUsersTable();
+      }
+    });
+    
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
     console.log('🔄 Falling back to demo mode');
+    dbConnected = false;
   }
 } else {
   console.warn('⚠️ No DATABASE_URL or pg module found, using demo mode');
+}
+
+// Create users table if it doesn't exist
+async function createUsersTable() {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        first_name VARCHAR(100),
+        last_name VARCHAR(100),
+        role VARCHAR(50) DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        last_login_at TIMESTAMP
+      )
+    `);
+    console.log('✅ Users table ready');
+  } catch (error) {
+    console.error('❌ Failed to create users table:', error.message);
+  }
 }
 
 // CORS Configuration - Comprehensive with debug logging (like working test server)
