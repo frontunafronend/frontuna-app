@@ -4,6 +4,7 @@ import { NotificationService } from '../../services/notification/notification.se
 import { AIPromptCoreService } from '../../services/ai/ai-prompt-core.service';
 import { EditorStateService } from '../../services/editor-state.service';
 import { AnalyticsService } from '../../services/analytics/analytics.service';
+import { ProfessionalLoaderComponent } from '../../components/ui/professional-loader/professional-loader.component';
 
 interface ChatMessage {
   id: string;
@@ -17,17 +18,11 @@ interface ChatMessage {
 @Component({
   selector: 'app-ai-copilot',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ProfessionalLoaderComponent],
   template: `
-    <!-- Loading Overlay -->
-    <div *ngIf="isPageLoading()" class="page-loading-overlay">
-      <div class="loading-spinner">
-        <div class="spinner"></div>
-        <p>Loading AI Copilot...</p>
-      </div>
-    </div>
 
-    <div class="ai-copilot-page" [class.loading]="isPageLoading()">
+
+    <div class="ai-copilot-page">
       <!-- Header -->
       <div class="page-header">
         <div class="header-content">
@@ -116,23 +111,16 @@ interface ChatMessage {
                         </div>
                       </div>
 
-            <!-- Loading Message -->
+            <!-- Professional AI Thinking Loader -->
             <div *ngIf="isGenerating()" class="chat-message ai-message loading-message">
-              <div class="message-avatar">
-                <span class="loading-icon">🤖</span>
-              </div>
               <div class="message-content">
-                <div class="message-text">
-                  <div class="typing-indicator">
-                    <span class="typing-dot"></span>
-                    <span class="typing-dot"></span>
-                    <span class="typing-dot"></span>
-                  </div>
-                  <span class="loading-text">AI is thinking...</span>
-                </div>
-                <div class="message-time">Now</div>
-                        </div>
-                      </div>
+                <app-professional-loader 
+                  type="thinking" 
+                  message="AI is thinking..." 
+                  size="small">
+                </app-professional-loader>
+              </div>
+            </div>
                     </div>
 
                     <!-- Chat Input -->
@@ -250,9 +238,6 @@ export class AICopilotComponent implements OnInit {
   }
 
   // Helper methods
-  isPageLoading(): boolean {
-    return false; // Simplified - no complex loading logic
-  }
 
   getStatusText(): string {
     if (this.isGenerating()) return 'Processing...';

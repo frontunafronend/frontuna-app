@@ -16,8 +16,7 @@ export const environment = {
     enableAnalytics: true,
     enableWebSocket: true,
     enableTooltips: true,
-    enableAnimations: true,
-    enableMockData: false
+    enableAnimations: true
   },
   
   // Google Analytics

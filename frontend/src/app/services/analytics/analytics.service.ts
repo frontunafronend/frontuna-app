@@ -327,10 +327,6 @@ export class AnalyticsService {
   getMetrics(dateRange?: { start: Date; end: Date }): Observable<AnalyticsMetrics> {
     console.log('📊 Analytics: Fetching metrics...', dateRange);
 
-    if (environment.features.enableMockData) {
-      return this.mockGetMetrics(dateRange);
-    }
-
     const params: { [key: string]: string } = {};
     if (dateRange) {
       params['start'] = dateRange.start.toISOString();
@@ -353,9 +349,6 @@ export class AnalyticsService {
    * Get user journey
    */
   getUserJourney(userId: string, sessionId?: string): Observable<UserJourney[]> {
-    if (environment.features.enableMockData) {
-      return this.mockGetUserJourney(userId, sessionId);
-    }
 
     const params: { [key: string]: string } = {};
     if (sessionId) {
@@ -368,9 +361,6 @@ export class AnalyticsService {
    * Get feature usage analytics
    */
   getFeatureUsage(timeframe: 'day' | 'week' | 'month' | 'year' = 'week'): Observable<FeatureUsage[]> {
-    if (environment.features.enableMockData) {
-      return this.mockGetFeatureUsage(timeframe);
-    }
 
     return this.http.get<FeatureUsage[]>(`${this.baseUrl}/features`, { 
       params: { timeframe } 
@@ -401,9 +391,6 @@ export class AnalyticsService {
    * Export analytics data
    */
   exportData(format: 'json' | 'csv' = 'json'): Observable<Blob> {
-    if (environment.features.enableMockData) {
-      return this.mockExportData(format);
-    }
 
     return this.http.get(`${this.baseUrl}/export`, {
       params: { format },
@@ -488,11 +475,6 @@ export class AnalyticsService {
     const eventsToSend = [...this.eventQueue];
     this.eventQueue = [];
 
-    if (environment.features.enableMockData) {
-      console.log('📊 Analytics: Mock batch send:', eventsToSend);
-      return;
-    }
-
     this.http.post(`${this.baseUrl}/batch`, { events: eventsToSend })
       .pipe(
         catchError(error => {
@@ -513,10 +495,6 @@ export class AnalyticsService {
   }
 
   private sendEventImmediately(event: AnalyticsEvent): void {
-    if (environment.features.enableMockData) {
-      console.log('📊 Analytics: Mock immediate send:', event);
-      return;
-    }
 
     this.http.post(`${this.baseUrl}/event`, event)
       .pipe(

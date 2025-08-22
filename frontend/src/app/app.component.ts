@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '@app/services/auth/auth.service';
-import { LoadingService } from '@app/services/shared/loading.service';
+
 import { SeoService } from '@app/services/seo/seo.service';
 import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics.service';
 import { MatButtonModule } from '@angular/material/button';
@@ -27,7 +27,7 @@ import { FooterComponent } from './components/layout/footer/footer.component';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  private readonly loadingService = inject(LoadingService);
+
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   
@@ -36,7 +36,6 @@ export class AppComponent implements OnInit {
   private readonly analyticsService = inject(GoogleAnalyticsService);
 
   // Reactive state
-  public readonly isLoading = this.loadingService.isLoading;
   public readonly showScrollTop = signal(false);
 
   title = 'Frontuna.ai';

@@ -1097,8 +1097,8 @@ export class HeaderComponent {
   public readonly notificationCount = computed(() => this.notifications().filter((n: any) => !n.isRead).length);
   public readonly isMobileMenuOpen = this._isMobileMenuOpen.asReadonly();
 
-  logout(): void {
-    this.authService.logout();
+  async logout(): Promise<void> {
+    await this.authService.logout();
   }
 
   toggleMobileMenu(): void {

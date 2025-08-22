@@ -22,7 +22,6 @@ import { errorInterceptor } from './interceptors/error.interceptor';
 import { loadingInterceptor } from './interceptors/loading.interceptor';
 import { environment } from '../environments/environment';
 import { AuthService } from './services/auth/auth.service';
-import { AuthMockService } from './services/auth/auth-mock.service';
 
 // AI Services
 import { AICopilotService } from './services/ai/ai-copilot.service';
@@ -38,7 +37,7 @@ export function playerFactory() {
 }
 
 // Auth initialization factory
-export function initializeAuth(authService: AuthService | AuthMockService) {
+export function initializeAuth(authService: AuthService) {
   return () => authService.initializeForApp();
 }
 
@@ -51,20 +50,12 @@ export function initializeSeo(seoService: SeoService) {
   };
 }
 
-// Auth service factory - use mock service when mock data is enabled
-export function authServiceFactory() {
-  return environment.features.enableMockData ? new AuthMockService() : undefined;
-}
+
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Conditional Auth Service Provider
-    ...(environment.features.enableMockData ? [
-      {
-        provide: AuthService,
-        useClass: AuthMockService
-      }
-    ] : []),
+    // Auth Service
+    AuthService,
     
     // AI Services
     AICopilotService,

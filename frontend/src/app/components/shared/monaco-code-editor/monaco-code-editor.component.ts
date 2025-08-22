@@ -188,45 +188,88 @@ export class MonacoCodeEditorComponent implements OnInit, OnDestroy, OnChanges {
         return;
       }
 
-      const script = document.createElement('script');
-      script.src = 'assets/monaco-editor/min/vs/loader.js';
-      script.onload = () => {
-        (window as any).require.config({ 
-          paths: { 
-            vs: 'assets/monaco-editor/min/vs' 
-          },
-          'vs/nls': {
-            availableLanguages: {
-              '*': 'en'
-            }
-          }
-        });
+      // Try CDN first, then fallback to local assets
+      const tryLoadMonaco = (scriptSrc: string, configPaths: string, isLocal: boolean = false) => {
+        const script = document.createElement('script');
+        script.src = scriptSrc;
         
-        // Set Monaco environment with CDN paths
-        (window as any).MonacoEnvironment = {
-          getWorkerUrl: function (moduleId: string, label: string) {
-            if (label === 'json') {
-              return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/json/json.worker.js';
+        script.onload = () => {
+          try {
+            (window as any).require.config({ 
+              paths: { 
+                vs: configPaths
+              },
+              'vs/nls': {
+                availableLanguages: {
+                  '*': 'en'
+                }
+              }
+            });
+            
+            // Set Monaco environment
+            (window as any).MonacoEnvironment = {
+              getWorkerUrl: function (moduleId: string, label: string) {
+                const basePath = isLocal ? 'assets/monaco-editor/min/vs' : 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs';
+                
+                if (label === 'json') {
+                  return `${basePath}/language/json/json.worker.js`;
+                }
+                if (label === 'css' || label === 'scss' || label === 'less') {
+                  return `${basePath}/language/css/css.worker.js`;
+                }
+                if (label === 'html' || label === 'handlebars' || label === 'razor') {
+                  return `${basePath}/language/html/html.worker.js`;
+                }
+                if (label === 'typescript' || label === 'javascript') {
+                  return `${basePath}/language/typescript/ts.worker.js`;
+                }
+                return `${basePath}/editor/editor.worker.js`;
+              }
+            };
+            
+            (window as any).require(['vs/editor/editor.main'], () => {
+              resolve();
+            }, (error: any) => {
+              console.error('Failed to load Monaco editor main:', error);
+              if (!isLocal) {
+                // Try local fallback
+                document.head.removeChild(script);
+                tryLoadMonaco('assets/monaco-editor/min/vs/loader.js', 'assets/monaco-editor/min/vs', true);
+              } else {
+                reject(new Error('Failed to load Monaco Editor from both CDN and local assets'));
+              }
+            });
+          } catch (error) {
+            console.error('Monaco configuration error:', error);
+            if (!isLocal) {
+              // Try local fallback
+              document.head.removeChild(script);
+              tryLoadMonaco('assets/monaco-editor/min/vs/loader.js', 'assets/monaco-editor/min/vs', true);
+            } else {
+              reject(new Error('Failed to configure Monaco Editor'));
             }
-            if (label === 'css' || label === 'scss' || label === 'less') {
-              return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/css/css.worker.js';
-            }
-            if (label === 'html' || label === 'handlebars' || label === 'razor') {
-              return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/html/html.worker.js';
-            }
-            if (label === 'typescript' || label === 'javascript') {
-              return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/typescript/ts.worker.js';
-            }
-            return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.worker.js';
           }
         };
         
-        (window as any).require(['vs/editor/editor.main'], () => {
-          resolve();
-        });
+        script.onerror = () => {
+          console.error('Failed to load Monaco script from:', scriptSrc);
+          if (!isLocal) {
+            // Try local fallback
+            document.head.removeChild(script);
+            tryLoadMonaco('assets/monaco-editor/min/vs/loader.js', 'assets/monaco-editor/min/vs', true);
+          } else {
+            reject(new Error('Failed to load Monaco Editor from both CDN and local assets'));
+          }
+        };
+        
+        document.head.appendChild(script);
       };
-      script.onerror = () => reject(new Error('Failed to load Monaco Editor'));
-      document.head.appendChild(script);
+
+      // Start with CDN
+      tryLoadMonaco(
+        'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js',
+        'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs'
+      );
     });
   }
 

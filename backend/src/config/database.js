@@ -1,74 +1,49 @@
-const mongoose = require('mongoose');
 const { createLogger } = require('../utils/logger');
 
 const logger = createLogger('database');
 
-// MongoDB connection options
-const options = {
-  maxPoolSize: 10, // Maintain up to 10 socket connections
-  serverSelectionTimeoutMS: 2000, // Keep trying to send operations for 2 seconds
-  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-};
-
 /**
- * Connect to MongoDB database
+ * Connect to database (PostgreSQL via Prisma)
  */
 async function connectDatabase() {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/frontuna-ai';
+    // Import Prisma client
+    const prisma = require('../lib/prisma').default;
     
-    logger.info('Connecting to MongoDB...', { uri: mongoUri.replace(/:[^:@]*@/, ':***@') });
+    // Test the connection
+    await prisma.$connect();
     
-    // Set shorter timeout for faster failure
-    const connectionOptions = {
-      ...options,
-      serverSelectionTimeoutMS: 2000, // 2 seconds timeout
-      connectTimeoutMS: 2000
-    };
-    
-    await mongoose.connect(mongoUri, connectionOptions);
-    
-    logger.info('MongoDB connected successfully', {
-      host: mongoose.connection.host,
-      port: mongoose.connection.port,
-      database: mongoose.connection.name
-    });
-
-    // Connection event handlers
-    mongoose.connection.on('error', (error) => {
-      logger.error('MongoDB connection error:', error);
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      logger.warn('MongoDB disconnected');
-    });
-
-    mongoose.connection.on('reconnected', () => {
-      logger.info('MongoDB reconnected');
-    });
+    logger.info('Database connected successfully via Prisma');
 
     // Handle application shutdown
     process.on('SIGINT', async () => {
-      await mongoose.connection.close();
-      logger.info('MongoDB connection closed due to application termination');
+      await prisma.$disconnect();
+      logger.info('Database connection closed due to application termination');
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', async () => {
+      await prisma.$disconnect();
+      logger.info('Database connection closed due to application termination');
       process.exit(0);
     });
 
   } catch (error) {
-    logger.error('Failed to connect to MongoDB:', error);
+    logger.error('Failed to connect to database:', error);
     throw error;
   }
 }
 
 /**
- * Disconnect from MongoDB
+ * Disconnect from database
  */
 async function disconnectDatabase() {
   try {
-    await mongoose.connection.close();
-    logger.info('MongoDB connection closed');
+    const prisma = require('../lib/prisma').default;
+    await prisma.$disconnect();
+    logger.info('Database connection closed');
   } catch (error) {
-    logger.error('Error closing MongoDB connection:', error);
+    logger.error('Error closing database connection:', error);
     throw error;
   }
 }
@@ -77,25 +52,25 @@ async function disconnectDatabase() {
  * Get database connection status
  */
 function getDatabaseStatus() {
-  const states = {
-    0: 'disconnected',
-    1: 'connected',
-    2: 'connecting',
-    3: 'disconnecting'
-  };
-
-  return {
-    status: states[mongoose.connection.readyState] || 'unknown',
-    host: mongoose.connection.host,
-    port: mongoose.connection.port,
-    database: mongoose.connection.name,
-    collections: Object.keys(mongoose.connection.collections).length
-  };
+  try {
+    const prisma = require('../lib/prisma').default;
+    return {
+      status: 'connected',
+      type: 'postgresql',
+      provider: 'prisma'
+    };
+  } catch (error) {
+    return {
+      status: 'disconnected',
+      type: 'postgresql',
+      provider: 'prisma',
+      error: error.message
+    };
+  }
 }
 
 module.exports = {
   connectDatabase,
   disconnectDatabase,
-  getDatabaseStatus,
-  mongoose
+  getDatabaseStatus
 };

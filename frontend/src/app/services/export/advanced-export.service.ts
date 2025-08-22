@@ -105,10 +105,6 @@ export class AdvancedExportService {
   exportComponents(config: ExportConfig): Observable<ExportResult> {
     console.log('🚀 Advanced Export: Starting export with config:', config);
 
-    if (environment.features.enableMockData) {
-      return this.mockExportComponents(config);
-    }
-
     return this.http.post<ExportResult>(`${this.baseUrl}/advanced`, config)
       .pipe(
         tap(result => {
@@ -131,10 +127,6 @@ export class AdvancedExportService {
    */
   exportToCodeSandbox(config: ExportConfig): Observable<ExportResult> {
     console.log('📦 CodeSandbox Export: Creating sandbox...');
-
-    if (environment.features.enableMockData) {
-      return this.mockCodeSandboxExport(config);
-    }
 
     const sandboxConfig = this.buildCodeSandboxConfig(config);
     
@@ -160,10 +152,6 @@ export class AdvancedExportService {
   exportToStackBlitz(config: ExportConfig): Observable<ExportResult> {
     console.log('⚡ StackBlitz Export: Creating project...');
 
-    if (environment.features.enableMockData) {
-      return this.mockStackBlitzExport(config);
-    }
-
     const stackBlitzConfig = this.buildStackBlitzConfig(config);
     
     return this.http.post<ExportResult>(`${this.baseUrl}/stackblitz`, stackBlitzConfig)
@@ -188,10 +176,6 @@ export class AdvancedExportService {
   exportToGitHubGist(config: ExportConfig): Observable<ExportResult> {
     console.log('🐙 GitHub Gist Export: Creating gist...');
 
-    if (environment.features.enableMockData) {
-      return this.mockGitHubGistExport(config);
-    }
-
     const gistConfig = this.buildGitHubGistConfig(config);
     
     return this.http.post<ExportResult>(`${this.baseUrl}/github-gist`, gistConfig)
@@ -214,9 +198,6 @@ export class AdvancedExportService {
    * Get available export templates
    */
   getExportTemplates(framework: string): Observable<ExportTemplate[]> {
-    if (environment.features.enableMockData) {
-      return this.mockGetExportTemplates(framework);
-    }
 
     return this.http.get<ExportTemplate[]>(`${this.baseUrl}/templates/${framework}`);
   }

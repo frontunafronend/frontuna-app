@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ProfessionalLoaderComponent } from '@app/components/ui/professional-loader/professional-loader.component';
 
 import { AuthService } from '@app/services/auth/auth.service';
 import { SeoService } from '@app/services/seo/seo.service';
@@ -27,10 +27,22 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
     MatButtonModule,
     MatIconModule,
     MatCheckboxModule,
-    MatProgressSpinnerModule
+    ProfessionalLoaderComponent
   ],
   template: `
     <div class="auth-container">
+      <!-- Professional Loading Overlay -->
+      @if (isLoading()) {
+        <div class="loading-overlay">
+          <app-professional-loader 
+            type="processing" 
+            message="Signing you in..." 
+            subMessage="Please wait while we authenticate your account"
+            size="normal">
+          </app-professional-loader>
+        </div>
+      }
+      
       <div class="auth-card-container">
         <mat-card class="auth-card">
           <mat-card-header class="auth-header">
@@ -98,7 +110,6 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
                       class="auth-submit-btn"
                       [disabled]="loginForm.invalid || isLoading()">
                 @if (isLoading()) {
-                  <mat-spinner diameter="20"></mat-spinner>
                   <span>Signing In...</span>
                 } @else {
                   <mat-icon>login</mat-icon>
@@ -170,6 +181,27 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
       align-items: center;
       justify-content: center;
       padding: 2rem 1rem;
+      position: relative;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     .auth-card-container {

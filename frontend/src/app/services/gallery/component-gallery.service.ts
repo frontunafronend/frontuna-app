@@ -147,10 +147,6 @@ export class ComponentGalleryService {
     this.isLoadingSignal.set(true);
     this.currentFilterSignal.set(filter);
     
-    if (environment.features.enableMockData) {
-      return this.mockGetComponents(filter, page, limit);
-    }
-    
     const params: any = { page, limit, ...filter };
     if (filter.tags?.length) {
       params.tags = filter.tags.join(',');
@@ -183,10 +179,6 @@ export class ComponentGalleryService {
   getComponent(id: string): Observable<GalleryComponent> {
     console.log('🎨 Gallery Service: Getting component:', id);
     
-    if (environment.features.enableMockData) {
-      return this.mockGetComponent(id);
-    }
-    
     return this.http.get<GalleryComponent>(`${this.baseUrl}/components/${id}`)
       .pipe(
         tap(component => console.log('✅ Gallery Service: Component loaded:', component.name)),
@@ -212,10 +204,6 @@ export class ComponentGalleryService {
    */
   getFeaturedComponents(limit = 6): Observable<GalleryComponent[]> {
     console.log('🎨 Gallery Service: Getting featured components');
-    
-    if (environment.features.enableMockData) {
-      return this.mockGetFeaturedComponents(limit);
-    }
     
     return this.http.get<GalleryComponent[]>(`${this.baseUrl}/featured`, { params: { limit } })
       .pipe(
@@ -253,10 +241,6 @@ export class ComponentGalleryService {
   addToFavorites(componentId: string): Observable<void> {
     console.log('🎨 Gallery Service: Adding to favorites:', componentId);
     
-    if (environment.features.enableMockData) {
-      return this.mockAddToFavorites(componentId);
-    }
-    
     return this.http.post<void>(`${this.baseUrl}/favorites`, { componentId })
       .pipe(
         tap(() => {
@@ -278,10 +262,6 @@ export class ComponentGalleryService {
   removeFromFavorites(componentId: string): Observable<void> {
     console.log('🎨 Gallery Service: Removing from favorites:', componentId);
     
-    if (environment.features.enableMockData) {
-      return this.mockRemoveFromFavorites(componentId);
-    }
-    
     return this.http.delete<void>(`${this.baseUrl}/favorites/${componentId}`)
       .pipe(
         tap(() => {
@@ -302,10 +282,6 @@ export class ComponentGalleryService {
    */
   getFavorites(): Observable<FavoriteComponent[]> {
     console.log('🎨 Gallery Service: Getting favorites');
-    
-    if (environment.features.enableMockData) {
-      return this.mockGetFavorites();
-    }
     
     return this.http.get<FavoriteComponent[]>(`${this.baseUrl}/favorites`)
       .pipe(
@@ -332,10 +308,6 @@ export class ComponentGalleryService {
    */
   likeComponent(componentId: string): Observable<void> {
     console.log('🎨 Gallery Service: Liking component:', componentId);
-    
-    if (environment.features.enableMockData) {
-      return this.mockLikeComponent(componentId);
-    }
     
     return this.http.post<void>(`${this.baseUrl}/components/${componentId}/like`, {})
       .pipe(

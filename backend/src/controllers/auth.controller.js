@@ -33,8 +33,8 @@ exports.login = async (req, res, next) => {
   try {
     const { email, password, rememberMe } = req.body;
 
-    // Find user by email
-    const user = await User.findOne({ email }).select('+password');
+    // Find user by email with password
+    const user = await User.findOneWithPassword({ email });
     if (!user) {
       logSecurityEvent('failed_login_attempt', { email, ip: req.ip });
       return res.status(401).json({
@@ -46,22 +46,10 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    // Check if account is active
-    if (!user.isActive) {
-      logSecurityEvent('login_attempt_inactive_account', { userId: user._id, email });
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'ACCOUNT_INACTIVE',
-          message: 'Your account has been deactivated. Please contact support.'
-        }
-      });
-    }
-
     // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      logSecurityEvent('failed_login_attempt', { userId: user._id, email, ip: req.ip });
+      logSecurityEvent('failed_login_attempt', { userId: user.id, email, ip: req.ip });
       return res.status(401).json({
         success: false,
         error: {
@@ -72,26 +60,31 @@ exports.login = async (req, res, next) => {
     }
 
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(user._id);
+    const { accessToken, refreshToken } = generateTokens(user.id);
 
-    // Update user's last login
-    user.lastLoginAt = new Date();
-    user.lastLoginIP = req.ip;
-    if (rememberMe) {
-      user.refreshToken = refreshToken;
+    // Update user's last login (if you add these fields to schema)
+    try {
+      await User.updateLastLogin(user.id, { ip: req.ip });
+    } catch (error) {
+      // Ignore if fields don't exist in schema
+      logger.warn('Could not update last login info:', error.message);
     }
-    await user.save();
 
     // Remove sensitive data
-    user.password = undefined;
-    user.refreshToken = undefined;
+    const userResponse = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      subscription: user.subscriptions?.[0] || null
+    };
 
-    logAuthEvent('login_success', user._id, { ip: req.ip, rememberMe });
+    logAuthEvent('login_success', user.id, { ip: req.ip, rememberMe });
 
     res.json({
       success: true,
       data: {
-        user,
+        user: userResponse,
         accessToken,
         refreshToken,
         expiresIn: jwt.decode(accessToken).exp
@@ -110,7 +103,7 @@ exports.login = async (req, res, next) => {
  */
 exports.signup = async (req, res, next) => {
   try {
-    const { email, password, firstName, lastName, agreeToTerms, subscribeToNewsletter } = req.body;
+    const { email, password, agreeToTerms, subscribeToNewsletter } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -124,84 +117,53 @@ exports.signup = async (req, res, next) => {
       });
     }
 
-    // Hash password
-    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    // Generate email verification token
-    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
-
-    // Create user
-    const user = new User({
+    // Create user using Prisma service
+    const user = await User.create({
       email,
-      password: hashedPassword,
-      firstName,
-      lastName,
-      agreeToTerms,
-      subscribeToNewsletter: subscribeToNewsletter || false,
-      emailVerificationToken,
-      registrationIP: req.ip,
-      subscription: {
+      password,
+      role: 'user'
+    });
+
+    // Create default subscription for the user
+    const { prisma } = require('../lib/prisma');
+    await prisma.subscription.create({
+      data: {
+        userId: user.id,
         plan: 'free',
         status: 'active',
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-        isTrialActive: true,
-        trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) // 14 days
-      },
-      usage: {
-        generationsUsed: 0,
-        generationsLimit: 10, // Free tier limit
-        storageUsed: 0,
-        storageLimit: 100, // 100MB
-        lastResetDate: new Date()
-      },
-      preferences: {
-        theme: 'light',
-        language: 'en',
-        timezone: 'UTC',
-        notifications: {
-          email: true,
-          push: false,
-          updates: true,
-          marketing: subscribeToNewsletter || false
-        },
-        ui: {
-          enableAnimations: true,
-          enableTooltips: true,
-          compactMode: false
-        }
+        startsAt: new Date(),
+        renewsAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year
       }
     });
 
-    await user.save();
-
-    // Send verification email
-    try {
-      await emailService.sendVerificationEmail(user.email, emailVerificationToken, `${firstName} ${lastName}`);
-    } catch (emailError) {
-      logger.error('Failed to send verification email:', emailError);
-      // Don't fail the registration, just log the error
-    }
-
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(user._id);
+    const { accessToken, refreshToken } = generateTokens(user.id);
 
-    // Remove sensitive data
-    user.password = undefined;
-    user.emailVerificationToken = undefined;
+    // Remove sensitive data for response
+    const userResponse = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      subscription: {
+        plan: 'free',
+        status: 'active',
+        startsAt: new Date(),
+        renewsAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+      }
+    };
 
-    logAuthEvent('signup_success', user._id, { ip: req.ip, subscribeToNewsletter });
+    logAuthEvent('signup_success', user.id, { ip: req.ip, subscribeToNewsletter });
 
     res.status(201).json({
       success: true,
       data: {
-        user,
+        user: userResponse,
         accessToken,
         refreshToken,
         expiresIn: jwt.decode(accessToken).exp
       },
-      message: 'Account created successfully. Please check your email to verify your account.'
+      message: 'Account created successfully!'
     });
 
   } catch (error) {

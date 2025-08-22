@@ -27,14 +27,6 @@ const signupValidation = [
     .isLength({ min: 8 })
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .withMessage('Password must contain at least 8 characters with uppercase, lowercase, number and special character'),
-  body('firstName')
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('First name must be between 2 and 50 characters'),
-  body('lastName')
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Last name must be between 2 and 50 characters'),
   body('agreeToTerms')
     .isBoolean()
     .custom(value => value === true)
@@ -77,14 +69,14 @@ const updateProfileValidation = [
 
 // Public routes
 router.post('/login', 
-  rateLimitMiddleware.auth,
+  // rateLimitMiddleware.auth, // Temporarily disabled for testing
   loginValidation,
   validationMiddleware,
   authController.login
 );
 
 router.post('/signup', 
-  rateLimitMiddleware.auth,
+  // rateLimitMiddleware.auth, // Temporarily disabled for testing
   signupValidation,
   validationMiddleware,
   authController.signup

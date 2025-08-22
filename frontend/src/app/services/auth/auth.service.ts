@@ -32,6 +32,7 @@ export class AuthService {
   
   // Reactive state using signals
   private readonly currentUserSubject = new BehaviorSubject<User | null>(null);
+  private readonly currentUserSignal = signal<User | null>(null);
   private readonly isAuthenticatedSignal = signal<boolean>(false);
   private readonly isLoadingSignal = signal<boolean>(false);
   
@@ -39,7 +40,7 @@ export class AuthService {
   public readonly currentUser$ = this.currentUserSubject.asObservable();
   public readonly isAuthenticated = computed(() => this.isAuthenticatedSignal());
   public readonly isLoading = computed(() => this.isLoadingSignal());
-  public readonly currentUser = computed(() => this.currentUserSubject.value);
+  public readonly currentUser = computed(() => this.currentUserSignal());
   
   // Token refresh timer
   private refreshTokenTimer?: any;
@@ -117,7 +118,7 @@ export class AuthService {
       if (storedUser && token && this.isTokenValid(token)) {
         // Restore user session
         console.log('✅ Restoring user session from secure storage');
-        this.currentUserSubject.next(storedUser);
+        this.updateCurrentUser(storedUser);
         this.setAuthenticationState(true);
         await this.scheduleTokenRefresh();
         
@@ -127,10 +128,10 @@ export class AuthService {
         console.log('🔄 Token found but no user session, loading from server');
         this.setAuthenticationState(true);
         this.loadUserProfile().subscribe({
-          next: async (user) => {
-            console.log('✅ User profile loaded, storing session');
-            this.currentUserSubject.next(user);
-            await this.encryptionService.storeUserSession(user);
+                  next: async (user) => {
+          console.log('✅ User profile loaded, storing session');
+          this.updateCurrentUser(user);
+          await this.encryptionService.storeUserSession(user);
             await this.scheduleTokenRefresh();
           },
           error: (error) => {
@@ -163,7 +164,7 @@ export class AuthService {
       this.loadUserProfile().subscribe({
         next: async (user) => {
           console.log('✅ User profile loaded in fallback mode');
-          this.currentUserSubject.next(user);
+          this.updateCurrentUser(user);
           await this.scheduleTokenRefresh();
         },
         error: (error) => {
@@ -174,7 +175,7 @@ export class AuthService {
     } else {
       console.log('❌ No valid token in fallback mode');
       this.setAuthenticationState(false);
-      this.currentUserSubject.next(null);
+      this.updateCurrentUser(null);
     }
   }
 
@@ -239,12 +240,12 @@ export class AuthService {
   /**
    * Logout current user and clear all secure data
    */
-  logout(): void {
+  async logout(): Promise<void> {
     // Clear encrypted tokens and user session
     this.clearAuthState();
     
     // Clear user state  
-    this.currentUserSubject.next(null);
+    this.updateCurrentUser(null);
     this.setAuthenticationState(false);
     
     // Clear refresh timer
@@ -253,9 +254,22 @@ export class AuthService {
       this.refreshTokenTimer = undefined;
     }
     
-    // Navigate to login
-    this.router.navigate(['/auth/login']);
-    this.notificationService.showInfo('You have been logged out');
+    // Force hard refresh of authentication state and wait for it
+    await this.forceRefreshAuthState();
+    
+    // Wait to ensure header has updated, then navigate
+    setTimeout(() => {
+      this.router.navigate(['/auth/login']);
+      this.notificationService.showInfo('You have been logged out');
+    }, 50);
+  }
+
+  /**
+   * Update current user in both BehaviorSubject and Signal
+   */
+  private updateCurrentUser(user: User | null): void {
+    this.currentUserSubject.next(user);
+    this.currentUserSignal.set(user);
   }
 
   /**
@@ -334,7 +348,7 @@ export class AuthService {
           return response.data;
         }),
         tap(user => {
-          this.currentUserSubject.next(user);
+          this.updateCurrentUser(user);
           this.notificationService.showSuccess('Profile updated successfully!');
         }),
         catchError(error => {
@@ -441,15 +455,21 @@ export class AuthService {
       // Store user session securely
       await this.encryptionService.storeUserSession(authResponse.user);
       
-      // Update state
-      this.currentUserSubject.next(authResponse.user);
+      // Update state FIRST
+      this.updateCurrentUser(authResponse.user);
       this.setAuthenticationState(true);
+      
+      // Force hard refresh of authentication state and wait for it
+      await this.forceRefreshAuthState();
       
       // Schedule token refresh
       await this.scheduleTokenRefresh();
       
-      // Navigate to dashboard
-      this.router.navigate(['/dashboard']);
+      // Wait longer to ensure header has updated, then navigate
+      setTimeout(() => {
+        this.router.navigate(['/dashboard']);
+      }, 200);
+      
     } catch (error) {
       console.error('Failed to handle auth success:', error);
       // Fallback to regular storage
@@ -465,15 +485,20 @@ export class AuthService {
     localStorage.setItem(environment.auth.tokenKey, authResponse.accessToken);
     localStorage.setItem(environment.auth.refreshTokenKey, authResponse.refreshToken);
     
-    // Update state
-    this.currentUserSubject.next(authResponse.user);
+    // Update state FIRST
+    this.updateCurrentUser(authResponse.user);
     this.setAuthenticationState(true);
+    
+    // Force hard refresh of authentication state and wait for it
+    await this.forceRefreshAuthState();
     
     // Schedule token refresh
     await this.scheduleTokenRefresh();
     
-    // Navigate to dashboard
-    this.router.navigate(['/dashboard']);
+    // Wait to ensure header has updated, then navigate
+    setTimeout(() => {
+      this.router.navigate(['/dashboard']);
+    }, 200);
   }
 
   /**
@@ -593,5 +618,35 @@ export class AuthService {
       console.error('❌ App auth initialization failed:', error);
       this.setAuthenticationState(false);
     }
+  }
+
+  /**
+   * Force hard refresh of authentication state
+   */
+  private forceRefreshAuthState(): Promise<void> {
+    console.log('🔄 Forcing hard refresh of authentication state...');
+    
+    return new Promise((resolve) => {
+      // Force update the signals by setting them again
+      const currentUser = this.currentUserSubject.value;
+      const isAuthenticated = !!currentUser;
+      
+      // Trigger change detection by updating both signals and BehaviorSubject
+      this.isAuthenticatedSignal.set(false);
+      this.currentUserSignal.set(null);
+      this.currentUserSubject.next(null);
+      
+      setTimeout(() => {
+        this.isAuthenticatedSignal.set(isAuthenticated);
+        this.currentUserSignal.set(currentUser);
+        this.currentUserSubject.next(currentUser);
+        
+        // Give Angular's change detection another cycle to process
+        setTimeout(() => {
+          console.log('✅ Authentication state hard refresh complete');
+          resolve();
+        }, 10);
+      }, 20);
+    });
   }
 }
