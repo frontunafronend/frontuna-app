@@ -778,12 +778,238 @@ app.use('*', (req, res) => {
   });
 });
 
+// ===== AI SERVICES ENDPOINTS =====
+
+// AI Prompt Core Service
+app.post('/api/ai/prompt/send', async (req, res) => {
+  try {
+    console.log('🤖 AI Prompt request:', req.body);
+    
+    const { content, type, context, model } = req.body;
+    
+    // Mock AI response for now - replace with real AI service later
+    const mockResponse = {
+      id: 'ai-response-' + Date.now(),
+      content: `Here's the ${type} response for: "${content}"\n\n\`\`\`typescript\n// Generated TypeScript code\nexport interface ExampleInterface {\n  id: string;\n  name: string;\n  description?: string;\n}\n\nexport class ExampleComponent {\n  data: ExampleInterface[] = [];\n  \n  constructor() {\n    console.log('Component initialized');\n  }\n}\n\`\`\`\n\n\`\`\`html\n<!-- Generated HTML template -->\n<div class="example-component">\n  <h2>{{ title }}</h2>\n  <div *ngFor="let item of data" class="item">\n    <span>{{ item.name }}</span>\n  </div>\n</div>\n\`\`\`\n\n\`\`\`scss\n/* Generated SCSS styles */\n.example-component {\n  padding: 1rem;\n  border-radius: 8px;\n  background: #f5f5f5;\n  \n  .item {\n    padding: 0.5rem;\n    margin: 0.25rem 0;\n    background: white;\n    border-radius: 4px;\n  }\n}\n\`\`\``,
+      timestamp: new Date().toISOString(),
+      model: model || 'gpt-4',
+      usage: {
+        promptTokens: 100,
+        completionTokens: 200,
+        totalTokens: 300
+      }
+    };
+    
+    // Simulate processing delay
+    setTimeout(() => {
+      res.json({
+        success: true,
+        data: mockResponse
+      });
+    }, 1500);
+    
+  } catch (error) {
+    console.error('❌ AI Prompt error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'AI service temporarily unavailable'
+    });
+  }
+});
+
+// AI Code Generation
+app.post('/api/ai/generate', async (req, res) => {
+  try {
+    console.log('🏗️ AI Generate request:', req.body);
+    
+    const mockCode = {
+      typescript: `// Generated TypeScript Component\nimport { Component } from '@angular/core';\n\n@Component({\n  selector: 'app-generated',\n  templateUrl: './generated.component.html',\n  styleUrls: ['./generated.component.scss']\n})\nexport class GeneratedComponent {\n  title = 'Generated Component';\n  data: any[] = [];\n}`,
+      html: `<!-- Generated HTML Template -->\n<div class="generated-component">\n  <h2>{{ title }}</h2>\n  <div class="content">\n    <p>This is a generated component</p>\n  </div>\n</div>`,
+      scss: `/* Generated SCSS Styles */\n.generated-component {\n  padding: 2rem;\n  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n  border-radius: 12px;\n  color: white;\n  \n  h2 {\n    margin-bottom: 1rem;\n    font-size: 1.5rem;\n  }\n  \n  .content {\n    background: rgba(255, 255, 255, 0.1);\n    padding: 1rem;\n    border-radius: 8px;\n  }\n}`
+    };
+    
+    res.json({
+      success: true,
+      data: {
+        id: 'generated-' + Date.now(),
+        code: mockCode,
+        metadata: {
+          framework: 'angular',
+          complexity: 'intermediate',
+          dependencies: ['@angular/core']
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ AI Generate error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Code generation failed'
+    });
+  }
+});
+
+// AI Transform/Refactor
+app.post('/api/ai/transform', async (req, res) => {
+  try {
+    console.log('🔄 AI Transform request:', req.body);
+    
+    const { sourceCode, transformationType } = req.body;
+    
+    res.json({
+      success: true,
+      data: {
+        id: 'transform-' + Date.now(),
+        originalCode: sourceCode,
+        transformedCode: `// Transformed (${transformationType}) code\n${sourceCode}\n// Additional optimizations applied`,
+        changes: [
+          { type: 'optimization', description: 'Improved performance' },
+          { type: 'refactoring', description: 'Better code structure' }
+        ]
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ AI Transform error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Code transformation failed'
+    });
+  }
+});
+
+// ===== COMPONENT GALLERY ENDPOINTS =====
+
+app.get('/api/gallery/components', async (req, res) => {
+  try {
+    console.log('🎨 Gallery: Getting components');
+    
+    const mockComponents = [
+      {
+        id: 'comp-1',
+        name: 'modern-button',
+        displayName: 'Modern Button',
+        description: 'A sleek, modern button component with hover effects',
+        category: 'ui',
+        framework: 'angular',
+        tags: ['button', 'ui', 'interactive'],
+        author: { name: 'AI Assistant', verified: true },
+        usage: { downloads: 1250, likes: 89, views: 2340 },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 'comp-2',
+        name: 'data-table',
+        displayName: 'Data Table',
+        description: 'Professional data table with sorting and filtering',
+        category: 'data',
+        framework: 'angular',
+        tags: ['table', 'data', 'sorting'],
+        author: { name: 'AI Assistant', verified: true },
+        usage: { downloads: 856, likes: 67, views: 1890 },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+    
+    res.json({
+      success: true,
+      data: {
+        components: mockComponents,
+        total: mockComponents.length,
+        page: 1,
+        limit: 20
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Gallery error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load gallery components'
+    });
+  }
+});
+
+// ===== MISSING AUTH ENDPOINTS =====
+
+app.get('/api/auth/profile', async (req, res) => {
+  try {
+    console.log('👤 Getting user profile');
+    
+    // TODO: Get user from token and database
+    const mockProfile = {
+      id: 'user-123',
+      email: 'user@example.com',
+      firstName: 'Demo',
+      lastName: 'User',
+      role: 'user',
+      createdAt: new Date().toISOString()
+    };
+    
+    res.json({
+      success: true,
+      data: mockProfile
+    });
+    
+  } catch (error) {
+    console.error('❌ Profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load profile'
+    });
+  }
+});
+
+app.post('/api/auth/refresh', async (req, res) => {
+  try {
+    console.log('🔄 Refreshing token');
+    
+    const { refreshToken } = req.body;
+    
+    // Generate new tokens
+    const newTokenPayload = {
+      sub: 'user-123',
+      email: 'user@example.com',
+      role: 'user',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
+    };
+    
+    const newToken = jwt.sign(
+      newTokenPayload,
+      process.env.JWT_SECRET || 'demo-secret-key-for-development-only',
+      { algorithm: 'HS256' }
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        accessToken: newToken,
+        refreshToken: 'new-refresh-' + Date.now(),
+        expiresIn: newTokenPayload.exp
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Token refresh error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to refresh token'
+    });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Production server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🔑 Super admin setup: POST /api/setup-admin`);
+  console.log(`🤖 AI Copilot: POST /api/ai/prompt/send`);
+  console.log(`🎨 Gallery: GET /api/gallery/components`);
 });
 
 module.exports = app;
