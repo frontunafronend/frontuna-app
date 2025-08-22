@@ -78,11 +78,28 @@ app.post('/api/auth/signup', async (req, res) => {
     
     console.log('User created successfully:', user);
     
-    // Return success response
+    // Create a simple JWT-like token for the new user
+    const demoPayload = {
+      sub: user.id,
+      email: user.email,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year from now
+    };
+    
+    // Create a fake JWT token (header.payload.signature format)
+    const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64url');
+    const payload = Buffer.from(JSON.stringify(demoPayload)).toString('base64url');
+    const signature = 'demo-signature';
+    const demoJWT = `${header}.${payload}.${signature}`;
+    
+    // Return success response with tokens
     res.status(201).json({
       success: true,
       data: {
         user,
+        accessToken: demoJWT,
+        refreshToken: 'demo-refresh-' + Date.now(),
+        expiresIn: demoPayload.exp,
         message: 'Account created successfully!'
       }
     });
@@ -122,12 +139,27 @@ app.post('/api/auth/login', async (req, res) => {
       lastName: 'User'
     };
     
+    // Create a simple JWT-like token that won't expire for demo purposes
+    const demoPayload = {
+      sub: user.id,
+      email: user.email,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year from now
+    };
+    
+    // Create a fake JWT token (header.payload.signature format)
+    const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64url');
+    const payload = Buffer.from(JSON.stringify(demoPayload)).toString('base64url');
+    const signature = 'demo-signature';
+    const demoJWT = `${header}.${payload}.${signature}`;
+    
     res.json({
       success: true,
       data: {
         user,
-        accessToken: 'demo-token-' + Date.now(),
+        accessToken: demoJWT,
         refreshToken: 'demo-refresh-' + Date.now(),
+        expiresIn: demoPayload.exp,
         message: 'Login successful'
       }
     });
