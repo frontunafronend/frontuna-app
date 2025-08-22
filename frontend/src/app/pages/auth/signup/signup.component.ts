@@ -49,7 +49,7 @@ import { Router } from '@angular/router';
       }
       
       <div class="auth-card-container">
-        <mat-card class="auth-card">
+            <mat-card class="auth-card">
           <mat-card-header class="auth-header">
             <div class="auth-header-content">
               <div class="auth-logo">
@@ -66,13 +66,13 @@ import { Router } from '@angular/router';
                 <mat-card-subtitle>Join thousands of developers using Frontuna.ai</mat-card-subtitle>
               </div>
             </div>
-          </mat-card-header>
-
-          <mat-card-content>
+              </mat-card-header>
+              
+              <mat-card-content>
             <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="auth-form">
               <div class="name-fields">
                 <mat-form-field appearance="outline" class="half-width">
-                  <mat-label>First Name</mat-label>
+                    <mat-label>First Name</mat-label>
                   <input matInput 
                          type="text" 
                          formControlName="firstName"
@@ -82,7 +82,7 @@ import { Router } from '@angular/router';
                   <mat-error *ngIf="signupForm.get('firstName')?.hasError('minlength')">
                     Must be at least 2 characters
                   </mat-error>
-                </mat-form-field>
+                  </mat-form-field>
 
                 <mat-form-field appearance="outline" class="half-width">
                   <mat-label>Last Name</mat-label>
@@ -97,8 +97,8 @@ import { Router } from '@angular/router';
                   </mat-error>
                 </mat-form-field>
               </div>
-
-              <mat-form-field appearance="outline" class="w-100">
+                  
+                  <mat-form-field appearance="outline" class="w-100">
                 <mat-label>Email Address</mat-label>
                 <input matInput 
                        type="email" 
@@ -112,10 +112,10 @@ import { Router } from '@angular/router';
                 <mat-error *ngIf="signupForm.get('email')?.hasError('email')">
                   Please enter a valid email address
                 </mat-error>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="w-100">
-                <mat-label>Password</mat-label>
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Password</mat-label>
                 <input matInput 
                        [type]="hidePassword ? 'password' : 'text'"
                        formControlName="password"
@@ -167,8 +167,8 @@ import { Router } from '@angular/router';
                 <mat-error *ngIf="signupForm.get('confirmPassword')?.hasError('passwordMismatch')">
                   Passwords do not match
                 </mat-error>
-              </mat-form-field>
-
+                  </mat-form-field>
+                  
               <!-- Terms and Newsletter -->
               <div class="form-checkboxes">
                 <mat-checkbox formControlName="agreeToTerms" required class="terms-checkbox">
@@ -194,13 +194,13 @@ import { Router } from '@angular/router';
                       [disabled]="signupForm.invalid || isLoading()">
                 @if (isLoading()) {
                   <span>Creating Account...</span>
-                } @else {
+                    } @else {
                   <mat-icon>person_add</mat-icon>
                   <span>Create Account</span>
-                }
-              </button>
-            </form>
-
+                    }
+                  </button>
+                </form>
+                
             <div class="divider">
               <span>or</span>
             </div>
@@ -221,8 +221,8 @@ import { Router } from '@angular/router';
                 <img src="assets/images/social/github.svg" alt="GitHub" />
                 Continue with GitHub
               </button>
-            </div>
-          </mat-card-content>
+                </div>
+              </mat-card-content>
 
           <mat-card-actions class="auth-actions">
             <p class="login-prompt">
@@ -230,7 +230,7 @@ import { Router } from '@angular/router';
               <a routerLink="/auth/login" class="login-link">Sign in instead</a>
             </p>
           </mat-card-actions>
-        </mat-card>
+            </mat-card>
 
         <div class="auth-benefits">
           <h3>Start your journey with</h3>
@@ -296,7 +296,7 @@ import { Router } from '@angular/router';
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(5px);
       display: flex;
-      align-items: center;
+      align-items: center; 
       justify-content: center;
       z-index: 9999;
       animation: fadeIn 0.3s ease-out;
@@ -315,7 +315,7 @@ import { Router } from '@angular/router';
       width: 100%;
       align-items: start;
     }
-
+    
     .auth-card {
       width: 100%;
       max-width: 450px;
@@ -397,7 +397,7 @@ import { Router } from '@angular/router';
     .auth-logo-img:not(.error) {
       background-color: transparent;
     }
-
+    
     .auth-form {
       display: flex;
       flex-direction: column;
@@ -807,9 +807,9 @@ export class SignupComponent implements OnInit {
       // Validate password strength
       if (this.passwordStrength === 'weak') {
         this.notificationService.showWarning('Please create a stronger password with uppercase, lowercase, numbers, and special characters.');
-        return;
-      }
-      
+      return;
+    }
+
       // Only send fields that the backend expects
       const signupData = {
         email: formValue.email,
@@ -826,8 +826,8 @@ export class SignupComponent implements OnInit {
       this.globalLoader.show(this.globalLoader.forOperation('signup'));
       
       this.authService.signup(signupData).subscribe({
-        next: (response) => {
-          console.log('Signup successful!', response);
+      next: (response) => {
+        console.log('Signup successful!', response);
           this.analyticsService.trackSignup('email');
           
           // Update loader message
@@ -845,9 +845,9 @@ export class SignupComponent implements OnInit {
               }
             });
           }, 2000);
-        },
-        error: (error) => {
-          console.error('Signup failed:', error);
+      },
+      error: (error) => {
+        console.error('Signup failed:', error);
           this.analyticsService.trackError(`Signup failed: ${error.message || error}`);
           
           // Hide loader and show error
@@ -855,8 +855,8 @@ export class SignupComponent implements OnInit {
           
           const errorMessage = error?.error?.message || error?.message || 'Registration failed. Please try again.';
           this.notificationService.showError(errorMessage);
-        },
-        complete: () => {
+      },
+      complete: () => {
           console.log('Signup request completed');
         }
       });
