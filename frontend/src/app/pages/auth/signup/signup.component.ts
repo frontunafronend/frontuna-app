@@ -830,21 +830,17 @@ export class SignupComponent implements OnInit {
         console.log('Signup successful!', response);
           this.analyticsService.trackSignup('email');
           
-          // Update loader message
-          this.globalLoader.updateMessage('Account created successfully!', 'Redirecting to dashboard...');
+          // Hide loader and navigate immediately (like login does)
+          this.globalLoader.hide();
           
-          // Wait for auth state to be properly set, then navigate using Angular router
-          setTimeout(() => {
-            this.globalLoader.hide();
-            // Use Angular router instead of window.location to preserve auth state
-            this.router.navigate(['/dashboard']).then(success => {
-              if (!success) {
-                console.warn('Navigation to dashboard failed, trying fallback');
-                // Fallback if navigation fails
-                window.location.href = '/dashboard';
-              }
-            });
-          }, 2000);
+          // Navigate immediately without delay to prevent auto-logout
+          this.router.navigate(['/dashboard']).then(success => {
+            if (!success) {
+              console.warn('Navigation to dashboard failed, trying fallback');
+              // Fallback if navigation fails
+              window.location.href = '/dashboard';
+            }
+          });
       },
       error: (error) => {
         console.error('Signup failed:', error);
