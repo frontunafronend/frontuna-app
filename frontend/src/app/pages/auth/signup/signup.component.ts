@@ -51,14 +51,21 @@ import { Router } from '@angular/router';
       <div class="auth-card-container">
         <mat-card class="auth-card">
           <mat-card-header class="auth-header">
-            <div class="auth-logo">
-              <img src="assets/images/logo/cat-logo.png" 
-                   alt="Happy Cat with Fish Logo" 
-                   (error)="onImageError($event)"
-                   loading="lazy" />
+            <div class="auth-header-content">
+              <div class="auth-logo">
+                <img src="assets/images/logo/cat-logo.svg" 
+                     alt="Happy Cat with Fish Logo" 
+                     class="auth-logo-img"
+                     (error)="onImageError($event)"
+                     width="50" 
+                     height="50"
+                     loading="eager" />
+              </div>
+              <div class="auth-header-text">
+                <mat-card-title>Create Your Account</mat-card-title>
+                <mat-card-subtitle>Join thousands of developers using Frontuna.ai</mat-card-subtitle>
+              </div>
             </div>
-            <mat-card-title>Create Your Account</mat-card-title>
-            <mat-card-subtitle>Join thousands of developers using Frontuna.ai</mat-card-subtitle>
           </mat-card-header>
 
           <mat-card-content>
@@ -140,46 +147,43 @@ import { Router } from '@angular/router';
               </div>
 
               <!-- Confirm Password Field -->
-              <div style="background: yellow; padding: 0.5rem; border: 2px solid blue; margin: 1rem 0;">
-                <h4 style="color: blue;">CONFIRM PASSWORD FIELD</h4>
-                <mat-form-field appearance="outline" class="w-100">
-                  <mat-label>Confirm Password</mat-label>
-                  <input matInput 
-                         [type]="hideConfirmPassword ? 'password' : 'text'"
-                         formControlName="confirmPassword"
-                         placeholder="Confirm your password"
-                         autocomplete="new-password">
-                  <mat-icon matPrefix>lock</mat-icon>
-                  <button mat-icon-button 
-                          matSuffix 
-                          type="button"
-                          (click)="hideConfirmPassword = !hideConfirmPassword">
-                    <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                  </button>
-                  <mat-error *ngIf="signupForm.get('confirmPassword')?.hasError('required')">
-                    Please confirm your password
-                  </mat-error>
-                  <mat-error *ngIf="signupForm.get('confirmPassword')?.hasError('passwordMismatch')">
-                    Passwords do not match
-                  </mat-error>
-                </mat-form-field>
-              </div>
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Confirm Password</mat-label>
+                <input matInput 
+                       [type]="hideConfirmPassword ? 'password' : 'text'"
+                       formControlName="confirmPassword"
+                       placeholder="Confirm your password"
+                       autocomplete="new-password">
+                <mat-icon matPrefix>lock</mat-icon>
+                <button mat-icon-button 
+                        matSuffix 
+                        type="button"
+                        (click)="hideConfirmPassword = !hideConfirmPassword">
+                  <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                <mat-error *ngIf="signupForm.get('confirmPassword')?.hasError('required')">
+                  Please confirm your password
+                </mat-error>
+                <mat-error *ngIf="signupForm.get('confirmPassword')?.hasError('passwordMismatch')">
+                  Passwords do not match
+                </mat-error>
+              </mat-form-field>
 
-              <!-- Checkboxes Section -->
-              <div class="form-checkboxes" style="background: #f0f0f0; padding: 1rem; border: 2px solid red; margin: 1rem 0;">
-                <h4 style="color: red;">CHECKBOXES SECTION</h4>
-                
-                <mat-checkbox formControlName="agreeToTerms" required style="display: block; margin: 1rem 0;">
-                  I agree to the Terms of Service and Privacy Policy
+              <!-- Terms and Newsletter -->
+              <div class="form-checkboxes">
+                <mat-checkbox formControlName="agreeToTerms" required class="terms-checkbox">
+                  I agree to the 
+                  <a href="/terms" target="_blank">Terms of Service</a> and 
+                  <a href="/privacy" target="_blank">Privacy Policy</a>
                 </mat-checkbox>
                 
                 <mat-error *ngIf="signupForm.get('agreeToTerms')?.hasError('required') && signupForm.get('agreeToTerms')?.touched" 
-                           style="color: red; font-weight: bold;">
-                  You must agree to the terms
+                           class="terms-error">
+                  You must agree to the terms and conditions
                 </mat-error>
 
-                <mat-checkbox formControlName="subscribeToNewsletter" style="display: block; margin: 1rem 0;">
-                  Send me product updates and tips (optional)
+                <mat-checkbox formControlName="subscribeToNewsletter" class="newsletter-checkbox">
+                  Send me product updates and development tips (optional)
                 </mat-checkbox>
               </div>
 
@@ -322,28 +326,76 @@ import { Router } from '@angular/router';
     .auth-header {
       text-align: center;
       margin-bottom: 2rem;
+      width: 100%;
+    }
+
+    .auth-header-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 1rem;
+    }
+
+    .auth-header-text {
+      width: 100%;
+      text-align: center;
+    }
+
+    .auth-header-text mat-card-title {
+      width: 100%;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-header-text mat-card-subtitle {
+      width: 100%;
+      color: #666;
+      font-size: 1rem;
+      line-height: 1.4;
     }
 
     .auth-logo {
-      margin-bottom: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 60px; /* Fixed width for logo container */
+      height: 60px; /* Fixed height to prevent layout shift */
+      min-height: 60px;
+      margin: 0 auto;
     }
 
-    .auth-logo img {
+    .auth-logo-img {
       height: 50px;
-      width: auto;
-      max-width: 200px;
+      width: 50px; /* Fixed width to prevent layout shift */
+      max-width: 50px;
       object-fit: contain;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease;
+      transition: transform 0.2s ease, opacity 0.3s ease;
+      /* Prevent layout shift during loading */
+      display: block;
     }
     
-    .auth-logo img:hover {
+    .auth-logo-img:hover {
       transform: scale(1.05);
     }
     
-    .auth-logo img.error {
-      display: none;
+    .auth-logo-img.error {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Ensure consistent spacing even when image loads */
+    .auth-logo-img {
+      /* Add a subtle background color while loading */
+      background-color: rgba(103, 126, 234, 0.05);
+    }
+
+    .auth-logo-img:not(.error) {
+      background-color: transparent;
     }
 
     .auth-form {
@@ -408,20 +460,36 @@ import { Router } from '@angular/router';
     .form-checkboxes {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 1.5rem;
+      margin: 2rem 0;
+      padding: 1.5rem;
+      background: rgba(103, 126, 234, 0.02);
+      border-radius: 12px;
+      border: 1px solid rgba(103, 126, 234, 0.1);
     }
 
-    .form-checkboxes mat-checkbox {
+    .terms-checkbox,
+    .newsletter-checkbox {
       font-size: 0.9rem;
+      line-height: 1.4;
     }
 
     .form-checkboxes a {
       color: #667eea;
       text-decoration: none;
+      font-weight: 500;
     }
 
     .form-checkboxes a:hover {
       text-decoration: underline;
+      color: #5a6fd8;
+    }
+
+    .terms-error {
+      color: #f44336;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      font-weight: 500;
     }
 
     .auth-submit-btn {
@@ -468,13 +536,33 @@ import { Router } from '@angular/router';
       align-items: center;
       justify-content: center;
       gap: 0.75rem;
-      padding: 0.75rem;
+      padding: 0.75rem 1.5rem;
       font-weight: 500;
+      border: 2px solid #e0e0e0;
+      transition: all 0.2s ease;
+    }
+
+    .social-btn:hover {
+      border-color: #667eea;
+      background-color: rgba(103, 126, 234, 0.05);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .social-btn img {
       width: 20px;
       height: 20px;
+      flex-shrink: 0;
+    }
+
+    .google-btn:hover {
+      border-color: #4285F4;
+      background-color: rgba(66, 133, 244, 0.05);
+    }
+
+    .github-btn:hover {
+      border-color: #333;
+      background-color: rgba(51, 51, 51, 0.05);
     }
 
     .auth-actions {
@@ -586,20 +674,14 @@ import { Router } from '@angular/router';
       }
     }
 
-    .form-checkboxes {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-
-    .form-checkboxes mat-checkbox {
+    .terms-checkbox,
+    .newsletter-checkbox {
       display: block !important;
+      margin-bottom: 0.5rem;
     }
 
-    .form-checkboxes mat-error {
-      margin-top: 0.5rem;
-      font-size: 0.75rem;
+    .newsletter-checkbox {
+      opacity: 0.8;
     }
   `]
 })
@@ -847,15 +929,26 @@ export class SignupComponent implements OnInit {
   onImageError(event: Event): void {
     console.warn('Cat logo failed to load, trying fallback');
     const img = event.target as HTMLImageElement;
-    // Try different fallback paths
-    if (img.src.includes('cat-logo.png')) {
-      img.src = '/assets/images/logo/cat-logo.png'; // Try absolute path
-    } else if (img.src.includes('/assets/')) {
-      img.src = 'assets/images/logo/logo.svg'; // Try SVG fallback
+    
+    // Try different fallback paths in order of preference
+    if (img.src.includes('cat-logo.svg')) {
+      console.log('SVG failed, trying PNG');
+      img.src = 'assets/images/logo/cat-logo.png'; // Try PNG fallback
+    } else if (img.src.includes('cat-logo.png')) {
+      console.log('PNG failed, trying absolute SVG path');
+      img.src = '/assets/images/logo/cat-logo.svg'; // Try absolute SVG path
+    } else if (img.src.includes('/assets/images/logo/cat-logo.svg')) {
+      console.log('Absolute SVG failed, trying main logo');
+      img.src = 'assets/images/logo/logo.svg'; // Try main logo SVG
     } else {
-      // Hide image if all fallbacks fail
-      img.classList.add('error');
+      // Hide image if all fallbacks fail but maintain layout
       console.error('All image fallbacks failed for cat logo');
+      img.classList.add('error');
+      // Show a simple emoji as final fallback
+      const logoContainer = img.closest('.auth-logo');
+      if (logoContainer) {
+        logoContainer.innerHTML = '<span style="font-size: 2rem;">🐱</span>';
+      }
     }
   }
 }

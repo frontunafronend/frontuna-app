@@ -21,7 +21,13 @@ import { MatButtonModule } from '@angular/material/button';
           <div class="col-lg-4 col-md-6 mb-4">
             <div class="footer-brand">
               <div class="brand-header">
-                <img src="assets/images/logo/cat-logo.png" alt="Happy Cat with Fish Logo" class="footer-logo" />
+                <img src="assets/images/logo/cat-logo.svg" 
+                     alt="Happy Cat with Fish Logo" 
+                     class="footer-logo"
+                     (error)="onLogoError($event)"
+                     width="45"
+                     height="45"
+                     loading="lazy" />
                 <h5 class="brand-title">Frontuna.com</h5>
               </div>
               <p class="brand-description">
@@ -154,12 +160,38 @@ import { MatButtonModule } from '@angular/material/button';
       justify-content: center;
       gap: 0.75rem;
       margin-bottom: 1.5rem;
+      min-height: 45px; /* Ensure consistent height even if image fails */
+    }
+
+    .brand-header.logo-failed {
+      /* Style when logo fails to load */
+      justify-content: center;
+    }
+
+    .brand-header.logo-failed .brand-title {
+      font-size: 1.8rem;
+      text-align: center;
     }
 
     .footer-logo {
-      height: 40px;
-      width: auto;
-      filter: brightness(0) invert(1);
+      height: 45px;
+      width: 45px;
+      max-width: 45px;
+      object-fit: contain;
+      border-radius: 8px;
+      transition: transform 0.3s ease, filter 0.3s ease;
+      /* Enhanced filter for better visibility on dark background */
+      filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.2));
+      /* Ensure SVG displays properly */
+      display: block;
+    }
+
+    .footer-logo:hover {
+      transform: scale(1.05);
+    }
+
+    .footer-logo.error {
+      display: none;
     }
 
     .brand-title {
@@ -291,4 +323,34 @@ import { MatButtonModule } from '@angular/material/button';
 })
 export class FooterComponent {
   public readonly currentYear = new Date().getFullYear();
+
+  onLogoError(event: Event): void {
+    console.warn('Footer cat logo failed to load, trying fallback');
+    const img = event.target as HTMLImageElement;
+    
+    // Try different fallback paths in order of preference
+    if (img.src.includes('cat-logo.svg')) {
+      console.log('Footer SVG failed, trying PNG');
+      img.src = 'assets/images/logo/cat-logo.png'; // Try PNG fallback
+    } else if (img.src.includes('cat-logo.png')) {
+      console.log('Footer PNG failed, trying absolute SVG path');
+      img.src = '/assets/images/logo/cat-logo.svg'; // Try absolute SVG path
+    } else if (img.src.includes('/assets/images/logo/cat-logo.svg')) {
+      console.log('Footer absolute SVG failed, trying main logo');
+      img.src = 'assets/images/logo/logo.svg'; // Try main logo SVG
+    } else {
+      // Hide image if all fallbacks fail and show text logo
+      console.error('All image fallbacks failed for footer cat logo');
+      img.classList.add('error');
+      const brandHeader = img.closest('.brand-header');
+      if (brandHeader) {
+        brandHeader.classList.add('logo-failed');
+        // Show a simple emoji as final fallback
+        const logoContainer = brandHeader.querySelector('.footer-logo');
+        if (logoContainer) {
+          logoContainer.outerHTML = '<span style="font-size: 2rem; color: white;">🐱</span>';
+        }
+      }
+    }
+  }
 }
