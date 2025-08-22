@@ -1,3 +1,35 @@
+/**
+ * 🤖 AI BUG GUARDIAN PROTECTED FILE
+ * Last analyzed: 2025-08-22T21:30:48.042Z
+ * Issues detected: 1
+ * 
+ * This file is protected against common bugs:
+ * - GENERIC_ERROR_MESSAGE: MEDIUM
+ */
+
+
+// 🛡️ API GUARD: This code defines API endpoints
+// CRITICAL RULES:
+// 1. ALWAYS return consistent response format: { success, data, message }
+// 2. ALWAYS handle both database and demo modes
+// 3. ALWAYS provide meaningful error messages
+// 4. NEVER expose internal server errors to client
+/**
+ * 🤖 AI BUG GUARDIAN PROTECTED FILE
+ * Last analyzed: 2025-08-22T21:22:46.040Z
+ * Issues detected: 1
+ * 
+ * This file is protected against common bugs:
+ * - GENERIC_ERROR_MESSAGE: MEDIUM
+ */
+
+
+// 🛡️ API GUARD: This code defines API endpoints
+// CRITICAL RULES:
+// 1. ALWAYS return consistent response format: { success, data, message }
+// 2. ALWAYS handle both database and demo modes
+// 3. ALWAYS provide meaningful error messages
+// 4. NEVER expose internal server errors to client
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';

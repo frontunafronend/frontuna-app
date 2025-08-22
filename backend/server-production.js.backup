@@ -1,3 +1,49 @@
+/**
+ * 🤖 AI BUG GUARDIAN PROTECTED FILE
+ * Last analyzed: 2025-08-22T21:30:47.945Z
+ * Issues detected: 8
+ * 
+ * This file is protected against common bugs:
+ * - MISSING_DB_ERROR_HANDLING: HIGH
+ * - MOCK_DATA_WITHOUT_DB_FALLBACK: HIGH
+ * - HARDCODED_DEMO_RESPONSES: HIGH
+ * - API_WITHOUT_DB_INTEGRATION: HIGH
+ * - AI_USAGE_NOT_TRACKED: MEDIUM
+ * - INCOMPLETE_API_RESPONSE: MEDIUM
+ * - GENERIC_ERROR_MESSAGE: MEDIUM
+ * - STATIC_USER_DATA: HIGH
+ */
+
+
+// 🛡️ DATABASE GUARD: This code interacts with the database
+// CRITICAL RULES:
+// 1. ALWAYS wrap database queries in try-catch blocks
+// 2. ALWAYS provide fallback responses for demo mode
+// 3. NEVER expose raw database errors to frontend
+// 4. ALWAYS validate user input before database operations
+/**
+ * 🤖 AI BUG GUARDIAN PROTECTED FILE
+ * Last analyzed: 2025-08-22T21:22:45.976Z
+ * Issues detected: 8
+ * 
+ * This file is protected against common bugs:
+ * - MISSING_DB_ERROR_HANDLING: HIGH
+ * - MOCK_DATA_WITHOUT_DB_FALLBACK: HIGH
+ * - HARDCODED_DEMO_RESPONSES: HIGH
+ * - API_WITHOUT_DB_INTEGRATION: HIGH
+ * - AI_USAGE_NOT_TRACKED: MEDIUM
+ * - INCOMPLETE_API_RESPONSE: MEDIUM
+ * - GENERIC_ERROR_MESSAGE: MEDIUM
+ * - STATIC_USER_DATA: HIGH
+ */
+
+
+// 🛡️ DATABASE GUARD: This code interacts with the database
+// CRITICAL RULES:
+// 1. ALWAYS wrap database queries in try-catch blocks
+// 2. ALWAYS provide fallback responses for demo mode
+// 3. NEVER expose raw database errors to frontend
+// 4. ALWAYS validate user input before database operations
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
