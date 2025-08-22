@@ -3,10 +3,11 @@ const cors = require('cors');
 require('dotenv').config();
 
 // Optional dependencies - only load if available
-let bcrypt, Pool;
+let bcrypt, Pool, jwt;
 try {
   bcrypt = require('bcryptjs');
   Pool = require('pg').Pool;
+  jwt = require('jsonwebtoken');
 } catch (error) {
   console.warn('⚠️ Optional dependencies not available:', error.message);
 }
@@ -324,11 +325,12 @@ app.post('/api/auth/signup', async (req, res) => {
         exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year
       };
 
-      // Simple JWT format (header.payload.signature) - using base64url encoding for frontend compatibility
-      const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64url');
-      const payload = Buffer.from(JSON.stringify(demoPayload)).toString('base64url');
-      const signature = 'demo-signature-' + Date.now();
-      const token = `${header}.${payload}.${signature}`;
+      // Generate proper JWT token using jsonwebtoken library
+      const token = jwt.sign(
+        demoPayload,
+        process.env.JWT_SECRET || 'demo-secret-key-for-development-only',
+        { algorithm: 'HS256' }
+      );
 
       return res.status(201).json({
         success: true,
@@ -379,11 +381,12 @@ app.post('/api/auth/signup', async (req, res) => {
       exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year
     };
 
-    // Create properly formatted JWT using base64url (for frontend compatibility)
-    const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64url');
-    const payload = Buffer.from(JSON.stringify(tokenPayload)).toString('base64url');
-    const signature = 'prod-signature-' + Date.now();
-    const token = `${header}.${payload}.${signature}`;
+    // Generate proper JWT token using jsonwebtoken library
+    const token = jwt.sign(
+      tokenPayload,
+      process.env.JWT_SECRET || 'demo-secret-key-for-development-only',
+      { algorithm: 'HS256' }
+    );
 
     res.status(201).json({
       success: true,
@@ -448,10 +451,12 @@ app.post('/api/auth/login', async (req, res) => {
         exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60)
       };
 
-      const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64url');
-      const payload = Buffer.from(JSON.stringify(demoPayload)).toString('base64url');
-      const signature = 'demo-login-' + Date.now();
-      const token = `${header}.${payload}.${signature}`;
+      // Generate proper JWT token using jsonwebtoken library
+      const token = jwt.sign(
+        demoPayload,
+        process.env.JWT_SECRET || 'demo-secret-key-for-development-only',
+        { algorithm: 'HS256' }
+      );
 
       return res.json({
         success: true,
@@ -507,11 +512,12 @@ app.post('/api/auth/login', async (req, res) => {
       exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60)
     };
 
-    // Create properly formatted JWT using base64url (for frontend compatibility)
-    const header = Buffer.from(JSON.stringify({alg: 'HS256', typ: 'JWT'})).toString('base64url');
-    const payload = Buffer.from(JSON.stringify(loginPayload)).toString('base64url');
-    const signature = 'login-signature-' + Date.now();
-    const token = `${header}.${payload}.${signature}`;
+    // Generate proper JWT token using jsonwebtoken library
+    const token = jwt.sign(
+      loginPayload,
+      process.env.JWT_SECRET || 'demo-secret-key-for-development-only',
+      { algorithm: 'HS256' }
+    );
 
     res.json({
       success: true,
