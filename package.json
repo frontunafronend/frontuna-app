@@ -1,47 +1,20 @@
 {
   "name": "frontuna-app",
   "version": "1.0.0",
-  "description": "Frontuna - AI-Powered Angular Application with Neon Database",
-  "private": true,
+  "description": "AI-powered component generation platform",
   "scripts": {
-    "build": "cd frontend && npm ci && npm run build:vercel",
-    "build:prod": "cd frontend && npm ci && npm run build -- --configuration=production",
-    "start:vercel": "npx vercel dev",
-    "deploy": "npx vercel --prod",
-    "deploy:preview": "npx vercel",
-    "install:frontend": "cd frontend && npm ci",
-    "install:backend": "cd backend && npm ci",
-    "install:all": "npm run install:frontend && npm run install:backend",
-    "dev:frontend": "cd frontend && npm start",
-    "dev:backend": "cd backend && npm start",
-    "test:frontend": "cd frontend && npm test",
-    "lint:frontend": "cd frontend && npm run lint",
-    "health-check": "curl -f http://localhost:3000/api/health || exit 1"
+    "start": "cd frontend && ng serve",
+    "build": "cd frontend && ng build",
+    "backend": "cd backend && node server-production.js",
+    "bug-scan": "node backend/ai-bug-guardian.js",
+    "auto-scan": "node backend/auto-bug-scanner.js",
+    "health-check": "npm run bug-scan && echo 'System health check complete'",
+    "fix-guide": "npm run bug-scan && echo 'Check DATABASE-FIX-GUIDE.md for step-by-step fixes'"
   },
-  "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-username/frontuna-app.git"
-  },
-  "keywords": [
-    "angular",
-    "ai",
-    "neon",
-    "postgresql",
-    "vercel",
-    "typescript"
-  ],
-  "author": "Your Name",
+  "keywords": ["ai", "components", "angular", "frontend", "development"],
+  "author": "Frontuna Team",
   "license": "MIT",
   "devDependencies": {
-    "@vercel/node": "^3.0.0",
-    "vercel": "^33.0.0"
-  },
-  "dependencies": {
-    "pg": "^8.11.0",
-    "@types/pg": "^8.10.0"
+    "concurrently": "^8.2.0"
   }
 }
