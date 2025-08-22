@@ -74,6 +74,8 @@ exports.login = async (req, res, next) => {
     const userResponse = {
       id: user.id,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role,
       createdAt: user.createdAt,
       subscription: user.subscriptions?.[0] || null
@@ -103,7 +105,7 @@ exports.login = async (req, res, next) => {
  */
 exports.signup = async (req, res, next) => {
   try {
-    const { email, password, agreeToTerms, subscribeToNewsletter } = req.body;
+    const { email, password, firstName, lastName, agreeToTerms, subscribeToNewsletter } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -121,6 +123,8 @@ exports.signup = async (req, res, next) => {
     const user = await User.create({
       email,
       password,
+      firstName,
+      lastName,
       role: 'user'
     });
 
@@ -143,6 +147,8 @@ exports.signup = async (req, res, next) => {
     const userResponse = {
       id: user.id,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role,
       createdAt: user.createdAt,
       subscription: {
