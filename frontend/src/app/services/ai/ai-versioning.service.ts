@@ -163,18 +163,20 @@ export class AIVersioningService {
   getVersions(componentId: string): Observable<ComponentVersion[]> {
     console.log('📚 AI Versioning: Getting versions for component:', componentId);
     
-    // Always use live backend - no mock data
+    // Always use live backend - database connected
     
-    return this.http.get<ComponentVersion[]>(`${this.baseUrl}/components/${componentId}/versions`)
+    return this.http.get<{success: boolean, data: ComponentVersion[]}>(`${this.baseUrl}/components/${componentId}/versions`)
       .pipe(
-        tap(versions => {
+        tap(response => {
+          const versions = response.success ? response.data : [];
+          console.log('✅ AI Versioning: Loaded versions from database:', versions.length);
           this.versionsSubject.next(versions);
           if (versions.length > 0 && !this.currentVersionSubject.value) {
             this.currentVersionSubject.next(versions[0]);
           }
         }),
         catchError(error => {
-          console.error('❌ AI Versioning: Error getting versions:', error);
+          console.error('❌ AI Versioning: Error getting versions from database:', error);
           return of([]);
         })
       );

@@ -206,6 +206,19 @@ async function createUsersTable() {
       )
     `);
     
+    // Create API keys table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS api_keys (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        key_value VARCHAR(255) UNIQUE NOT NULL,
+        last_used TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    
     console.log('✅ All database tables ready (users, preferences, notifications, ai_usage)');
   } catch (error) {
     console.error('❌ Failed to create database tables:', error instanceof Error ? error.message : error);
