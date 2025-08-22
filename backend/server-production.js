@@ -694,22 +694,75 @@ app.get('/api/users/preferences', async (req, res) => {
   try {
     console.log('⚙️ Getting user preferences');
     
+    // Extract email from token
+    const authHeader = req.headers.authorization;
+    let userEmail = 'demo@example.com';
+    
+    if (authHeader && authHeader.startsWith('Bearer ') && jwt) {
+      try {
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'demo-secret-key-for-development-only');
+        userEmail = decoded.email || decoded.sub;
+      } catch (tokenError) {
+        console.log('⚠️ Token decode failed, using demo email');
+      }
+    }
+    
     if (dbConnected && db) {
-      // Try to get from database
-      // TODO: Implement user preferences table
-      // For now, return defaults
+      try {
+        // Get user ID first
+        const userResult = await db.query('SELECT id FROM users WHERE email = $1', [userEmail]);
+        
+        if (userResult.rows.length > 0) {
+          const userId = userResult.rows[0].id;
+          
+          // Get preferences from database
+          const prefResult = await db.query(
+            'SELECT * FROM user_preferences WHERE user_id = $1',
+            [userId]
+          );
+          
+          if (prefResult.rows.length > 0) {
+            const prefs = prefResult.rows[0];
+            console.log('✅ Preferences loaded from database');
+            
+            res.json({
+              success: true,
+              data: {
+                darkMode: prefs.dark_mode,
+                language: prefs.language,
+                defaultFramework: prefs.default_framework,
+                autoSave: prefs.auto_save,
+                typescript: prefs.typescript,
+                notifications: prefs.notifications
+              }
+            });
+            return;
+          } else {
+            // Create default preferences for this user
+            await db.query(
+              'INSERT INTO user_preferences (user_id) VALUES ($1)',
+              [userId]
+            );
+            console.log('✅ Created default preferences for user');
+          }
+        }
+      } catch (dbError) {
+        console.error('❌ Database error loading preferences:', dbError);
+      }
     }
     
     // Return default preferences
     const defaultPreferences = {
       darkMode: false,
       language: 'en',
-      defaultFramework: 'react',
+      defaultFramework: 'angular',
       autoSave: true,
       typescript: true,
       notifications: true
     };
     
+    console.log('📝 Using default preferences');
     res.json({
       success: true,
       data: defaultPreferences
@@ -727,17 +780,75 @@ app.put('/api/users/preferences', async (req, res) => {
   try {
     console.log('🔧 Updating user preferences:', req.body);
     
-    if (dbConnected && db) {
-      // Try to save to database
-      // TODO: Implement user preferences table
-      // For now, just acknowledge the update
-      console.log('✅ Preferences would be saved to database');
+    // Extract email from token
+    const authHeader = req.headers.authorization;
+    let userEmail = 'demo@example.com';
+    
+    if (authHeader && authHeader.startsWith('Bearer ') && jwt) {
+      try {
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'demo-secret-key-for-development-only');
+        userEmail = decoded.email || decoded.sub;
+      } catch (tokenError) {
+        console.log('⚠️ Token decode failed, using demo email');
+      }
     }
     
+    const { darkMode, language, defaultFramework, autoSave, typescript, notifications } = req.body;
+    
+    if (dbConnected && db) {
+      try {
+        // Get user ID first
+        const userResult = await db.query('SELECT id FROM users WHERE email = $1', [userEmail]);
+        
+        if (userResult.rows.length > 0) {
+          const userId = userResult.rows[0].id;
+          
+          // Update preferences in database
+          const updateResult = await db.query(`
+            INSERT INTO user_preferences (user_id, dark_mode, language, default_framework, auto_save, typescript, notifications, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            ON CONFLICT (user_id) 
+            DO UPDATE SET 
+              dark_mode = $2,
+              language = $3,
+              default_framework = $4,
+              auto_save = $5,
+              typescript = $6,
+              notifications = $7,
+              updated_at = NOW()
+            RETURNING *
+          `, [userId, darkMode, language, defaultFramework, autoSave, typescript, notifications]);
+          
+          if (updateResult.rows.length > 0) {
+            console.log('✅ Preferences saved to database');
+            
+            res.json({
+              success: true,
+              data: {
+                darkMode,
+                language,
+                defaultFramework,
+                autoSave,
+                typescript,
+                notifications
+              },
+              message: 'Preferences updated successfully in database'
+            });
+            return;
+          }
+        }
+      } catch (dbError) {
+        console.error('❌ Database error updating preferences:', dbError);
+      }
+    }
+    
+    // Demo mode response
+    console.log('📝 Preferences updated (demo mode)');
     res.json({
       success: true,
       data: req.body,
-      message: 'Preferences updated successfully'
+      message: 'Preferences updated successfully (demo mode)'
     });
   } catch (error) {
     console.error('❌ Update preferences error:', error);
@@ -919,19 +1030,30 @@ app.put('/api/users/notifications', async (req, res) => {
   }
 });
 
-app.get('/api/users/api-keys', (req, res) => {
-  res.json({
-    success: true,
-    data: [
-      {
-        id: 'key-1',
-        name: 'Production Key',
-        key: 'fta_' + Math.random().toString(36).substring(2, 15),
-        createdAt: new Date().toISOString(),
-        lastUsed: new Date().toISOString()
-      }
-    ]
-  });
+app.get('/api/users/api-keys', async (req, res) => {
+  try {
+    console.log('🔑 Getting API keys');
+    
+    // Demo mode response with database-ready structure
+    res.json({
+      success: true,
+      data: [
+        {
+          id: 'demo-key-1',
+          name: 'Demo API Key',
+          key: 'fta_demo_' + Math.random().toString(36).substring(2, 10),
+          createdAt: new Date().toISOString(),
+          lastUsed: new Date().toISOString()
+        }
+      ]
+    });
+  } catch (error) {
+    console.error('❌ Get API keys error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get API keys'
+    });
+  }
 });
 
 app.post('/api/users/api-keys', (req, res) => {

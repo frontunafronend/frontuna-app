@@ -179,7 +179,7 @@ export class ComponentGalleryService {
    * Get components from gallery with filtering and pagination
    */
   getComponents(filter: GalleryFilter = {}, page = 1, limit = 20): Observable<GalleryResponse> {
-    console.log('🎨 Gallery Service: Getting components', { filter, page, limit });
+    console.log('🎨 Gallery Service: Getting components from database', { filter, page, limit });
     
     this.isLoadingSignal.set(true);
     this.currentFilterSignal.set(filter);
@@ -192,18 +192,20 @@ export class ComponentGalleryService {
     return this.http.get<GalleryResponse>(`${this.baseUrl}/components`, { params })
       .pipe(
         tap(response => {
-          console.log('✅ Gallery Service: Components loaded:', response.components.length);
-          if (page === 1) {
-            this.componentsSubject.next(response.components);
-          } else {
-            const current = this.componentsSubject.value;
-            this.componentsSubject.next([...current, ...response.components]);
+          console.log('✅ Gallery Service: Components loaded from database:', response.components?.length || 0);
+          if (response.success && response.data?.components) {
+            if (page === 1) {
+              this.componentsSubject.next(response.data.components);
+            } else {
+              const current = this.componentsSubject.value;
+              this.componentsSubject.next([...current, ...response.data.components]);
+            }
           }
           this.isLoadingSignal.set(false);
         }),
         catchError(error => {
-          console.error('❌ Gallery Service: Failed to load components:', error);
-          this.notificationService.showError('Failed to load components');
+          console.error('❌ Gallery Service: Failed to load components from database:', error);
+          this.notificationService.showError('Failed to load components from database');
           this.isLoadingSignal.set(false);
           return throwError(() => error);
         })
