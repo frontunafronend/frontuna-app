@@ -1,12 +1,3 @@
-/**
- * 🤖 AI BUG GUARDIAN PROTECTED FILE
- * Last analyzed: 2025-08-22T21:22:46.025Z
- * Issues detected: 1
- * 
- * This file is protected against common bugs:
- * - AI_USAGE_NOT_TRACKED: MEDIUM
- */
-
 // BULLETPROOF AI COPILOT COMPONENT - CLEAN VERSION
 import { Component, OnInit, ViewChild, ElementRef, inject, signal, computed } from '@angular/core';
 import { ChatMessage } from '../../interfaces/chat-message.interface';
