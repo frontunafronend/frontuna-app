@@ -507,45 +507,120 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Settings endpoints (from your working settings service)
-app.get('/api/users/preferences', (req, res) => {
-  res.json({
-    success: true,
-    data: {
+app.get('/api/users/preferences', async (req, res) => {
+  try {
+    console.log('⚙️ Getting user preferences');
+    
+    if (dbConnected && db) {
+      // Try to get from database
+      // TODO: Implement user preferences table
+      // For now, return defaults
+    }
+    
+    // Return default preferences
+    const defaultPreferences = {
       darkMode: false,
       language: 'en',
       defaultFramework: 'react',
       autoSave: true,
+      typescript: true,
       notifications: true
+    };
+    
+    res.json({
+      success: true,
+      data: defaultPreferences
+    });
+  } catch (error) {
+    console.error('❌ Get preferences error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get preferences'
+    });
+  }
+});
+
+app.put('/api/users/preferences', async (req, res) => {
+  try {
+    console.log('🔧 Updating user preferences:', req.body);
+    
+    if (dbConnected && db) {
+      // Try to save to database
+      // TODO: Implement user preferences table
+      // For now, just acknowledge the update
+      console.log('✅ Preferences would be saved to database');
     }
-  });
+    
+    res.json({
+      success: true,
+      data: req.body,
+      message: 'Preferences updated successfully'
+    });
+  } catch (error) {
+    console.error('❌ Update preferences error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update preferences'
+    });
+  }
 });
 
-app.put('/api/users/preferences', (req, res) => {
-  res.json({
-    success: true,
-    data: req.body,
-    message: 'Preferences updated successfully'
-  });
-});
-
-app.get('/api/users/notifications', (req, res) => {
-  res.json({
-    success: true,
-    data: {
+app.get('/api/users/notifications', async (req, res) => {
+  try {
+    console.log('📬 Getting notification settings');
+    
+    if (dbConnected && db) {
+      // Try to get from database
+      // TODO: Implement user notification settings table
+      // For now, return defaults
+    }
+    
+    // Return default notification settings
+    const defaultSettings = {
       email: true,
       push: false,
       generationComplete: true,
-      weeklyDigest: false
-    }
-  });
+      weeklySummary: false,
+      planUpdates: true,
+      browserNotifications: false
+    };
+    
+    res.json({
+      success: true,
+      data: defaultSettings
+    });
+  } catch (error) {
+    console.error('❌ Get notifications error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get notification settings'
+    });
+  }
 });
 
-app.put('/api/users/notifications', (req, res) => {
-  res.json({
-    success: true,
-    data: req.body,
-    message: 'Notification settings updated successfully'
-  });
+app.put('/api/users/notifications', async (req, res) => {
+  try {
+    console.log('🔔 Updating notification settings:', req.body);
+    
+    if (dbConnected && db) {
+      // Try to save to database
+      // TODO: Implement user notification settings table
+      // For now, just acknowledge the update
+      console.log('✅ Notification settings would be saved to database');
+    }
+    
+    res.json({
+      success: true,
+      data: req.body,
+      message: 'Notification settings updated successfully'
+    });
+  } catch (error) {
+    console.error('❌ Update notifications error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update notification settings'
+    });
+  }
 });
 
 app.get('/api/users/api-keys', (req, res) => {

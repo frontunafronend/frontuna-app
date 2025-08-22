@@ -202,7 +202,7 @@
                     <span class="preference-title">Generation Complete</span>
                     <span class="preference-desc">Get notified when component generation finishes</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="notifications().generationComplete">
+                  <mat-slide-toggle [(ngModel)]="notifications().generationComplete" (change)="updateNotificationSetting('generationComplete', $event.checked)">
                   </mat-slide-toggle>
                 </div>
                 
@@ -211,7 +211,7 @@
                     <span class="preference-title">Weekly Summary</span>
                     <span class="preference-desc">Receive weekly usage summary</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="notifications().weeklySummary">
+                  <mat-slide-toggle [(ngModel)]="notifications().weeklySummary" (change)="updateNotificationSetting('weeklySummary', $event.checked)">
                   </mat-slide-toggle>
                 </div>
                 
@@ -220,7 +220,7 @@
                     <span class="preference-title">Plan Updates</span>
                     <span class="preference-desc">Get notified about billing and plan changes</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="notifications().planUpdates">
+                  <mat-slide-toggle [(ngModel)]="notifications().planUpdates" (change)="updateNotificationSetting('planUpdates', $event.checked)">
                   </mat-slide-toggle>
                 </div>
               </div>
@@ -234,7 +234,7 @@
                     <span class="preference-title">Browser Notifications</span>
                     <span class="preference-desc">Show notifications in your browser</span>
                   </div>
-                  <mat-slide-toggle [(ngModel)]="notifications().browserNotifications">
+                  <mat-slide-toggle [(ngModel)]="notifications().browserNotifications" (change)="updateNotificationSetting('browserNotifications', $event.checked)">
                   </mat-slide-toggle>
                 </div>
               </div>

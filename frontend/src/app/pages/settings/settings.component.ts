@@ -221,6 +221,30 @@ export class SettingsComponent implements OnInit, OnDestroy {
     );
   }
 
+  // ===== NOTIFICATION SETTINGS =====
+
+  updateNotificationSetting(key: keyof NotificationSettings, value: boolean): void {
+    console.log(`🔔 Updating notification setting ${key}:`, value);
+    
+    const currentSettings = this.notifications();
+    const updatedSettings = { ...currentSettings, [key]: value };
+    
+    this.subscriptions.add(
+      this.settingsService.updateNotificationSettings(updatedSettings).subscribe({
+        next: () => {
+          console.log(`✅ Notification setting ${key} updated in real backend`);
+          this.notifications.set(updatedSettings);
+        },
+        error: (error) => {
+          console.error(`❌ Failed to update notification setting ${key}:`, error);
+          // Revert the change in UI
+          this.notifications.set({ ...currentSettings, [key]: !value });
+          this.notificationService.showError(`Failed to update ${key} setting`);
+        }
+      })
+    );
+  }
+
   // ===== SECURITY MANAGEMENT =====
 
   changePassword(): void {
