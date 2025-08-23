@@ -1,0 +1,9 @@
+Frontend deployment trigger - Auth fixes ready for production
+Timestamp: 2025-08-23T11:45:00Z
+Fixes included:
+- Bulletproof AuthGuard with comprehensive token checking
+- Disabled auto-logout on 401 errors
+- Enhanced debugging for auth state
+- Should resolve login redirect issues on refresh
+
+Deploy this frontend to make auth work properly on live site.
