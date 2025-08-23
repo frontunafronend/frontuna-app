@@ -219,7 +219,38 @@ async function createUsersTable() {
       )
     `);
     
-    console.log('✅ All database tables ready (users, preferences, notifications, ai_usage)');
+    // Create chat history table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS chat_history (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        session_id VARCHAR(255) NOT NULL,
+        message_type VARCHAR(50) NOT NULL, -- 'user' or 'assistant'
+        content TEXT NOT NULL,
+        tokens_used INTEGER DEFAULT 0,
+        model_used VARCHAR(100),
+        response_time INTEGER, -- in milliseconds
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    
+    // Create AI copilot sessions table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS copilot_sessions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        session_id VARCHAR(255) UNIQUE NOT NULL,
+        title VARCHAR(255),
+        context TEXT,
+        total_tokens INTEGER DEFAULT 0,
+        message_count INTEGER DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    
+    console.log('✅ All database tables ready (users, preferences, notifications, ai_usage, chat_history, copilot_sessions)');
   } catch (error) {
     console.error('❌ Failed to create database tables:', error instanceof Error ? error.message : error);
   }
@@ -1565,6 +1596,367 @@ app.post('/api/auth/refresh', async (req, res) => {
     });
   }
 });
+
+// ===== AI COPILOT ENDPOINTS =====
+
+// Start new copilot session
+app.post('/api/ai/copilot/session', async (req, res) => {
+  try {
+    console.log('🤖 Starting new copilot session');
+    
+    // Extract email from token
+    const authHeader = req.headers.authorization;
+    let userEmail = 'demo@example.com';
+    
+    if (authHeader && authHeader.startsWith('Bearer ') && jwt) {
+      try {
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'demo-secret-key-for-development-only');
+        userEmail = decoded.email || decoded.sub;
+      } catch (tokenError) {
+        console.log('⚠️ Token decode failed, using demo email');
+      }
+    }
+    
+    const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+    const { title, context } = req.body;
+    
+    if (dbConnected && db) {
+      try {
+        // Get user ID
+        const userResult = await db.query('SELECT id FROM users WHERE email = $1', [userEmail]);
+        
+        if (userResult.rows.length > 0) {
+          const userId = userResult.rows[0].id;
+          
+          // Create session in database
+          const sessionResult = await db.query(`
+            INSERT INTO copilot_sessions (user_id, session_id, title, context)
+            VALUES ($1, $2, $3, $4)
+            RETURNING *
+          `, [userId, sessionId, title || 'New Chat', context || '']);
+          
+          console.log('✅ Copilot session created in database');
+          
+          res.json({
+            success: true,
+            data: {
+              sessionId,
+              title: title || 'New Chat',
+              context: context || '',
+              createdAt: new Date().toISOString()
+            }
+          });
+          return;
+        }
+      } catch (dbError) {
+        console.error('❌ Database error creating session:', dbError);
+      }
+    }
+    
+    // Demo mode response
+    console.log('📝 Created demo copilot session');
+    res.json({
+      success: true,
+      data: {
+        sessionId,
+        title: title || 'Demo Chat',
+        context: context || '',
+        createdAt: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('❌ Copilot session creation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create copilot session'
+    });
+  }
+});
+
+// Send message to AI copilot
+app.post('/api/ai/copilot/chat', async (req, res) => {
+  try {
+    const startTime = Date.now();
+    console.log('🤖 Processing AI copilot message');
+    
+    // Extract email from token
+    const authHeader = req.headers.authorization;
+    let userEmail = 'demo@example.com';
+    
+    if (authHeader && authHeader.startsWith('Bearer ') && jwt) {
+      try {
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'demo-secret-key-for-development-only');
+        userEmail = decoded.email || decoded.sub;
+      } catch (tokenError) {
+        console.log('⚠️ Token decode failed, using demo email');
+      }
+    }
+    
+    const { sessionId, message, context } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message is required'
+      });
+    }
+    
+    // Simulate AI processing (replace with actual AI service)
+    const aiResponse = await simulateAIResponse(message, context);
+    const responseTime = Date.now() - startTime;
+    
+    if (dbConnected && db) {
+      try {
+        // Get user ID
+        const userResult = await db.query('SELECT id FROM users WHERE email = $1', [userEmail]);
+        
+        if (userResult.rows.length > 0) {
+          const userId = userResult.rows[0].id;
+          
+          // Save user message
+          await db.query(`
+            INSERT INTO chat_history (user_id, session_id, message_type, content, tokens_used, model_used, response_time)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `, [userId, sessionId, 'user', message, 0, 'user-input', 0]);
+          
+          // Save AI response
+          await db.query(`
+            INSERT INTO chat_history (user_id, session_id, message_type, content, tokens_used, model_used, response_time)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `, [userId, sessionId, 'assistant', aiResponse.content, aiResponse.tokensUsed, aiResponse.model, responseTime]);
+          
+          // Update session stats
+          await db.query(`
+            UPDATE copilot_sessions 
+            SET total_tokens = total_tokens + $1, message_count = message_count + 2, updated_at = NOW()
+            WHERE session_id = $2
+          `, [aiResponse.tokensUsed, sessionId]);
+          
+          // Update user AI usage
+          await db.query(`
+            INSERT INTO ai_usage (user_id, prompt, response, mode, tokens_used)
+            VALUES ($1, $2, $3, $4, $5)
+          `, [userId, message, aiResponse.content, 'copilot', aiResponse.tokensUsed]);
+          
+          console.log('✅ Chat history saved to database');
+        }
+      } catch (dbError) {
+        console.error('❌ Database error saving chat:', dbError);
+      }
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        message: aiResponse.content,
+        sessionId,
+        tokensUsed: aiResponse.tokensUsed,
+        model: aiResponse.model,
+        responseTime
+      }
+    });
+  } catch (error) {
+    console.error('❌ AI copilot chat error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process AI message'
+    });
+  }
+});
+
+// Get chat history for session
+app.get('/api/ai/copilot/history/:sessionId', async (req, res) => {
+  try {
+    console.log('📚 Getting chat history');
+    
+    const { sessionId } = req.params;
+    
+    // Extract email from token
+    const authHeader = req.headers.authorization;
+    let userEmail = 'demo@example.com';
+    
+    if (authHeader && authHeader.startsWith('Bearer ') && jwt) {
+      try {
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'demo-secret-key-for-development-only');
+        userEmail = decoded.email || decoded.sub;
+      } catch (tokenError) {
+        console.log('⚠️ Token decode failed, using demo email');
+      }
+    }
+    
+    if (dbConnected && db) {
+      try {
+        // Get user ID
+        const userResult = await db.query('SELECT id FROM users WHERE email = $1', [userEmail]);
+        
+        if (userResult.rows.length > 0) {
+          const userId = userResult.rows[0].id;
+          
+          // Get chat history
+          const historyResult = await db.query(`
+            SELECT message_type, content, tokens_used, model_used, response_time, created_at
+            FROM chat_history 
+            WHERE user_id = $1 AND session_id = $2
+            ORDER BY created_at ASC
+          `, [userId, sessionId]);
+          
+          console.log('✅ Chat history loaded from database');
+          
+          res.json({
+            success: true,
+            data: historyResult.rows.map(row => ({
+              type: row.message_type,
+              content: row.content,
+              tokensUsed: row.tokens_used,
+              model: row.model_used,
+              responseTime: row.response_time,
+              timestamp: row.created_at
+            }))
+          });
+          return;
+        }
+      } catch (dbError) {
+        console.error('❌ Database error loading history:', dbError);
+      }
+    }
+    
+    // Demo mode response
+    res.json({
+      success: true,
+      data: [
+        {
+          type: 'user',
+          content: 'Hello, how can you help me?',
+          timestamp: new Date().toISOString()
+        },
+        {
+          type: 'assistant',
+          content: 'Hello! I\'m your AI copilot. I can help you with code generation, debugging, explanations, and much more. What would you like to work on?',
+          tokensUsed: 45,
+          model: 'demo-model',
+          responseTime: 1200,
+          timestamp: new Date().toISOString()
+        }
+      ]
+    });
+  } catch (error) {
+    console.error('❌ Chat history error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load chat history'
+    });
+  }
+});
+
+// Get user's copilot sessions
+app.get('/api/ai/copilot/sessions', async (req, res) => {
+  try {
+    console.log('📝 Getting copilot sessions');
+    
+    // Extract email from token
+    const authHeader = req.headers.authorization;
+    let userEmail = 'demo@example.com';
+    
+    if (authHeader && authHeader.startsWith('Bearer ') && jwt) {
+      try {
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'demo-secret-key-for-development-only');
+        userEmail = decoded.email || decoded.sub;
+      } catch (tokenError) {
+        console.log('⚠️ Token decode failed, using demo email');
+      }
+    }
+    
+    if (dbConnected && db) {
+      try {
+        // Get user ID
+        const userResult = await db.query('SELECT id FROM users WHERE email = $1', [userEmail]);
+        
+        if (userResult.rows.length > 0) {
+          const userId = userResult.rows[0].id;
+          
+          // Get sessions
+          const sessionsResult = await db.query(`
+            SELECT session_id, title, total_tokens, message_count, status, created_at, updated_at
+            FROM copilot_sessions 
+            WHERE user_id = $1
+            ORDER BY updated_at DESC
+            LIMIT 50
+          `, [userId]);
+          
+          console.log('✅ Copilot sessions loaded from database');
+          
+          res.json({
+            success: true,
+            data: sessionsResult.rows.map(row => ({
+              sessionId: row.session_id,
+              title: row.title,
+              totalTokens: row.total_tokens,
+              messageCount: row.message_count,
+              status: row.status,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at
+            }))
+          });
+          return;
+        }
+      } catch (dbError) {
+        console.error('❌ Database error loading sessions:', dbError);
+      }
+    }
+    
+    // Demo mode response
+    res.json({
+      success: true,
+      data: [
+        {
+          sessionId: 'demo-session-1',
+          title: 'Demo Chat Session',
+          totalTokens: 150,
+          messageCount: 4,
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+    });
+  } catch (error) {
+    console.error('❌ Copilot sessions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load copilot sessions'
+    });
+  }
+});
+
+// Simulate AI response (replace with actual AI service integration)
+async function simulateAIResponse(message, context) {
+  // Simulate processing delay
+  await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 500));
+  
+  // Generate contextual response based on message
+  let response = '';
+  const lowerMessage = message.toLowerCase();
+  
+  if (lowerMessage.includes('code') || lowerMessage.includes('function')) {
+    response = `I can help you with coding! Here's a suggestion for your request:\n\n\`\`\`typescript\n// Example code based on your request\nfunction handleUserRequest(input: string): string {\n  return \`Processing: \${input}\`;\n}\n\`\`\`\n\nWould you like me to explain this code or help you modify it?`;
+  } else if (lowerMessage.includes('debug') || lowerMessage.includes('error')) {
+    response = `I'll help you debug that issue. Here's what I suggest:\n\n1. Check the console for error messages\n2. Verify your imports and dependencies\n3. Look for typos in variable names\n4. Ensure proper error handling\n\nCan you share the specific error message you're seeing?`;
+  } else if (lowerMessage.includes('explain') || lowerMessage.includes('how')) {
+    response = `I'd be happy to explain that! Based on your question, here's a breakdown:\n\n• The concept involves understanding the core principles\n• Implementation requires following best practices\n• Testing ensures everything works as expected\n\nWhat specific aspect would you like me to dive deeper into?`;
+  } else {
+    response = `I understand you're asking about: "${message}"\n\nAs your AI copilot, I can help you with:\n• Code generation and optimization\n• Debugging and troubleshooting\n• Architecture and design patterns\n• Best practices and recommendations\n\nHow would you like to proceed with this topic?`;
+  }
+  
+  return {
+    content: response,
+    tokensUsed: Math.floor(response.length / 4) + Math.floor(Math.random() * 20), // Rough token estimation
+    model: 'frontuna-ai-v1'
+  };
+}
 
 // Start server
 const PORT = process.env.PORT || 3000;
