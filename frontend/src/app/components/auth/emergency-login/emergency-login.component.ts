@@ -105,7 +105,7 @@ import { NotificationService } from '@app/services/notification/notification.ser
           <div class="credentials-section">
             <h3>🔑 Admin Credentials</h3>
             <div class="credential-item">
-              <strong>Email:</strong> admin@frontuna.com
+              <strong>Email:</strong> admin&#64;frontuna.com
               <button mat-icon-button (click)="fillCredentials('admin')">
                 <mat-icon>content_copy</mat-icon>
               </button>

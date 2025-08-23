@@ -198,17 +198,32 @@ export class UltimateAuthService {
           subscription: {
             plan: 'free' as SubscriptionPlan,
             status: 'active' as SubscriptionStatus,
-            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            isTrialActive: false
           },
           usage: {
-            apiCalls: 0,
+            generationsUsed: 0,
+            generationsLimit: 1000,
             storageUsed: 0,
-            lastLogin: new Date()
+            storageLimit: 100,
+            lastResetDate: new Date()
           },
           preferences: {
             theme: 'light',
             language: 'en',
-            notifications: true
+            timezone: 'UTC',
+            notifications: {
+              email: true,
+              push: true,
+              updates: true,
+              marketing: false
+            },
+            ui: {
+              enableAnimations: true,
+              enableTooltips: true,
+              compactMode: false
+            }
           },
           createdAt: new Date(),
           updatedAt: new Date()
@@ -440,9 +455,10 @@ export class UltimateAuthService {
       const response = await this.http.get(
         `${this.environmentService.config.apiUrl}/auth/validate`,
         {
-          headers: { Authorization: `Bearer ${token}` },
-          timeout: 5000 // 5 second timeout
+          headers: { Authorization: `Bearer ${token}` }
         }
+      ).pipe(
+        timeout(5000)
       ).toPromise();
       
       console.log('✅ Server validation successful');
@@ -475,7 +491,7 @@ export class UltimateAuthService {
       // Store encrypted version if available
       if (this.encryptionService.isSecureStorageAvailable()) {
         try {
-          await this.encryptionService.storeToken(token);
+          await this.encryptionService.setSecureItem('access_token', token);
           localStorage.setItem('frontuna_secure_access_token', token); // Backup
         } catch (error) {
           console.log('⚠️ Could not store encrypted token, but continuing:', error);
