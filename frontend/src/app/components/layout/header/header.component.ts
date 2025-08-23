@@ -254,6 +254,17 @@ import { NotificationService } from '@app/services/notification/notification.ser
         <span>Preferences</span>
       </button>
       
+      <!-- 👑 ADMIN PANEL - Only visible to admin users -->
+      @if (isAdmin()) {
+        <mat-divider></mat-divider>
+        
+        <button mat-menu-item routerLink="/admin" class="admin-menu-item">
+          <mat-icon class="admin-icon">admin_panel_settings</mat-icon>
+          <span>Admin Panel</span>
+          <mat-icon class="admin-badge">verified</mat-icon>
+        </button>
+      }
+      
       <mat-divider></mat-divider>
       
       <button mat-menu-item (click)="logout()">
@@ -956,6 +967,29 @@ import { NotificationService } from '@app/services/notification/notification.ser
       margin-top: 0.25rem;
     }
 
+    /* 👑 ADMIN MENU ITEM STYLES */
+    .admin-menu-item {
+      background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1)) !important;
+      color: #ff9800 !important;
+      font-weight: 600 !important;
+      position: relative;
+    }
+
+    .admin-menu-item:hover {
+      background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2)) !important;
+      color: #ff6f00 !important;
+    }
+
+    .admin-menu-item .admin-icon {
+      color: #ff9800 !important;
+    }
+
+    .admin-menu-item .admin-badge {
+      margin-left: auto !important;
+      font-size: 16px !important;
+      color: #ff9800 !important;
+    }
+
     .notification-menu {
       min-width: 350px;
     }
@@ -1090,7 +1124,13 @@ export class HeaderComponent {
 
   // Computed properties
   public readonly currentUser = this.authService.currentUser;
-  public readonly isAdmin = computed(() => this.authService.isAdmin());
+  public readonly isAdmin = computed(() => {
+    const user = this.currentUser();
+    const isAdminRole = user?.role === 'admin';
+    const isAdminEmail = user?.email === 'admin@frontuna.com';
+    console.log('🔍 Header Admin check:', { user: user?.email, role: user?.role, isAdmin: isAdminRole || isAdminEmail });
+    return isAdminRole || isAdminEmail;
+  });
   
   // Mock data - replace with actual notification service
   public readonly notifications = computed(() => [] as any[]);
