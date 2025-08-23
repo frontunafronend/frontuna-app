@@ -410,10 +410,56 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
             </div>
           </mat-tab>
 
-          <!-- AI Keeper Tab -->
-          <mat-tab label="AI Keeper">
+          <!-- AI System Tab -->
+          <mat-tab label="AI System">
             <div class="tab-content">
-              <div class="ai-keeper-section">
+              <div class="ai-system-section">
+                <!-- Quick Access Card -->
+                <mat-card class="quick-access-card">
+                  <mat-card-header>
+                    <mat-card-title>
+                      <mat-icon>smart_toy</mat-icon>
+                      AI System Management
+                    </mat-card-title>
+                    <mat-card-subtitle>Manage AI copilots, guards, and system health</mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <div class="quick-access-grid">
+                      <button mat-raised-button 
+                              color="primary" 
+                              routerLink="/admin/ai-copilots"
+                              class="access-button">
+                        <mat-icon>psychology</mat-icon>
+                        <div class="button-content">
+                          <span class="button-title">AI Copilots & Guards</span>
+                          <span class="button-subtitle">View all AI components and security guards</span>
+                        </div>
+                      </button>
+                      
+                      <button mat-raised-button 
+                              color="accent" 
+                              class="access-button">
+                        <mat-icon>analytics</mat-icon>
+                        <div class="button-content">
+                          <span class="button-title">AI Analytics</span>
+                          <span class="button-subtitle">Performance metrics and usage statistics</span>
+                        </div>
+                      </button>
+                      
+                      <button mat-raised-button 
+                              color="warn" 
+                              class="access-button">
+                        <mat-icon>settings</mat-icon>
+                        <div class="button-content">
+                          <span class="button-title">AI Configuration</span>
+                          <span class="button-subtitle">Configure AI models and parameters</span>
+                        </div>
+                      </button>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+
+                <!-- AI Insights Card -->
                 <mat-card class="ai-insights-card">
                   <mat-card-header>
                     <mat-card-title>
@@ -788,6 +834,57 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
     .priority-high { background: #ffebee; color: #d32f2f; }
     .priority-medium { background: #fff3e0; color: #f57c00; }
     .priority-low { background: #e8f5e8; color: #388e3c; }
+
+    .quick-access-card {
+      margin-bottom: 2rem;
+    }
+
+    .quick-access-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .access-button {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      height: auto;
+      min-height: 80px;
+      text-align: left;
+      border-radius: 8px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .access-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .access-button mat-icon {
+      font-size: 2rem;
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .button-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .button-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .button-subtitle {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      line-height: 1.3;
+    }
 
     @media (max-width: 768px) {
       .admin-layout {

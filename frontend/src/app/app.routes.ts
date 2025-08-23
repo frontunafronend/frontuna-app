@@ -156,6 +156,13 @@ export const routes: Routes = [
     title: 'Admin Dashboard - Frontuna.com',
     data: { seoIndex: false } // Admin should not be indexed
   },
+  {
+    path: 'admin/ai-copilots',
+    loadComponent: () => import('./pages/admin/ai-copilots.component').then(m => m.AICopilotAdminComponent),
+    canActivate: [AdminGuard],
+    title: 'AI Copilots & Guards - Admin - Frontuna.com',
+    data: { seoIndex: false }
+  },
 
     // Content pages
   { 

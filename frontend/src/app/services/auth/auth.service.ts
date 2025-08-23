@@ -160,45 +160,122 @@ export class AuthService {
     console.log('✅ AUTH SERVICE initialized successfully');
   }
 
-  // 🔧 SIMPLIFIED SYNC INITIALIZATION - PREVENTS RACE CONDITIONS 🔧
+  // 🔧 ENHANCED SYNC INITIALIZATION - PREVENTS REDIRECT ON REFRESH 🔧
   private initializeAuthStateSync(): void {
-    console.log('🔧 Initializing auth state synchronously...');
+    console.log('🔧 Initializing auth state synchronously - preventing login redirect...');
     
     try {
       // Check for any stored tokens immediately
       const token = localStorage.getItem('frontuna_primary_token') ||
                    localStorage.getItem('frontuna_access_token') ||
                    localStorage.getItem('access_token') ||
-                   sessionStorage.getItem('frontuna_session_token');
+                   sessionStorage.getItem('frontuna_session_token') ||
+                   localStorage.getItem('frontuna_backup1_token') ||
+                   localStorage.getItem('frontuna_emergency_token');
       
-      if (token && token.trim()) {
-        console.log('✅ Found stored token, setting authenticated state');
+      // Check for emergency mode
+      const isEmergencyMode = localStorage.getItem('frontuna_emergency_mode') === 'true' ||
+                             sessionStorage.getItem('frontuna_emergency_mode') === 'true';
+      
+      // Check for stored user data (indicates active session)
+      const storedUserData = localStorage.getItem('frontuna_emergency_user') ||
+                            sessionStorage.getItem('frontuna_emergency_user');
+      
+      // 🎯 MAIN FIX: Set authenticated if we have ANY indication of authentication
+      if (token || isEmergencyMode || storedUserData) {
+        console.log('✅ Authentication indicators found - user stays authenticated');
+        console.log('🔍 Indicators:', { 
+          hasToken: !!token, 
+          isEmergencyMode, 
+          hasUserData: !!storedUserData 
+        });
+        
         this.isAuthenticatedSignal.set(true);
         
-        // Try to get stored user data
-        const storedUserData = localStorage.getItem('frontuna_emergency_user') ||
-                              sessionStorage.getItem('frontuna_emergency_user');
-        
+        // Try to restore user data
         if (storedUserData) {
           try {
             const user = JSON.parse(storedUserData);
             this.currentUserSignal.set(user);
             this.currentUserSubject.next(user);
-            console.log('✅ Restored user data from storage');
+            console.log('✅ User data restored:', user.email);
           } catch (error) {
             console.log('⚠️ Could not parse stored user data, but keeping authenticated');
+            // Create a fallback user to prevent UI issues
+            this.createFallbackUser();
           }
+        } else if (token) {
+          // Have token but no user data - create fallback user
+          console.log('🔄 Token found but no user data, creating fallback user');
+          this.createFallbackUser();
         }
       } else {
-        console.log('ℹ️ No tokens found, user not authenticated');
+        console.log('ℹ️ No authentication indicators found');
         this.isAuthenticatedSignal.set(false);
         this.currentUserSignal.set(null);
         this.currentUserSubject.next(null);
       }
     } catch (error) {
       console.error('❌ Sync auth initialization error:', error);
-      // Don't fail - just log the error
+      // Even on error, try to maintain authentication if we have tokens
+      const hasAnyToken = localStorage.getItem('frontuna_primary_token') ||
+                         localStorage.getItem('frontuna_access_token') ||
+                         localStorage.getItem('access_token');
+      if (hasAnyToken) {
+        console.log('🛡️ Error during init, but token exists - staying authenticated');
+        this.isAuthenticatedSignal.set(true);
+        this.createFallbackUser();
+      }
     }
+  }
+
+  // 🔧 CREATE FALLBACK USER TO PREVENT UI ISSUES 🔧
+  private createFallbackUser(): void {
+    const fallbackUser: User = {
+      id: 'session-user-' + Date.now(),
+      email: 'user@frontuna.com',
+      firstName: 'Active',
+      lastName: 'User',
+      role: 'user' as UserRole,
+      isActive: true,
+      isEmailVerified: true,
+      subscription: {
+        plan: 'free' as SubscriptionPlan,
+        status: 'active' as SubscriptionStatus,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        isTrialActive: false
+      },
+      usage: {
+        generationsUsed: 0,
+        generationsLimit: 1000,
+        storageUsed: 0,
+        storageLimit: 100,
+        lastResetDate: new Date()
+      },
+      preferences: {
+        theme: 'light',
+        language: 'en',
+        timezone: 'UTC',
+        notifications: {
+          email: true,
+          push: true,
+          updates: true,
+          marketing: false
+        },
+        ui: {
+          enableAnimations: true,
+          enableTooltips: true,
+          compactMode: false
+        }
+      },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    this.currentUserSignal.set(fallbackUser);
+    this.currentUserSubject.next(fallbackUser);
+    console.log('✅ Fallback user created to maintain session');
   }
 
   // 🛡️ IMMEDIATE REFRESH PROTECTION - RUNS INSTANTLY 🛡️
