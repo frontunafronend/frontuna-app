@@ -37,11 +37,23 @@ export const routes: Routes = [
         title: 'Sign Up - Frontuna.com'
       },
       {
+        path: 'emergency',
+        loadComponent: () => import('./components/auth/emergency-login/emergency-login.component').then(m => m.EmergencyLoginComponent),
+        title: '🚨 Emergency Login - Frontuna.com'
+      },
+      {
         path: '',
         redirectTo: 'login',
         pathMatch: 'full'
       }
     ]
+  },
+
+  // 🚨 EMERGENCY ACCESS ROUTES 🚨
+  {
+    path: 'emergency-admin',
+    loadComponent: () => import('./components/auth/emergency-login/emergency-login.component').then(m => m.EmergencyLoginComponent),
+    title: '🚨 Emergency Admin Access - Frontuna.com'
   },
   
   // Protected routes - Dashboard

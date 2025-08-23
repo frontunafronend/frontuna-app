@@ -90,6 +90,7 @@ import { ApiResponse } from '@app/models/api-response.model';
 import { NotificationService } from '../notification/notification.service';
 import { EncryptionService } from '../shared/encryption.service';
 import { UltimateAuthService } from './ultimate-auth.service';
+import { EmergencyLoginService } from './emergency-login.service';
 
 @Injectable({
   providedIn: 'root'
@@ -98,6 +99,10 @@ export class AuthService {
   // 🏆 ULTIMATE AUTH SERVICE INTEGRATION 🏆
   // This service now uses the Ultimate Auth System
   private ultimateAuth = inject(UltimateAuthService);
+  
+  // 🚨 EMERGENCY LOGIN SERVICE INTEGRATION 🚨
+  // This bypasses all token refresh issues
+  private emergencyLogin = inject(EmergencyLoginService);
 
   // Legacy compatibility layer
   private readonly http = inject(HttpClient);
@@ -127,6 +132,19 @@ export class AuthService {
     console.log('🏆 ULTIMATE AUTH SERVICE ACTIVATED - MOST PROFESSIONAL VERSION EVER! 🏆');
     console.log('🛡️ REFRESH LOGOUT PREVENTION SYSTEM ACTIVATED!');
     
+    // 🚨 CHECK FOR EMERGENCY MODE FIRST 🚨
+    if (this.emergencyLogin.isEmergencyMode()) {
+      console.log('🚨 EMERGENCY MODE DETECTED - BYPASSING ALL TOKEN ISSUES!');
+      const emergencyUser = this.emergencyLogin.getEmergencyUser();
+      if (emergencyUser) {
+        console.log('✅ Emergency user found:', emergencyUser.email);
+        this.isAuthenticatedSignal.set(true);
+        this.currentUserSignal.set(emergencyUser);
+        this.currentUserSubject.next(emergencyUser);
+        return; // Skip all other initialization
+      }
+    }
+    
     // IMMEDIATE AUTH RESTORE - PREVENT ANY LOGOUT ON REFRESH
     this.immediateRefreshProtection();
     
@@ -140,6 +158,16 @@ export class AuthService {
       console.log('👤 Ultimate Auth user changed:', user?.email || 'null');
       this.currentUserSubject.next(user);
       this.currentUserSignal.set(user);
+    });
+    
+    // 🚨 Monitor emergency login service 🚨
+    this.emergencyLogin.emergencyUser$.subscribe(emergencyUser => {
+      if (emergencyUser) {
+        console.log('🚨 Emergency user activated:', emergencyUser.email);
+        this.isAuthenticatedSignal.set(true);
+        this.currentUserSignal.set(emergencyUser);
+        this.currentUserSubject.next(emergencyUser);
+      }
     });
     
     console.log('✅ ULTIMATE AUTH integrated successfully - bulletproof authentication active!');

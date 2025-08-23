@@ -91,7 +91,7 @@ export class UltimateAuthService {
   public readonly authState$ = this.authStateSubject.asObservable();
   public readonly isAuthenticated$ = this.authState$.pipe(map(state => state.isAuthenticated));
   public readonly currentUser$ = this.authState$.pipe(map(state => state.user));
-  public readonly authStatus$ = this.authStatusSignal.asObservable();
+  public readonly authStatus$ = computed(() => this.authStatusSignal());
 
   // 🎯 COMPUTED PROPERTIES 🎯
   public readonly isAuthenticated = computed(() => this.isAuthenticatedSignal());
