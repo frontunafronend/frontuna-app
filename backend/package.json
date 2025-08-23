@@ -19,7 +19,9 @@
     "audit": "ts-node --transpile-only scripts/audit-data.ts",
     "docs": "swagger-jsdoc -d swaggerDef.js src/routes/*.js -o docs/swagger.json",
     "copilot-guard": "node ai-copilot-guard.js",
-    "copilot-scan": "node ai-copilot-guard.js"
+    "copilot-scan": "node ai-copilot-guard.js",
+    "auth-guardian": "node auth-copilot-guardian.js",
+    "ultimate-auth-scan": "node auth-copilot-guardian.js"
   },
   "keywords": [
     "ai",
