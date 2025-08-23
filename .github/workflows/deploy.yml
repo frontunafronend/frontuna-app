@@ -1,0 +1,151 @@
+name: 🚀 Deploy to Vercel
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # 🔍 Detect Changes
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend-changed: ${{ steps.changes.outputs.frontend }}
+      backend-changed: ${{ steps.changes.outputs.backend }}
+      api-changed: ${{ steps.changes.outputs.api }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - 'shared/**'
+              - 'vercel.json'
+            backend:
+              - 'backend/**'
+              - 'shared/**'
+            api:
+              - 'api/**'
+
+  # 🎨 Deploy Frontend to www.frontuna.com
+  deploy-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build:prod
+
+      - name: Deploy frontend to Vercel
+        run: |
+          cd frontend
+          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_FRONTEND_PROJECT_ID }}
+
+      - name: 📝 Frontend deployment summary
+        run: |
+          echo "✅ Frontend deployed to www.frontuna.com"
+          echo "🔧 Built from: frontend/"
+          echo "📦 Output: dist/frontuna-app/browser"
+
+  # 🔧 Deploy Backend API to frontuna-api.vercel.app
+  deploy-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend-changed == 'true' || needs.detect-changes.outputs.api-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Deploy backend to Vercel
+        run: |
+          cd backend
+          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_BACKEND_PROJECT_ID }}
+
+      - name: 📝 Backend deployment summary
+        run: |
+          echo "✅ Backend deployed to frontuna-api.vercel.app"
+          echo "🔧 Built from: backend/"
+          echo "📦 API endpoints available"
+
+  # 📊 Deployment Summary
+  deployment-summary:
+    needs: [detect-changes, deploy-frontend, deploy-backend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📋 Summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.detect-changes.outputs.frontend-changed }}" == "true" ]]; then
+            if [[ "${{ needs.deploy-frontend.result }}" == "success" ]]; then
+              echo "✅ **Frontend**: Deployed to [www.frontuna.com](https://www.frontuna.com)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Frontend**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⚪ **Frontend**: No changes detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.detect-changes.outputs.backend-changed }}" == "true" || "${{ needs.detect-changes.outputs.api-changed }}" == "true" ]]; then
+            if [[ "${{ needs.deploy-backend.result }}" == "success" ]]; then
+              echo "✅ **Backend**: Deployed to [frontuna-api.vercel.app](https://frontuna-api.vercel.app)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Backend**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⚪ **Backend**: No changes detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎯 **Auth fixes and admin panel** should now be live on production!" >> $GITHUB_STEP_SUMMARY

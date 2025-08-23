@@ -1,8 +1,15 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "name": "frontuna-app",
   "buildCommand": "cd frontend && npm ci && npm run build:prod",
   "outputDirectory": "frontend/dist/frontuna-app/browser",
   "framework": "angular",
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }],
+  "installCommand": "cd frontend && npm ci",
+  "devCommand": "cd frontend && npm start",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -18,8 +25,30 @@
         {
           "key": "X-XSS-Protection",
           "value": "1; mode=block"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "frontend/dist/frontuna-app/browser/index.html": {
+      "memory": 128
+    }
+  },
+  "regions": ["iad1"],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
