@@ -7,6 +7,7 @@ import { map, catchError, tap, switchMap, filter, timeout, retry, finalize, shar
 import { EnvironmentService } from '../core/environment.service';
 import { NotificationService } from '../notification/notification.service';
 import { EncryptionService } from '../shared/encryption.service';
+import { EmergencyLoginService } from './emergency-login.service';
 import { 
   User, 
   LoginRequest, 
@@ -522,19 +523,13 @@ export class UltimateAuthService {
         const adminUser: User = {
           id: 'admin-001',
           email: 'admin@frontuna.com',
-          name: 'Admin User',
+          firstName: 'Admin',
+          lastName: 'User',
           role: 'admin' as UserRole,
+          isActive: true,
           isEmailVerified: true,
-          profile: {
-            firstName: 'Admin',
-            lastName: 'User',
-            avatar: '',
-            bio: 'System Administrator',
-            website: '',
-            location: '',
-            company: 'Frontuna',
-            jobTitle: 'Administrator'
-          },
+          avatar: '',
+          company: 'Frontuna',
           subscription: {
             plan: 'premium' as SubscriptionPlan,
             status: 'active' as SubscriptionStatus,
@@ -572,20 +567,17 @@ export class UltimateAuthService {
         const adminToken = 'admin-localhost-token-' + Date.now();
         
         // Store admin session
-        this.storeTokensSecurely(adminToken, adminToken, adminUser);
+        await this.storeTokenInAllLocations(adminToken);
         this.currentUserSignal.set(adminUser);
         this.authStatusSignal.set('authenticated');
         
         console.log('✅ ADMIN LOCALHOST LOGIN SUCCESS');
         
         return {
-          success: true,
-          data: {
-            user: adminUser,
-            token: adminToken,
-            refreshToken: adminToken
-          },
-          message: 'Admin login successful'
+          user: adminUser,
+          accessToken: adminToken,
+          refreshToken: adminToken,
+          expiresIn: 86400 // 24 hours
         };
       }
       
