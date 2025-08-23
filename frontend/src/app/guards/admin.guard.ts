@@ -81,8 +81,7 @@ export const AdminGuard: CanActivateFn = (route, state) => {
   // No authentication found at all
   console.log('❌ Admin Guard - No authentication found, redirecting to login');
   notificationService.showError('Please log in to access this page');
-  router.navigate(['/auth/login'], { 
-    queryParams: { returnUrl: state.url } 
-  });
+  // Note: returnUrl removed since auth service always redirects to /dashboard after login
+  router.navigate(['/auth/login']);
   return of(false);
 };

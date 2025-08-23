@@ -139,6 +139,17 @@ import { DashboardNavComponent } from '../../components/shared/dashboard-nav/das
               <mat-icon>settings</mat-icon>
               <span>Settings</span>
             </a>
+            
+            <!-- 👑 ADMIN PANEL - Only visible to admin users -->
+            @if (isAdmin()) {
+              <a routerLink="/admin" 
+                 routerLinkActive="active" 
+                 class="nav-item admin-nav">
+                <mat-icon>admin_panel_settings</mat-icon>
+                <span>Admin Panel</span>
+                <mat-icon class="admin-badge" matTooltip="Administrator Access">verified</mat-icon>
+              </a>
+            }
           </div>
         </nav>
 
@@ -534,6 +545,32 @@ import { DashboardNavComponent } from '../../components/shared/dashboard-nav/das
       font-size: 20px;
       width: 20px;
       height: 20px;
+    }
+
+    /* 👑 ADMIN PANEL STYLES */
+    .nav-item.admin-nav {
+      background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+      border-left: 3px solid #ff9800;
+      position: relative;
+    }
+
+    .nav-item.admin-nav:hover {
+      background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2));
+      border-left-color: #ff6f00;
+    }
+
+    .nav-item.admin-nav.active {
+      background: linear-gradient(135deg, rgba(255, 193, 7, 0.25), rgba(255, 152, 0, 0.25));
+      border-left-color: #ff6f00;
+      font-weight: 700;
+    }
+
+    .admin-badge {
+      margin-left: auto;
+      font-size: 16px !important;
+      width: 16px !important;
+      height: 16px !important;
+      color: #ff9800;
     }
 
     .sidebar-footer {
@@ -1044,6 +1081,15 @@ export class DashboardComponent implements OnInit {
 
   // Component state from service
   public readonly recentComponents = this.componentStateService.recentComponents;
+  
+  // 👑 ADMIN CHECK - Determine if current user is admin
+  public readonly isAdmin = computed(() => {
+    const user = this.currentUser();
+    const isAdminRole = user?.role === 'admin';
+    const isAdminEmail = user?.email === 'admin@frontuna.com';
+    console.log('🔍 Admin check:', { user: user?.email, role: user?.role, isAdmin: isAdminRole || isAdminEmail });
+    return isAdminRole || isAdminEmail;
+  });
   public readonly savedComponentsCount = computed(() => this.componentStateService.savedComponents().length);
   public readonly allComponents = this.componentStateService.components;
   

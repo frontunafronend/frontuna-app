@@ -5,13 +5,14 @@ import { of } from 'rxjs';
 import { AuthService } from '@app/services/auth/auth.service';
 import { NotificationService } from '@app/services/notification/notification.service';
 
-// 🛡️ BULLETPROOF AUTH GUARD - ABSOLUTELY NO REDIRECTS ON REFRESH 🛡️
+// 🛡️ ULTIMATE BULLETPROOF AUTH GUARD - ZERO REDIRECTS ON REFRESH 🛡️
 export const AuthGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const notificationService = inject(NotificationService);
 
-  console.log('🛡️ BULLETPROOF AUTH GUARD - URL:', state.url);
+  console.log('🛡️ ULTIMATE AUTH GUARD - Protecting:', state.url);
+  console.log('🔍 Current URL should stay as:', state.url, 'after refresh');
   
   // 🔧 COMPREHENSIVE TOKEN CHECK - Check ALL possible locations
   const tokenChecks = {
@@ -78,11 +79,10 @@ export const AuthGuard: CanActivateFn = (route, state) => {
   // 🚨 ONLY redirect if absolutely NO authentication indicators exist
   console.log('❌ BULLETPROOF AUTH - Absolutely no authentication found');
   console.log('📍 Current URL:', state.url);
-  console.log('🔄 Redirecting to login with return URL');
+  console.log('🔄 Redirecting to login (returnUrl not needed - always goes to dashboard)');
   
   notificationService.showWarning('Please log in to access this page');
-  router.navigate(['/auth/login'], { 
-    queryParams: { returnUrl: state.url } 
-  });
+  // Note: returnUrl removed since auth service always redirects to /dashboard after login
+  router.navigate(['/auth/login']);
   return of(false);
 };
