@@ -599,11 +599,21 @@ export class UltimateAuthService {
         
         // Try emergency login service as fallback
         const emergencyService = inject(EmergencyLoginService);
-        const emergencyResult = await emergencyService.login(credentials.email, credentials.password);
+        const emergencySuccess = await emergencyService.emergencyLogin(credentials.email, credentials.password);
         
-        if (emergencyResult.success) {
+        if (emergencySuccess) {
           console.log('✅ Emergency login fallback successful');
-          return emergencyResult;
+          
+          // Get the user from emergency service
+          const emergencyUser = emergencyService.getEmergencyUser();
+          if (emergencyUser) {
+            return {
+              user: emergencyUser,
+              accessToken: 'emergency-token-' + Date.now(),
+              refreshToken: 'emergency-refresh-' + Date.now(),
+              expiresIn: 86400
+            };
+          }
         }
         
         throw new Error(response?.error?.message || 'Login failed - no fallback available');
