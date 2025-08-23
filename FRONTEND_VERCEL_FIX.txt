@@ -1,0 +1,14 @@
+VERCEL FRONTEND DEPLOYMENT FIX
+Timestamp: 2025-08-23T13:20:00Z
+
+ISSUE: Only API was deploying to Vercel, not the frontend
+SOLUTION: Modified root vercel.json to build and deploy frontend
+
+CHANGES:
+- Root vercel.json now builds frontend (cd frontend && npm run build:prod)
+- Output directory points to frontend/dist/frontuna-app/browser
+- Added security headers
+- This should make frontuna.com serve the Angular app with auth fixes
+
+RESULT: Frontend with auth fixes should now deploy to production!
+Admin login: admin@frontuna.com / FrontunaAdmin2024!
