@@ -40,30 +40,14 @@ export function playerFactory() {
   return import('lottie-web');
 }
 
-// 🏆 ULTIMATE AUTH INITIALIZATION - NEVER FAILS, NEVER LOGS OUT ON REFRESH! 🏆
+// 🔧 SIMPLIFIED AUTH INITIALIZATION - RELIABLE AND FAST 🔧
 export function initializeAuth(authService: AuthService) {
   return () => {
-    console.log('🏆 ULTIMATE APP INITIALIZER - BULLETPROOF AUTH STARTUP!');
+    console.log('🔧 AUTH INITIALIZER - Simple and reliable startup');
     
-    // CRITICAL: This initialization MUST NEVER fail or cause logout
-    return new Promise<void>((resolve) => {
-      try {
-        // Start auth initialization but NEVER wait for it to fail
-        authService.initializeForApp().catch(error => {
-          console.error('⚠️ Auth initialization had issues, but NOT failing app startup:', error);
-          // DO NOT throw or reject - just log and continue
-        });
-        
-        // ALWAYS resolve immediately to prevent app startup blocking
-        console.log('✅ ULTIMATE AUTH INITIALIZER - App startup NEVER blocked!');
-        resolve();
-        
-      } catch (error) {
-        console.error('⚠️ Auth initializer error, but continuing anyway:', error);
-        // ALWAYS resolve, NEVER reject
-        resolve();
-      }
-    });
+    // 🔧 FIX: Don't do any async work in APP_INITIALIZER - just resolve immediately
+    // The AuthService constructor already handles synchronous initialization
+    return Promise.resolve();
   };
 }
 

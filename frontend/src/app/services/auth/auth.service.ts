@@ -129,38 +129,25 @@ export class AuthService {
   private refreshTokenTimer?: any;
 
   constructor() {
-    console.log('🏆 ULTIMATE AUTH SERVICE ACTIVATED - MOST PROFESSIONAL VERSION EVER! 🏆');
-    console.log('🛡️ REFRESH LOGOUT PREVENTION SYSTEM ACTIVATED!');
+    console.log('🔐 AUTH SERVICE INITIALIZING - Simplified and reliable');
     
-    // 🚨 CHECK FOR EMERGENCY MODE FIRST 🚨
+    // 🔧 FIX: Simplified initialization to prevent race conditions
+    this.initializeAuthStateSync();
+    
+    // 🚨 CHECK FOR EMERGENCY MODE 🚨
     if (this.emergencyLogin.isEmergencyMode()) {
-      console.log('🚨 EMERGENCY MODE DETECTED - BYPASSING ALL TOKEN ISSUES!');
+      console.log('🚨 EMERGENCY MODE DETECTED');
       const emergencyUser = this.emergencyLogin.getEmergencyUser();
       if (emergencyUser) {
         console.log('✅ Emergency user found:', emergencyUser.email);
         this.isAuthenticatedSignal.set(true);
         this.currentUserSignal.set(emergencyUser);
         this.currentUserSubject.next(emergencyUser);
-        return; // Skip all other initialization
+        return;
       }
     }
     
-    // IMMEDIATE AUTH RESTORE - PREVENT ANY LOGOUT ON REFRESH
-    this.immediateRefreshProtection();
-    
-    // Delegate to Ultimate Auth Service for initialization
-    this.ultimateAuth.isAuthenticated$.subscribe(isAuth => {
-      console.log('🔄 Ultimate Auth state changed:', isAuth);
-      this.isAuthenticatedSignal.set(isAuth);
-    });
-    
-    this.ultimateAuth.currentUser$.subscribe(user => {
-      console.log('👤 Ultimate Auth user changed:', user?.email || 'null');
-      this.currentUserSubject.next(user);
-      this.currentUserSignal.set(user);
-    });
-    
-    // 🚨 Monitor emergency login service 🚨
+    // Monitor emergency login service
     this.emergencyLogin.emergencyUser$.subscribe(emergencyUser => {
       if (emergencyUser) {
         console.log('🚨 Emergency user activated:', emergencyUser.email);
@@ -170,8 +157,48 @@ export class AuthService {
       }
     });
     
-    console.log('✅ ULTIMATE AUTH integrated successfully - bulletproof authentication active!');
-    console.log('🚀 REFRESH LOGOUT PROTECTION: 100% ACTIVE!');
+    console.log('✅ AUTH SERVICE initialized successfully');
+  }
+
+  // 🔧 SIMPLIFIED SYNC INITIALIZATION - PREVENTS RACE CONDITIONS 🔧
+  private initializeAuthStateSync(): void {
+    console.log('🔧 Initializing auth state synchronously...');
+    
+    try {
+      // Check for any stored tokens immediately
+      const token = localStorage.getItem('frontuna_primary_token') ||
+                   localStorage.getItem('frontuna_access_token') ||
+                   localStorage.getItem('access_token') ||
+                   sessionStorage.getItem('frontuna_session_token');
+      
+      if (token && token.trim()) {
+        console.log('✅ Found stored token, setting authenticated state');
+        this.isAuthenticatedSignal.set(true);
+        
+        // Try to get stored user data
+        const storedUserData = localStorage.getItem('frontuna_emergency_user') ||
+                              sessionStorage.getItem('frontuna_emergency_user');
+        
+        if (storedUserData) {
+          try {
+            const user = JSON.parse(storedUserData);
+            this.currentUserSignal.set(user);
+            this.currentUserSubject.next(user);
+            console.log('✅ Restored user data from storage');
+          } catch (error) {
+            console.log('⚠️ Could not parse stored user data, but keeping authenticated');
+          }
+        }
+      } else {
+        console.log('ℹ️ No tokens found, user not authenticated');
+        this.isAuthenticatedSignal.set(false);
+        this.currentUserSignal.set(null);
+        this.currentUserSubject.next(null);
+      }
+    } catch (error) {
+      console.error('❌ Sync auth initialization error:', error);
+      // Don't fail - just log the error
+    }
   }
 
   // 🛡️ IMMEDIATE REFRESH PROTECTION - RUNS INSTANTLY 🛡️
@@ -879,26 +906,42 @@ export class AuthService {
   }
 
   /**
-   * 🏆 ULTIMATE TOKEN RETRIEVAL - Bulletproof token access
+   * 🔧 SIMPLIFIED TOKEN RETRIEVAL - Reliable and fast
    */
   async getToken(): Promise<string | null> {
-    console.log('🔑 ULTIMATE TOKEN RETRIEVAL - Using bulletproof token system');
+    console.log('🔑 Getting stored token...');
     
     try {
-      // Use Ultimate Auth Service first
-      const token = await this.ultimateAuth.getToken();
-      if (token) {
-        console.log('✅ Token retrieved from Ultimate Auth Service');
+      // Check all possible token locations in order of preference
+      const token = localStorage.getItem('frontuna_primary_token') ||
+                   localStorage.getItem('frontuna_access_token') ||
+                   localStorage.getItem('access_token') ||
+                   sessionStorage.getItem('frontuna_session_token') ||
+                   localStorage.getItem('frontuna_backup1_token') ||
+                   localStorage.getItem('frontuna_emergency_token');
+      
+      if (token && token.trim()) {
+        console.log('✅ Token found in storage');
         return token;
       }
       
-      // Fallback to legacy method
-      console.log('⚠️ Falling back to legacy token retrieval');
-      return await this.getStoredToken();
+      // Try Ultimate Auth Service as fallback
+      try {
+        const ultimateToken = await this.ultimateAuth.getToken();
+        if (ultimateToken) {
+          console.log('✅ Token retrieved from Ultimate Auth Service');
+          return ultimateToken;
+        }
+      } catch (ultimateError) {
+        console.log('⚠️ Ultimate auth service failed, continuing with null token');
+      }
+      
+      console.log('⚠️ No token found in any location');
+      return null;
       
     } catch (error) {
       console.error('❌ Token retrieval error:', error);
-      return await this.getStoredToken();
+      return null;
     }
   }
 
@@ -918,35 +961,41 @@ export class AuthService {
   }
 
   /**
-   * Handle successful authentication with secure storage
+   * Handle successful authentication with reliable storage
    */
   private async handleAuthSuccess(authResponse: AuthResponse): Promise<void> {
     try {
-      // Store tokens securely
-      await this.storeTokens(authResponse.accessToken, authResponse.refreshToken);
+      console.log('🔐 Handling auth success...');
       
-      // Store user session securely
-      await this.encryptionService.storeUserSession(authResponse.user);
+      // 🔧 FIX: Store tokens in multiple locations for reliability
+      localStorage.setItem('frontuna_primary_token', authResponse.accessToken);
+      localStorage.setItem('frontuna_access_token', authResponse.accessToken);
+      localStorage.setItem('access_token', authResponse.accessToken);
+      sessionStorage.setItem('frontuna_session_token', authResponse.accessToken);
       
-      // Update state FIRST
+      if (authResponse.refreshToken) {
+        localStorage.setItem('frontuna_refresh_token', authResponse.refreshToken);
+      }
+      
+      // Store user data
+      localStorage.setItem('frontuna_emergency_user', JSON.stringify(authResponse.user));
+      sessionStorage.setItem('frontuna_emergency_user', JSON.stringify(authResponse.user));
+      
+      // Update state immediately
       this.updateCurrentUser(authResponse.user);
       this.setAuthenticationState(true);
       
-      // Force hard refresh of authentication state and wait for it
-      await this.forceRefreshAuthState();
+      console.log('✅ Auth success handled, navigating to dashboard');
       
-      // Schedule token refresh
-      await this.scheduleTokenRefresh();
-      
-      // Wait longer to ensure header has updated, then navigate
-      setTimeout(() => {
-        this.router.navigate(['/dashboard']);
-      }, 200);
+      // Navigate immediately - no delays
+      this.router.navigate(['/dashboard']);
       
     } catch (error) {
-      console.error('Failed to handle auth success:', error);
-      // Fallback to regular storage
-      await this.handleAuthSuccessFallback(authResponse);
+      console.error('❌ Failed to handle auth success:', error);
+      // Still try to navigate even if storage fails
+      this.updateCurrentUser(authResponse.user);
+      this.setAuthenticationState(true);
+      this.router.navigate(['/dashboard']);
     }
   }
 
