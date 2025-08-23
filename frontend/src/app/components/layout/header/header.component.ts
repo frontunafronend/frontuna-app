@@ -255,7 +255,7 @@ import { NotificationService } from '@app/services/notification/notification.ser
       </button>
       
       <!-- 👑 ADMIN PANEL - Only visible to admin users -->
-      @if (isAdmin()) {
+     
         <mat-divider></mat-divider>
         
         <button mat-menu-item routerLink="/admin" class="admin-menu-item">
@@ -263,7 +263,7 @@ import { NotificationService } from '@app/services/notification/notification.ser
           <span>Admin Panel</span>
           <mat-icon class="admin-badge">verified</mat-icon>
         </button>
-      }
+       
       
       <mat-divider></mat-divider>
       

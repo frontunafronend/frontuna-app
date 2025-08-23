@@ -15,6 +15,7 @@ const logger = createLogger('routes');
 // Import route modules
 const authRoutes = require('./auth.routes');
 const generatorRoutes = require('./generator.routes');
+const componentsRoutes = require('./components.routes');
 const aiRoutes = require('./ai.routes');
 const usageRoutes = require('./usage.routes');
 const adminRoutes = require('./admin.routes');
@@ -88,6 +89,7 @@ router.get('/version', (req, res) => {
 // Mount route modules
 router.use('/auth', authRoutes);
 router.use('/generate', generatorRoutes);
+router.use('/components', componentsRoutes);
 router.use('/ai', aiRoutes);
 router.use('/usage', usageRoutes);
 router.use('/admin', adminRoutes);
