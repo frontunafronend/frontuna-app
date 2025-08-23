@@ -42,6 +42,7 @@ import { Component, OnInit, ViewChild, ElementRef, inject, signal, computed } fr
 import { CommonModule } from '@angular/common';
 import { NotificationService } from '../../services/notification/notification.service';
 import { AIPromptCoreService } from '../../services/ai/ai-prompt-core.service';
+import { AICopilotService } from '../../services/ai/ai-copilot.service';
 import { EditorStateService } from '../../services/editor-state.service';
 import { AnalyticsService } from '../../services/analytics/analytics.service';
 import { ProfessionalLoaderComponent } from '../../components/ui/professional-loader/professional-loader.component';
@@ -252,6 +253,7 @@ export class AICopilotComponent implements OnInit {
   // Services
   private notificationService = inject(NotificationService);
   private aiPromptCore = inject(AIPromptCoreService);
+  private aiCopilotService = inject(AICopilotService);
   private editorState = inject(EditorStateService);
   private analytics = inject(AnalyticsService);
 
@@ -274,7 +276,24 @@ export class AICopilotComponent implements OnInit {
   @ViewChild('chatMessagesContainer') chatMessagesContainer!: ElementRef;
 
   ngOnInit() {
-    console.log('AI Copilot Component initialized');
+    console.log('🤖 AI Copilot component initialized');
+    
+    // Subscribe to AI Copilot service observables
+    this.aiCopilotService.chatHistory$.subscribe(history => {
+      const messages: ChatMessage[] = history.map(msg => ({
+        id: `${msg.type}_${Date.now()}_${Math.random()}`,
+        type: msg.type === 'user' ? 'user' : 'ai',
+        sender: msg.type === 'user' ? 'You' : 'AI Copilot',
+        content: msg.content,
+        timestamp: new Date(msg.timestamp)
+      }));
+      this.chatMessages.set(messages);
+    });
+    
+    // Subscribe to loading state
+    this.aiCopilotService.isLoading$.subscribe(loading => {
+      this.isGenerating.set(loading);
+    });
   }
 
   // Helper methods
@@ -295,8 +314,32 @@ export class AICopilotComponent implements OnInit {
 
   sendMessage() {
     if (this.currentMessage.trim()) {
-      this.onSendPrompt(this.currentMessage, 'chat');
+      const message = this.currentMessage.trim();
       this.currentMessage = '';
+      
+      // Use the new AI Copilot service
+      this.isGenerating.set(true);
+      
+      this.aiCopilotService.sendMessage(message, JSON.stringify({
+        context: this.editorState.buffers(),
+        timestamp: new Date().toISOString()
+      })).subscribe({
+        next: (response) => {
+          console.log('✅ AI Copilot response received:', response);
+          this.isGenerating.set(false);
+          
+          if (response.success) {
+            // The service already handles adding messages to its internal state
+            // We can subscribe to the chat history to update our UI
+            // Chat history is automatically updated via the service observable
+          }
+        },
+        error: (error) => {
+          console.error('❌ AI Copilot error:', error);
+          this.isGenerating.set(false);
+          this.notificationService.showError('Failed to send message to AI Copilot');
+        }
+      });
     }
   }
 
