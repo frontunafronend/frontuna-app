@@ -171,6 +171,15 @@ import { DashboardNavComponent } from '../../components/shared/dashboard-nav/das
           <div class="header-content">
             <h1>Welcome back, {{ currentUser()?.firstName || 'Developer' }}!</h1>
             <p class="dashboard-subtitle">Ready to create amazing components?</p>
+            
+            <!-- 🐛 DEBUG INFO - Remove after testing -->
+            <div class="debug-info" style="background: #f0f0f0; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 12px;">
+              <strong>🔍 DEBUG:</strong><br>
+              Email: {{ currentUser()?.email || 'None' }}<br>
+              Role: {{ currentUser()?.role || 'None' }}<br>
+              Is Admin: {{ isAdmin() ? 'YES ✅' : 'NO ❌' }}<br>
+              <em>Check browser console for full details</em>
+            </div>
           </div>
           <div class="header-actions">
             <button (click)="generateComponent()" 
@@ -1087,8 +1096,26 @@ export class DashboardComponent implements OnInit {
     const user = this.currentUser();
     const isAdminRole = user?.role === 'admin';
     const isAdminEmail = user?.email === 'admin@frontuna.com';
-    console.log('🔍 Admin check:', { user: user?.email, role: user?.role, isAdmin: isAdminRole || isAdminEmail });
-    return isAdminRole || isAdminEmail;
+    const isAdmin = isAdminRole || isAdminEmail;
+    
+    // 🐛 ENHANCED DEBUG - Show in console AND page
+    console.log('🔍 ADMIN CHECK DEBUG:', { 
+      user: user?.email, 
+      role: user?.role, 
+      firstName: user?.firstName,
+      isAdminRole, 
+      isAdminEmail, 
+      finalIsAdmin: isAdmin,
+      fullUser: user 
+    });
+    
+    // 🚨 FORCE ADMIN FOR TESTING (remove after debugging)
+    if (user?.email === 'admin@frontuna.com') {
+      console.log('🔧 FORCING ADMIN ACCESS for admin@frontuna.com');
+      return true;
+    }
+    
+    return isAdmin;
   });
   public readonly savedComponentsCount = computed(() => this.componentStateService.savedComponents().length);
   public readonly allComponents = this.componentStateService.components;
