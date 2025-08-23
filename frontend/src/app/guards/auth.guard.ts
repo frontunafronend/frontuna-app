@@ -61,11 +61,11 @@ export const AuthGuard: CanActivateFn = (route, state) => {
       
       console.log('🔍 Auth service state:', { 
         hasCurrentUser: !!currentUser, 
-        isAuthenticated: isAuthenticated() 
+        isAuthenticated: isAuthenticated 
       });
       
       // If auth service doesn't recognize auth, force it
-      if (!currentUser || !isAuthenticated()) {
+      if (!currentUser || !isAuthenticated) {
         console.log('🔧 Auth service not synced, but we have tokens - forcing authentication state');
       }
     } catch (error) {
