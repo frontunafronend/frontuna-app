@@ -500,12 +500,14 @@ export class UltimateAuthService {
       
       const response = await this.http.post<any>(
         `${this.environmentService.config.apiUrl}/auth/login`,
-        credentials,
-        { timeout: 30000 }
+        credentials
+      ).pipe(
+        timeout(30000),
+        catchError(error => throwError(() => error))
       ).toPromise();
       
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message || 'Login failed');
+      if (!response || !response.success || !response.data) {
+        throw new Error(response?.error?.message || 'Login failed');
       }
       
       const authResponse = response.data;
@@ -671,7 +673,11 @@ export class UltimateAuthService {
       
       // Clear encrypted storage
       if (this.encryptionService.isSecureStorageAvailable()) {
-        await this.encryptionService.clearToken();
+        try {
+          await this.encryptionService.clearUserSession();
+        } catch (error) {
+          console.log('⚠️ Could not clear encrypted storage:', error);
+        }
       }
       
     } catch (error) {

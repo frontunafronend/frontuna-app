@@ -187,21 +187,36 @@ export class AuthService {
               role: 'user' as UserRole,
               isActive: true,
               isEmailVerified: true,
-              subscription: {
-                plan: 'free' as SubscriptionPlan,
-                status: 'active' as SubscriptionStatus,
-                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                          subscription: {
+              plan: 'free' as SubscriptionPlan,
+              status: 'active' as SubscriptionStatus,
+              startDate: new Date(),
+              endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+              isTrialActive: false
+            },
+            usage: {
+              generationsUsed: 0,
+              generationsLimit: 1000,
+              storageUsed: 0,
+              storageLimit: 100,
+              lastResetDate: new Date()
+            },
+            preferences: {
+              theme: 'light',
+              language: 'en',
+              timezone: 'UTC',
+              notifications: {
+                email: true,
+                push: true,
+                updates: true,
+                marketing: false
               },
-              usage: {
-                apiCalls: 0,
-                storageUsed: 0,
-                lastLogin: new Date()
-              },
-              preferences: {
-                theme: 'light',
-                language: 'en',
-                notifications: true
-              },
+              ui: {
+                enableAnimations: true,
+                enableTooltips: true,
+                compactMode: false
+              }
+            },
               createdAt: new Date(),
               updatedAt: new Date()
             };
@@ -542,14 +557,14 @@ export class AuthService {
     } catch (error) {
       console.error('❌ ULTIMATE LOGOUT ERROR:', error);
       // Fallback to legacy logout
-      this.legacyLogout();
+      await this.legacyLogout();
     }
   }
 
   /**
    * 🏆 LEGACY LOGOUT FALLBACK (for compatibility)
    */
-  private legacyLogout(): void {
+  private async legacyLogout(): Promise<void> {
     console.log('⚠️ Using legacy logout fallback');
     
     // Clear encrypted tokens and user session
