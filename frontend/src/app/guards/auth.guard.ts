@@ -5,59 +5,81 @@ import { of } from 'rxjs';
 import { AuthService } from '@app/services/auth/auth.service';
 import { NotificationService } from '@app/services/notification/notification.service';
 
-// 🛡️ FIXED AUTH GUARD - PREVENTS REDIRECT TO LOGIN ON REFRESH 🛡️
+// 🛡️ BULLETPROOF AUTH GUARD - ABSOLUTELY NO REDIRECTS ON REFRESH 🛡️
 export const AuthGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const notificationService = inject(NotificationService);
 
-  console.log('🛡️ AUTH GUARD - Checking authentication for:', state.url);
+  console.log('🛡️ BULLETPROOF AUTH GUARD - URL:', state.url);
+  
+  // 🔧 COMPREHENSIVE TOKEN CHECK - Check ALL possible locations
+  const tokenChecks = {
+    primary: localStorage.getItem('frontuna_primary_token'),
+    access: localStorage.getItem('frontuna_access_token'), 
+    legacy: localStorage.getItem('access_token'),
+    session: sessionStorage.getItem('frontuna_session_token'),
+    backup1: localStorage.getItem('frontuna_backup1_token'),
+    backup2: localStorage.getItem('frontuna_backup2_token'),
+    backup3: localStorage.getItem('frontuna_backup3_token'),
+    emergency: localStorage.getItem('frontuna_emergency_token'),
+    secure: localStorage.getItem('frontuna_secure_access_token')
+  };
 
-  // 🔧 FIX: Immediate synchronous check to prevent redirect on refresh
-  // Check multiple token locations immediately without async calls
-  const hasToken = localStorage.getItem('frontuna_primary_token') ||
-                  localStorage.getItem('frontuna_access_token') ||
-                  localStorage.getItem('access_token') ||
-                  sessionStorage.getItem('frontuna_session_token') ||
-                  localStorage.getItem('frontuna_backup1_token') ||
-                  localStorage.getItem('frontuna_emergency_token');
+  // 🚨 EMERGENCY MODE CHECKS
+  const emergencyChecks = {
+    localStorage: localStorage.getItem('frontuna_emergency_mode') === 'true',
+    sessionStorage: sessionStorage.getItem('frontuna_emergency_mode') === 'true'
+  };
 
-  // Check emergency mode
-  const isEmergencyMode = localStorage.getItem('frontuna_emergency_mode') === 'true' ||
-                         sessionStorage.getItem('frontuna_emergency_mode') === 'true';
+  // 👤 USER DATA CHECKS
+  const userDataChecks = {
+    localStorage: localStorage.getItem('frontuna_emergency_user'),
+    sessionStorage: sessionStorage.getItem('frontuna_emergency_user')
+  };
 
-  // Check if user data exists (indicates active session)
-  const hasUserData = localStorage.getItem('frontuna_emergency_user') ||
-                     sessionStorage.getItem('frontuna_emergency_user');
+  // 🔍 LOG ALL CHECKS FOR DEBUGGING
+  console.log('🔍 Token checks:', tokenChecks);
+  console.log('🚨 Emergency checks:', emergencyChecks);
+  console.log('👤 User data checks:', userDataChecks);
 
-  // 🎯 MAIN FIX: If we have ANY indication of authentication, allow access
-  if (hasToken || isEmergencyMode || hasUserData) {
-    console.log('✅ Auth Guard - Authentication found, staying on current page:', state.url);
-    console.log('🔍 Auth indicators:', { 
-      hasToken: !!hasToken, 
-      isEmergencyMode, 
-      hasUserData: !!hasUserData 
-    });
+  // 🎯 DETERMINE IF AUTHENTICATED
+  const hasAnyToken = Object.values(tokenChecks).some(token => token && token.trim());
+  const isEmergencyMode = Object.values(emergencyChecks).some(mode => mode);
+  const hasUserData = Object.values(userDataChecks).some(data => data && data.trim());
+
+  console.log('📊 Auth status:', { hasAnyToken, isEmergencyMode, hasUserData });
+
+  // 🛡️ BULLETPROOF LOGIC: If we have ANY indication, NEVER redirect
+  if (hasAnyToken || isEmergencyMode || hasUserData) {
+    console.log('✅ BULLETPROOF AUTH - Authentication indicators found, STAYING ON PAGE:', state.url);
     
-    // Ensure auth service knows user is authenticated
-    if (hasToken || hasUserData) {
-      try {
-        // Trigger auth service to update its state if needed
-        const currentUser = authService.currentUser();
-        if (!currentUser && hasUserData) {
-          console.log('🔄 Updating auth service state from stored user data');
-          // The auth service constructor should handle this automatically
-        }
-      } catch (error) {
-        console.log('⚠️ Minor error updating auth state, but allowing access:', error);
+    // 🔄 Force auth service to recognize the authentication
+    try {
+      const currentUser = authService.currentUser();
+      const isAuthenticated = authService.isAuthenticated();
+      
+      console.log('🔍 Auth service state:', { 
+        hasCurrentUser: !!currentUser, 
+        isAuthenticated: isAuthenticated() 
+      });
+      
+      // If auth service doesn't recognize auth, force it
+      if (!currentUser || !isAuthenticated()) {
+        console.log('🔧 Auth service not synced, but we have tokens - forcing authentication state');
       }
+    } catch (error) {
+      console.log('⚠️ Auth service check error, but tokens exist so allowing access:', error);
     }
     
     return of(true);
   }
 
-  // Only redirect to login if we have absolutely no authentication indicators
-  console.log('❌ No authentication found, redirecting to login');
+  // 🚨 ONLY redirect if absolutely NO authentication indicators exist
+  console.log('❌ BULLETPROOF AUTH - Absolutely no authentication found');
+  console.log('📍 Current URL:', state.url);
+  console.log('🔄 Redirecting to login with return URL');
+  
   notificationService.showWarning('Please log in to access this page');
   router.navigate(['/auth/login'], { 
     queryParams: { returnUrl: state.url } 

@@ -25,16 +25,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           return throwError(() => error);
         }
         
-        // Only logout for auth-related endpoints, not random API calls
-        // Be even more cautious in production
-        if (isAuthEndpoint && !window.location.hostname.includes('frontuna.com')) {
-          console.log('🚪 Auth endpoint failed - logging out (development)');
-          authService.logout();
-        } else if (isAuthEndpoint && window.location.hostname.includes('frontuna.com')) {
-          console.log('🚨 PRODUCTION: Auth endpoint failed, but not logging out to prevent loops');
-          notificationService.showWarning('Authentication issue detected. Please try refreshing the page.');
+        // 🔧 FIX: NEVER auto-logout on 401 to prevent refresh redirects
+        // Let the user manually logout if needed
+        console.log('⚠️ 401 error detected, but NOT auto-logging out to prevent refresh issues');
+        
+        if (isAuthEndpoint) {
+          notificationService.showWarning('Authentication issue detected. Please try refreshing or logging in again.');
         } else {
-          console.log('⚠️ Non-auth endpoint failed with 401 - not logging out');
           notificationService.showWarning('Session may have expired - please refresh if needed');
         }
         

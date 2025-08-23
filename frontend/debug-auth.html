@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Auth State</title>
+</head>
+<body>
+    <h1>🔍 Debug Authentication State</h1>
+    <p>Open browser console and refresh this page to see auth state</p>
+    
+    <div id="results"></div>
+
+    <script>
+        function debugAuth() {
+            console.log('🔍 DEBUGGING AUTH STATE ON REFRESH');
+            
+            const tokenChecks = {
+                primary: localStorage.getItem('frontuna_primary_token'),
+                access: localStorage.getItem('frontuna_access_token'), 
+                legacy: localStorage.getItem('access_token'),
+                session: sessionStorage.getItem('frontuna_session_token'),
+                backup1: localStorage.getItem('frontuna_backup1_token'),
+                backup2: localStorage.getItem('frontuna_backup2_token'),
+                backup3: localStorage.getItem('frontuna_backup3_token'),
+                emergency: localStorage.getItem('frontuna_emergency_token'),
+                secure: localStorage.getItem('frontuna_secure_access_token')
+            };
+
+            const emergencyChecks = {
+                localStorage: localStorage.getItem('frontuna_emergency_mode') === 'true',
+                sessionStorage: sessionStorage.getItem('frontuna_emergency_mode') === 'true'
+            };
+
+            const userDataChecks = {
+                localStorage: localStorage.getItem('frontuna_emergency_user'),
+                sessionStorage: sessionStorage.getItem('frontuna_emergency_user')
+            };
+
+            console.log('🔍 Token checks:', tokenChecks);
+            console.log('🚨 Emergency checks:', emergencyChecks);
+            console.log('👤 User data checks:', userDataChecks);
+
+            const hasAnyToken = Object.values(tokenChecks).some(token => token && token.trim());
+            const isEmergencyMode = Object.values(emergencyChecks).some(mode => mode);
+            const hasUserData = Object.values(userDataChecks).some(data => data && data.trim());
+
+            console.log('📊 Final auth status:', { hasAnyToken, isEmergencyMode, hasUserData });
+            console.log('✅ Should be authenticated:', hasAnyToken || isEmergencyMode || hasUserData);
+
+            // Display results on page
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h2>Auth State Results:</h2>
+                <p><strong>Has Any Token:</strong> ${hasAnyToken}</p>
+                <p><strong>Emergency Mode:</strong> ${isEmergencyMode}</p>
+                <p><strong>Has User Data:</strong> ${hasUserData}</p>
+                <p><strong>Should Be Authenticated:</strong> ${hasAnyToken || isEmergencyMode || hasUserData}</p>
+                <h3>Token Details:</h3>
+                <pre>${JSON.stringify(tokenChecks, null, 2)}</pre>
+                <h3>User Data:</h3>
+                <pre>${JSON.stringify(userDataChecks, null, 2)}</pre>
+            `;
+        }
+
+        // Run on page load
+        debugAuth();
+
+        // Add refresh button
+        const button = document.createElement('button');
+        button.textContent = 'Refresh Debug';
+        button.onclick = debugAuth;
+        document.body.appendChild(button);
+    </script>
+</body>
+</html>
