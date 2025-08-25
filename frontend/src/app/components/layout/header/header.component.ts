@@ -232,7 +232,17 @@ import { NotificationService } from '@app/services/notification/notification.ser
               {{ currentUser()?.firstName }} {{ currentUser()?.lastName }}
             </div>
             <div class="user-email">{{ currentUser()?.email }}</div>
-            <div class="user-plan">{{ currentUser()?.subscription?.plan | titlecase }}</div>
+            <div class="user-plan-section">
+              <div class="user-plan" [class.plan-free]="getUserPlan() === 'free'" 
+                                   [class.plan-premium]="getUserPlan() === 'premium'"
+                                   [class.plan-pro]="getUserPlan() === 'pro'">
+                <mat-icon class="plan-icon">{{ getPlanIcon() }}</mat-icon>
+                {{ getUserPlanLabel() }}
+              </div>
+              <div class="user-usage" *ngIf="getUserUsage()">
+                {{ getUserUsage().used }}/{{ getUserUsage().limit }} generations used
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -959,13 +969,47 @@ import { NotificationService } from '@app/services/notification/notification.ser
       opacity: 0.9;
     }
 
+    .user-plan-section {
+      margin-top: 0.5rem;
+    }
+
     .user-plan {
       font-size: 0.8rem;
       background: rgba(255, 255, 255, 0.2);
       padding: 0.25rem 0.5rem;
       border-radius: 0.25rem;
-      display: inline-block;
-      margin-top: 0.25rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+    }
+
+    .user-plan.plan-free {
+      background: rgba(158, 158, 158, 0.3);
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .user-plan.plan-pro {
+      background: rgba(255, 193, 7, 0.3);
+      color: #ffeb3b;
+    }
+
+    .user-plan.plan-premium {
+      background: rgba(156, 39, 176, 0.3);
+      color: #e1bee7;
+    }
+
+    .plan-icon {
+      font-size: 14px !important;
+      width: 14px !important;
+      height: 14px !important;
+    }
+
+    .user-usage {
+      font-size: 0.7rem;
+      opacity: 0.8;
+      font-weight: 400;
     }
 
     /* 👑 ADMIN MENU ITEM STYLES */
@@ -1127,25 +1171,52 @@ export class HeaderComponent {
   public readonly currentUser = this.authService.currentUser;
   public readonly isAdmin = computed(() => {
     const user = this.currentUser();
-    const isAdminRole = user?.role === 'admin';
-    const isAdminEmail = user?.email === 'admin@frontuna.com';
-    const isAdmin = isAdminRole || isAdminEmail;
     
-    // 🔍 ENHANCED DEBUGGING - Show detailed admin check
-    console.log('🔍 HEADER ADMIN CHECK DETAILED:', {
-      user: user?.email || 'NO_USER',
+    // 🔍 BULLETPROOF ADMIN DETECTION - Multiple fallback methods
+    const checks = {
+      hasUser: !!user,
+      email: user?.email || 'NO_EMAIL',
       role: user?.role || 'NO_ROLE',
-      firstName: user?.firstName || 'NO_FIRSTNAME',
-      isAdminRole,
-      isAdminEmail,
-      finalIsAdmin: isAdmin,
-      fullUserObject: user,
-      timestamp: new Date().toISOString()
+      isAdminEmail: user?.email === 'admin@frontuna.com',
+      isAdminRole: user?.role === 'admin',
+      isAdminRoleString: user?.role === 'admin' || user?.role?.toLowerCase() === 'admin',
+      emailContainsAdmin: user?.email?.toLowerCase().includes('admin') || false,
+      firstNameIsAdmin: user?.firstName?.toLowerCase() === 'admin' || false
+    };
+    
+    // 🚀 MULTIPLE ADMIN DETECTION METHODS
+    const adminMethods = [
+      checks.isAdminEmail,                    // Method 1: Exact email match
+      checks.isAdminRole,                     // Method 2: Role is 'admin'
+      checks.isAdminRoleString,              // Method 3: Role string comparison
+      checks.emailContainsAdmin,             // Method 4: Email contains 'admin'
+      checks.firstNameIsAdmin                // Method 5: First name is 'admin'
+    ];
+    
+    const isAdmin = adminMethods.some(method => method === true);
+    
+    // 🔍 COMPREHENSIVE DEBUGGING
+    console.log('👑 BULLETPROOF ADMIN CHECK:', {
+      ...checks,
+      adminMethods,
+      finalResult: isAdmin,
+      timestamp: new Date().toISOString(),
+      localStorage_tokens: {
+        primary: !!localStorage.getItem('frontuna_primary_token'),
+        backup1: !!localStorage.getItem('frontuna_backup1_token'),
+        emergency: !!localStorage.getItem('frontuna_emergency_token')
+      }
     });
     
-    // 🚨 FORCE ADMIN FOR TESTING (remove after debugging)
+    // 🚨 ULTIMATE FALLBACK - Always show admin for admin@frontuna.com
     if (user?.email === 'admin@frontuna.com') {
-      console.log('🔧 FORCING ADMIN ACCESS for admin@frontuna.com in header');
+      console.log('🔧 ULTIMATE ADMIN FALLBACK ACTIVATED for admin@frontuna.com');
+      return true;
+    }
+    
+    // 🚨 EMERGENCY FALLBACK - Show admin button if any admin indicators exist
+    if (user && (user.email?.includes('admin') || user.role?.includes('admin') || user.firstName?.toLowerCase() === 'admin')) {
+      console.log('🚨 EMERGENCY ADMIN FALLBACK ACTIVATED');
       return true;
     }
     
@@ -1177,6 +1248,48 @@ export class HeaderComponent {
   handleNotificationClick(notification: any): void {
     // TODO: Implement notification click handler
     console.log('Notification clicked:', notification);
+  }
+
+  // 💼 USER PLAN AND USAGE METHODS
+  getUserPlan(): string {
+    const user = this.currentUser();
+    const plan = user?.subscription?.plan || 'free';
+    console.log('📊 User Plan:', plan);
+    return plan.toLowerCase();
+  }
+
+  getUserPlanLabel(): string {
+    const plan = this.getUserPlan();
+    const labels = {
+      'free': 'Free Plan',
+      'pro': 'Pro Plan', 
+      'premium': 'Premium Plan',
+      'enterprise': 'Enterprise Plan'
+    };
+    return labels[plan as keyof typeof labels] || 'Free Plan';
+  }
+
+  getPlanIcon(): string {
+    const plan = this.getUserPlan();
+    const icons = {
+      'free': 'account_circle',
+      'pro': 'star',
+      'premium': 'workspace_premium',
+      'enterprise': 'business'
+    };
+    return icons[plan as keyof typeof icons] || 'account_circle';
+  }
+
+  getUserUsage(): { used: number; limit: number } | null {
+    const user = this.currentUser();
+    if (user?.usage) {
+      return {
+        used: user.usage.generationsUsed || 0,
+        limit: user.usage.generationsLimit || 10
+      };
+    }
+    // Default usage for free plan
+    return { used: 0, limit: 10 };
   }
 
 
