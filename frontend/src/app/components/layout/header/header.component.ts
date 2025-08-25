@@ -255,7 +255,7 @@ import { NotificationService } from '@app/services/notification/notification.ser
       </button>
       
       <!-- 👑 ADMIN PANEL - Only visible to admin users -->
-     
+      @if (isAdmin()) {
         <mat-divider></mat-divider>
         
         <button mat-menu-item routerLink="/admin" class="admin-menu-item">
@@ -263,6 +263,7 @@ import { NotificationService } from '@app/services/notification/notification.ser
           <span>Admin Panel</span>
           <mat-icon class="admin-badge">verified</mat-icon>
         </button>
+      }
        
       
       <mat-divider></mat-divider>
@@ -1128,8 +1129,27 @@ export class HeaderComponent {
     const user = this.currentUser();
     const isAdminRole = user?.role === 'admin';
     const isAdminEmail = user?.email === 'admin@frontuna.com';
-    console.log('🔍 Header Admin check:', { user: user?.email, role: user?.role, isAdmin: isAdminRole || isAdminEmail });
-    return isAdminRole || isAdminEmail;
+    const isAdmin = isAdminRole || isAdminEmail;
+    
+    // 🔍 ENHANCED DEBUGGING - Show detailed admin check
+    console.log('🔍 HEADER ADMIN CHECK DETAILED:', {
+      user: user?.email || 'NO_USER',
+      role: user?.role || 'NO_ROLE',
+      firstName: user?.firstName || 'NO_FIRSTNAME',
+      isAdminRole,
+      isAdminEmail,
+      finalIsAdmin: isAdmin,
+      fullUserObject: user,
+      timestamp: new Date().toISOString()
+    });
+    
+    // 🚨 FORCE ADMIN FOR TESTING (remove after debugging)
+    if (user?.email === 'admin@frontuna.com') {
+      console.log('🔧 FORCING ADMIN ACCESS for admin@frontuna.com in header');
+      return true;
+    }
+    
+    return isAdmin;
   });
   
   // Mock data - replace with actual notification service

@@ -571,7 +571,21 @@ export class UltimateAuthService {
         this.currentUserSignal.set(adminUser);
         this.authStatusSignal.set('authenticated');
         
+        // 🔍 ENHANCED ADMIN LOGIN DEBUGGING
         console.log('✅ ADMIN LOCALHOST LOGIN SUCCESS');
+        console.log('👑 ADMIN USER STORED:', {
+          email: adminUser.email,
+          role: adminUser.role,
+          firstName: adminUser.firstName,
+          id: adminUser.id,
+          timestamp: new Date().toISOString()
+        });
+        console.log('💾 ADMIN USER SET IN SIGNAL:', this.currentUserSignal());
+        
+        // Double-check that user is properly stored
+        setTimeout(() => {
+          console.log('🔍 ADMIN USER VERIFICATION (after 1 second):', this.currentUserSignal());
+        }, 1000);
         
         return {
           user: adminUser,
