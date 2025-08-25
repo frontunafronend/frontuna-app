@@ -14,6 +14,8 @@ interface UserProfile {
   firstName: string;
   lastName: string;
   role: string;
+  company?: string;
+  avatar?: string;
   subscription: {
     plan: 'free' | 'pro' | 'premium' | 'enterprise';
     status: 'active' | 'inactive' | 'trial' | 'expired';
@@ -198,12 +200,14 @@ export class UserDataService {
     
     console.log('🛡️ Creating fallback user profile for:', currentUser?.email);
     
-    return {
-      id: userId,
-      email: currentUser?.email || 'user@example.com',
-      firstName: currentUser?.firstName || 'User',
-      lastName: currentUser?.lastName || 'Name',
-      role: isAdmin ? 'admin' : 'user',
+         return {
+       id: userId,
+       email: currentUser?.email || 'user@example.com',
+       firstName: currentUser?.firstName || 'User',
+       lastName: currentUser?.lastName || 'Name',
+       role: isAdmin ? 'admin' : 'user',
+       company: currentUser?.company || '',
+       avatar: currentUser?.avatar || '',
       subscription: {
         plan: isAdmin ? 'premium' : 'free',
         status: 'active',

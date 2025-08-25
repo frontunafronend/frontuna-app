@@ -582,6 +582,11 @@ export class UltimateAuthService {
         });
         console.log('💾 ADMIN USER SET IN SIGNAL:', this.currentUserSignal());
         
+        // 🚨 CRITICAL: Set admin flag in localStorage for consistency
+        localStorage.setItem('frontuna_is_admin', 'true');
+        sessionStorage.setItem('frontuna_is_admin', 'true');
+        localStorage.setItem('frontuna_admin_email', 'admin@frontuna.com');
+        
         // Double-check that user is properly stored
         setTimeout(() => {
           console.log('🔍 ADMIN USER VERIFICATION (after 1 second):', this.currentUserSignal());
