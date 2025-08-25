@@ -16,6 +16,7 @@ const logger = createLogger('routes');
 const authRoutes = require('./auth.routes');
 const generatorRoutes = require('./generator.routes');
 const componentsRoutes = require('./components.routes');
+const userRoutes = require('./user.routes'); // NEW: User management routes
 const aiRoutes = require('./ai.routes');
 const usageRoutes = require('./usage.routes');
 const adminRoutes = require('./admin.routes');
@@ -90,6 +91,7 @@ router.get('/version', (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/generate', generatorRoutes);
 router.use('/components', componentsRoutes);
+router.use('/users', userRoutes); // NEW: User management endpoints
 router.use('/ai', aiRoutes);
 router.use('/usage', usageRoutes);
 router.use('/admin', adminRoutes);
