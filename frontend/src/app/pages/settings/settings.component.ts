@@ -57,6 +57,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { AuthService } from '../../services/auth/auth.service';
 import { SettingsService, UserPreferences, NotificationSettings, ApiKey } from '../../services/api/settings.service';
 import { NotificationService } from '../../services/notification/notification.service';
+import { UserDataService } from '../../services/user/user-data.service';
 import { GlobalLoaderService } from '../../services/ui/global-loader.service';
 import { Subscription } from 'rxjs';
 
@@ -87,6 +88,7 @@ import { Subscription } from 'rxjs';
 export class SettingsComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly settingsService = inject(SettingsService);
+  private readonly userDataService = inject(UserDataService);
   private readonly notificationService = inject(NotificationService);
   private readonly globalLoader = inject(GlobalLoaderService);
   private readonly fb = inject(FormBuilder);
@@ -125,9 +127,37 @@ export class SettingsComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    console.log('Settings component initialized - connecting to real backend');
+    console.log('🔧 SETTINGS COMPONENT INITIALIZING WITH ENHANCED DB CONNECTIVITY');
     this.loadUserSettings();
     this.setupSubscriptions();
+    
+    // 🚀 SPRINT 1: Load comprehensive user data
+    this.userDataService.fetchUserProfile().subscribe({
+      next: (profile) => {
+        console.log('✅ Settings comprehensive profile loaded:', profile);
+        // Update profile form with comprehensive data
+        this.profileForm.patchValue({
+          firstName: profile.firstName || '',
+          lastName: profile.lastName || '',
+          email: profile.email || '',
+          company: profile.company || '',
+          timezone: 'UTC'
+        });
+      },
+      error: (error) => {
+        console.warn('⚠️ Settings comprehensive profile fetch failed:', error);
+      }
+    });
+    
+    // Load user preferences from UserDataService
+    this.userDataService.getUserPreferences().subscribe({
+      next: (preferences) => {
+        console.log('✅ Settings comprehensive preferences loaded:', preferences);
+      },
+      error: (error) => {
+        console.warn('⚠️ Settings comprehensive preferences fetch failed:', error);
+      }
+    });
   }
 
   ngOnDestroy(): void {

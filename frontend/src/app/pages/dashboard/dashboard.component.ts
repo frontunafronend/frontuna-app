@@ -13,6 +13,8 @@ import { AuthService } from '@app/services/auth/auth.service';
 import { SeoService } from '@app/services/seo/seo.service';
 import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics.service';
 import { ComponentStateService, GeneratedComponent } from '../../services/component-state/component-state.service';
+import { UserDataService } from '../../services/user/user-data.service';
+import { ComponentService } from '../../services/component/component.service';
 import { EnhancedPreviewComponent } from '../../components/shared/enhanced-preview/enhanced-preview.component';
 import { DashboardNavComponent } from '../../components/shared/dashboard-nav/dashboard-nav.component';
 
@@ -1085,6 +1087,8 @@ export class DashboardComponent implements OnInit {
   private readonly analyticsService = inject(GoogleAnalyticsService);
   private readonly router = inject(Router);
   private readonly componentStateService = inject(ComponentStateService);
+  private readonly userDataService = inject(UserDataService);
+  private readonly componentService = inject(ComponentService);
 
   public readonly currentUser = this.authService.currentUser;
 
@@ -1140,6 +1144,8 @@ export class DashboardComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    console.log('🔧 DASHBOARD INITIALIZING WITH ENHANCED DATA CONNECTIVITY');
+    
     this.seoService.setPageSeo({
       title: 'Dashboard - Frontuna.com',
       description: 'Your AI-powered frontend component generation dashboard. Create, manage, and export components with ease.',
@@ -1150,6 +1156,48 @@ export class DashboardComponent implements OnInit {
       page_title: 'Dashboard',
       page_location: window.location.href
     });
+    
+    // 🚀 SPRINT 1: COMPREHENSIVE DATA LOADING
+    const currentUser = this.authService.currentUser();
+    if (currentUser?.id) {
+      console.log('👤 Loading comprehensive dashboard data for user:', currentUser.email);
+      
+      // Load user profile with subscription and usage data
+      this.userDataService.fetchUserProfile().subscribe({
+        next: (profile) => {
+          console.log('✅ Dashboard user profile loaded:', {
+            email: profile.email,
+            plan: profile.subscription?.plan,
+            usage: profile.usage
+          });
+        },
+        error: (error) => {
+          console.warn('⚠️ Dashboard profile fetch failed:', error);
+        }
+      });
+      
+      // Load user's components
+      this.componentService.getComponents().subscribe({
+        next: (components) => {
+          console.log('✅ Dashboard components loaded:', components.length, 'components');
+        },
+        error: (error) => {
+          console.warn('⚠️ Dashboard components fetch failed:', error);
+        }
+      });
+      
+      // Load user analytics
+      this.userDataService.getUserAnalytics().subscribe({
+        next: (analytics) => {
+          console.log('✅ Dashboard analytics loaded:', analytics);
+        },
+        error: (error) => {
+          console.warn('⚠️ Dashboard analytics fetch failed:', error);
+        }
+      });
+    } else {
+      console.warn('⚠️ No authenticated user found for dashboard data loading');
+    }
   }
 
   generateComponent(): void {
