@@ -72,12 +72,24 @@ export class UserDataService {
   /**
    * Fetch user profile from backend
    */
-  fetchUserProfile(userId: string): Observable<UserProfile> {
-    console.log('🔍 Fetching user profile for:', userId);
+  fetchUserProfile(userId?: string): Observable<UserProfile> {
+    const targetUserId = userId || this.authService.currentUser()?.id;
+    console.log('🔍 Fetching user profile for:', targetUserId);
+    
+    if (!targetUserId) {
+      console.warn('⚠️ No user ID available for profile fetch');
+      const fallbackProfile = this.createFallbackProfile('anonymous');
+      this._userProfile.set(fallbackProfile);
+      return of(fallbackProfile);
+    }
+
     this._isLoading.set(true);
     this._error.set(null);
 
-    return this.http.get<{success: boolean, data: UserProfile}>(`${this.apiUrl}/${userId}/profile`).pipe(
+    // Use current user endpoint if no specific user ID
+    const endpoint = userId ? `${this.apiUrl}/${userId}/profile` : `${this.apiUrl}/profile`;
+
+    return this.http.get<{success: boolean, data: UserProfile}>(endpoint).pipe(
       map(response => response.data),
       tap(profile => {
         console.log('✅ User profile fetched successfully:', profile);
@@ -90,7 +102,7 @@ export class UserDataService {
         this._isLoading.set(false);
         
         // Create fallback user profile
-        const fallbackProfile = this.createFallbackProfile(userId);
+        const fallbackProfile = this.createFallbackProfile(targetUserId);
         this._userProfile.set(fallbackProfile);
         
         this.notificationService.showWarning('Using offline user data');
@@ -221,6 +233,161 @@ export class UserDataService {
       return this.fetchUserProfile(currentUser.id);
     }
     return of(null);
+  }
+
+  /**
+   * Get user analytics
+   */
+  getUserAnalytics(): Observable<any[]> {
+    return this.http.get<{success: boolean, data: any[]}>(`${this.apiUrl}/analytics`).pipe(
+      map(response => response.data),
+      catchError(error => {
+        console.error('❌ Failed to fetch analytics:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get generation history
+   */
+  getGenerationHistory(page: number = 1, limit: number = 20): Observable<any[]> {
+    return this.http.get<{success: boolean, data: any[]}>(`${this.apiUrl}/analytics/generations?page=${page}&limit=${limit}`).pipe(
+      map(response => response.data),
+      catchError(error => {
+        console.error('❌ Failed to fetch generation history:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get usage trends
+   */
+  getUsageTrends(period: '7d' | '30d' | '90d' = '7d'): Observable<any[]> {
+    return this.http.get<{success: boolean, data: any[]}>(`${this.apiUrl}/analytics/usage-trends?period=${period}`).pipe(
+      map(response => response.data),
+      catchError(error => {
+        console.error('❌ Failed to fetch usage trends:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get user preferences
+   */
+  getUserPreferences(): Observable<any> {
+    return this.http.get<{success: boolean, data: any}>(`${this.apiUrl}/preferences`).pipe(
+      map(response => response.data),
+      catchError(error => {
+        console.error('❌ Failed to fetch preferences:', error);
+        return of({
+          theme: 'light',
+          language: 'en',
+          timezone: 'UTC',
+          notifications: {
+            email: true,
+            push: true,
+            updates: true,
+            marketing: false
+          }
+        });
+      })
+    );
+  }
+
+  /**
+   * Update user preferences
+   */
+  updateUserPreferences(preferences: any): Observable<any> {
+    return this.http.put<{success: boolean, data: any}>(`${this.apiUrl}/preferences`, preferences).pipe(
+      map(response => response.data),
+      tap(() => {
+        this.notificationService.showSuccess('Preferences updated successfully');
+      }),
+      catchError(error => {
+        console.error('❌ Failed to update preferences:', error);
+        this.notificationService.showError('Failed to update preferences');
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Get user notifications
+   */
+  getUserNotifications(): Observable<any[]> {
+    return this.http.get<{success: boolean, data: any[]}>(`${this.apiUrl}/notifications`).pipe(
+      map(response => response.data),
+      catchError(error => {
+        console.error('❌ Failed to fetch notifications:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Mark notification as read
+   */
+  markNotificationRead(notificationId: string): Observable<void> {
+    return this.http.put<{success: boolean}>(`${this.apiUrl}/notifications/${notificationId}/read`, {}).pipe(
+      map(() => void 0),
+      catchError(error => {
+        console.error('❌ Failed to mark notification as read:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Delete notification
+   */
+  deleteNotification(notificationId: string): Observable<void> {
+    return this.http.delete<{success: boolean}>(`${this.apiUrl}/notifications/${notificationId}`).pipe(
+      map(() => void 0),
+      catchError(error => {
+        console.error('❌ Failed to delete notification:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Change password
+   */
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http.post<{success: boolean}>(`${this.apiUrl}/change-password`, {
+      currentPassword,
+      newPassword
+    }).pipe(
+      map(() => void 0),
+      tap(() => {
+        this.notificationService.showSuccess('Password changed successfully');
+      }),
+      catchError(error => {
+        console.error('❌ Failed to change password:', error);
+        this.notificationService.showError('Failed to change password');
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Export user data
+   */
+  exportUserData(): Observable<any> {
+    return this.http.get<{success: boolean, data: any}>(`${this.apiUrl}/export`).pipe(
+      map(response => response.data),
+      tap(() => {
+        this.notificationService.showSuccess('User data exported successfully');
+      }),
+      catchError(error => {
+        console.error('❌ Failed to export user data:', error);
+        this.notificationService.showError('Failed to export user data');
+        throw error;
+      })
+    );
   }
 
   /**

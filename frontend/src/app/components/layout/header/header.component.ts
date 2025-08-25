@@ -1162,6 +1162,30 @@ export class HeaderComponent {
   private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
   private readonly userDataService = inject(UserDataService);
+
+  constructor() {
+    // Initialize user data when component loads
+    console.log('🔧 HEADER COMPONENT INITIALIZING WITH ENHANCED USER DATA');
+    
+    // Monitor auth changes and fetch user data
+    this.authService.currentUser$.subscribe(user => {
+      if (user?.id) {
+        console.log('👤 User authenticated, fetching comprehensive profile data...');
+        this.userDataService.fetchUserProfile().subscribe({
+          next: (profile) => {
+            console.log('✅ User profile loaded in header:', {
+              email: profile.email,
+              plan: profile.subscription?.plan,
+              usage: profile.usage
+            });
+          },
+          error: (error) => {
+            console.warn('⚠️ User profile fetch failed, using fallback data:', error);
+          }
+        });
+      }
+    });
+  }
   
   // Logo fallback state
   useTextLogo = false;
@@ -1255,23 +1279,42 @@ export class HeaderComponent {
   // 💼 BULLETPROOF USER PLAN AND USAGE METHODS
   getUserPlan(): string {
     const user = this.currentUser();
+    const userProfile = this.userDataService.userProfile();
+    
     console.log('🔍 DETAILED USER PLAN ANALYSIS:', {
       user: user ? 'EXISTS' : 'NULL',
       userEmail: user?.email || 'NO_EMAIL',
-      subscription: user?.subscription || 'NO_SUBSCRIPTION',
-      subscriptionPlan: user?.subscription?.plan || 'NO_PLAN',
-      fullUser: user
+      userProfile: userProfile ? 'EXISTS' : 'NULL',
+      authSubscription: user?.subscription || 'NO_AUTH_SUBSCRIPTION',
+      profileSubscription: userProfile?.subscription || 'NO_PROFILE_SUBSCRIPTION',
+      authPlan: user?.subscription?.plan || 'NO_AUTH_PLAN',
+      profilePlan: userProfile?.subscription?.plan || 'NO_PROFILE_PLAN',
+      fullUser: user,
+      fullProfile: userProfile
     });
     
-    // BULLETPROOF PLAN DETECTION with multiple fallbacks
+    // BULLETPROOF PLAN DETECTION with multiple data sources
     let plan = 'free'; // Default fallback
     
-    if (user?.subscription?.plan) {
+    // Priority 1: UserDataService profile (most comprehensive)
+    if (userProfile?.subscription?.plan) {
+      plan = userProfile.subscription.plan;
+      console.log('📊 Plan from UserDataService:', plan);
+    }
+    // Priority 2: Auth service subscription
+    else if (user?.subscription?.plan) {
       plan = user.subscription.plan;
-    } else if (user?.email === 'admin@frontuna.com') {
+      console.log('📊 Plan from AuthService:', plan);
+    }
+    // Priority 3: Admin detection
+    else if (user?.email === 'admin@frontuna.com' || user?.role === 'admin') {
       plan = 'premium'; // Admin gets premium plan
-    } else if (user) {
-      plan = 'free'; // Any authenticated user gets free plan
+      console.log('📊 Plan from Admin detection:', plan);
+    }
+    // Priority 4: Any authenticated user gets free plan
+    else if (user) {
+      plan = 'free';
+      console.log('📊 Plan from fallback (authenticated):', plan);
     }
     
     console.log('📊 FINAL USER PLAN:', plan);
@@ -1306,27 +1349,50 @@ export class HeaderComponent {
 
   getUserUsage(): { used: number; limit: number } {
     const user = this.currentUser();
+    const userProfile = this.userDataService.userProfile();
+    
     console.log('🔍 DETAILED USER USAGE ANALYSIS:', {
       user: user ? 'EXISTS' : 'NULL',
-      usage: user?.usage || 'NO_USAGE',
-      generationsUsed: user?.usage?.generationsUsed || 'NOT_SET',
-      generationsLimit: user?.usage?.generationsLimit || 'NOT_SET'
+      userProfile: userProfile ? 'EXISTS' : 'NULL',
+      authUsage: user?.usage || 'NO_AUTH_USAGE',
+      profileUsage: userProfile?.usage || 'NO_PROFILE_USAGE',
+      authUsed: user?.usage?.generationsUsed || 'NOT_SET',
+      authLimit: user?.usage?.generationsLimit || 'NOT_SET',
+      profileUsed: userProfile?.usage?.generationsUsed || 'NOT_SET',
+      profileLimit: userProfile?.usage?.generationsLimit || 'NOT_SET'
     });
     
-    // BULLETPROOF USAGE with guaranteed return values
+    // BULLETPROOF USAGE with multiple data sources
     let used = 0;
     let limit = 10; // Default free plan limit
     
-    if (user?.usage) {
+    // Priority 1: UserDataService profile (most accurate)
+    if (userProfile?.usage) {
+      used = userProfile.usage.generationsUsed || 0;
+      limit = userProfile.usage.generationsLimit || 10;
+      console.log('📈 Usage from UserDataService:', { used, limit });
+    }
+    // Priority 2: Auth service usage
+    else if (user?.usage) {
       used = user.usage.generationsUsed || 0;
       limit = user.usage.generationsLimit || 10;
-    } else if (user?.email === 'admin@frontuna.com') {
+      console.log('📈 Usage from AuthService:', { used, limit });
+    }
+    // Priority 3: Admin detection with high limits
+    else if (user?.email === 'admin@frontuna.com' || user?.role === 'admin') {
       used = 0;
       limit = 1000; // Admin gets higher limit
-    } else if (user) {
-      // Regular user without usage data
+      console.log('📈 Usage from Admin detection:', { used, limit });
+    }
+    // Priority 4: Plan-based limits
+    else if (user) {
+      const plan = this.getUserPlan();
       used = 0;
-      limit = 10;
+      if (plan === 'pro') limit = 100;
+      else if (plan === 'premium') limit = 500;
+      else if (plan === 'enterprise') limit = 2000;
+      else limit = 10; // free plan
+      console.log('📈 Usage from plan-based limits:', { used, limit, plan });
     }
     
     console.log('📈 FINAL USER USAGE:', { used, limit });
