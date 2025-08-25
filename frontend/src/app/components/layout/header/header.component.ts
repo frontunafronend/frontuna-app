@@ -239,9 +239,9 @@ import { NotificationService } from '@app/services/notification/notification.ser
                 <mat-icon class="plan-icon">{{ getPlanIcon() }}</mat-icon>
                 {{ getUserPlanLabel() }}
               </div>
-              <div class="user-usage" *ngIf="getUserUsage()">
-                {{ getUserUsage().used }}/{{ getUserUsage().limit }} generations used
-              </div>
+                                  <div class="user-usage" *ngIf="getUserUsage() as usage">
+                      {{ usage.used }}/{{ usage.limit }} generations used
+                    </div>
             </div>
           </div>
         </div>
