@@ -140,7 +140,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
           firstName: profile.firstName || '',
           lastName: profile.lastName || '',
           email: profile.email || '',
-          company: profile.company || '',
+          company: (profile as any).company || '',
           timezone: 'UTC'
         });
       },
