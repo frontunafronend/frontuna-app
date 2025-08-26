@@ -38,7 +38,7 @@ jobs:
   # 🎨 Deploy Frontend to www.frontuna.com
   deploy-frontend:
     needs: detect-changes
-    if: needs.detect-changes.outputs.frontend-changed == 'true'
+    if: always()  # Always deploy frontend - bypass detection
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
