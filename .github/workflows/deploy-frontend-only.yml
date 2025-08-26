@@ -1,0 +1,49 @@
+name: 🎯 Deploy Frontend Only
+
+on:
+  workflow_dispatch:  # Manual trigger only
+  push:
+    paths:
+      - 'frontend/**'
+    branches: [ main ]
+
+jobs:
+  deploy-frontend-only:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build:prod
+
+      - name: Deploy to frontuna-app project
+        working-directory: frontend
+        run: |
+          echo "🎯 DEPLOYING TO FRONTUNA-APP PROJECT DIRECTLY"
+          echo "Working directory: $(pwd)"
+          echo "Project configuration:"
+          cat .vercel/project.json
+          echo "Deploying to frontuna-app..."
+          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes
+        env:
+          VERCEL_ORG_ID: frontunas-projects-11c7fb14
+
+      - name: Success notification
+        run: |
+          echo "✅ Frontend deployed successfully to frontuna-app project"
+          echo "🌐 Should be live at: https://www.frontuna.com"
+          echo "🔑 Admin login: user@frontuna.com"

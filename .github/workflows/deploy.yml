@@ -65,17 +65,14 @@ jobs:
       - name: Deploy frontend to Vercel
         working-directory: frontend
         run: |
-          echo "🎯 DEPLOYING TO FRONTUNA-APP PROJECT"
+          echo "🎯 BYPASSING GITHUB SECRETS - DIRECT PROJECT TARGETING"
           echo "Current directory: $(pwd)"
-          echo "Files in current directory:"
-          ls -la
           echo "Vercel project configuration:"
           cat .vercel/project.json || echo "No .vercel/project.json found"
-          echo "Starting deployment..."
-          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes --debug
+          echo "Deploying directly to frontuna-app project..."
+          npx vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes --name frontuna-app --force
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_FRONTEND_PROJECT_ID }}
+          VERCEL_ORG_ID: frontunas-projects-11c7fb14
 
       - name: 📝 Frontend deployment summary
         run: |
