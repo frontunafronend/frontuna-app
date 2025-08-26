@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm ci && npm run build:prod",
+  "buildCommand": "npm ci && npx ng build --configuration production",
   "outputDirectory": "dist/frontuna-app/browser",
   "installCommand": "npm ci"
 }
