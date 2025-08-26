@@ -1,2 +1,23 @@
-
- 
+{
+  "version": 2,
+  "name": "frontuna-api",
+  "builds": [
+    {
+      "src": "server-production.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/server-production.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/server-production.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
