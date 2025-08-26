@@ -67,7 +67,9 @@ jobs:
       - name: Deploy frontend to Vercel
         run: |
           cd frontend
-          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes --scope frontunas-projects --name frontuna-app
+          echo "Deploying to frontuna-app project..."
+          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes
+        working-directory: frontend
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_FRONTEND_PROJECT_ID }}
@@ -81,7 +83,7 @@ jobs:
   # 🔧 Deploy Backend API to frontuna-api.vercel.app
   deploy-backend:
     needs: detect-changes
-    if: false  # Temporarily disabled to test frontend deployment
+    if: needs.detect-changes.outputs.backend-changed == 'true' || needs.detect-changes.outputs.api-changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -105,7 +107,9 @@ jobs:
       - name: Deploy backend to Vercel
         run: |
           cd backend
+          echo "Deploying to frontuna-api project..."
           vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes
+        working-directory: backend
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_BACKEND_PROJECT_ID }}
