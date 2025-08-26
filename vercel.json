@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm ci && npx --package @angular/cli ng build --configuration production",
+  "buildCommand": "npm ci && npx --package @angular/cli@17.0.0 ng build --configuration production",
   "outputDirectory": "dist/frontuna-app/browser",
   "installCommand": "npm ci"
 }
