@@ -55,21 +55,24 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm ci
+        working-directory: frontend
+        run: npm ci
 
       - name: Build frontend
-        run: |
-          cd frontend
-          npm run build:prod
+        working-directory: frontend
+        run: npm run build:prod
 
       - name: Deploy frontend to Vercel
-        run: |
-          cd frontend
-          echo "Deploying to frontuna-app project..."
-          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes
         working-directory: frontend
+        run: |
+          echo "🎯 DEPLOYING TO FRONTUNA-APP PROJECT"
+          echo "Current directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la
+          echo "Vercel project configuration:"
+          cat .vercel/project.json || echo "No .vercel/project.json found"
+          echo "Starting deployment..."
+          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes --debug
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_FRONTEND_PROJECT_ID }}
@@ -83,7 +86,7 @@ jobs:
   # 🔧 Deploy Backend API to frontuna-api.vercel.app
   deploy-backend:
     needs: detect-changes
-    if: needs.detect-changes.outputs.backend-changed == 'true' || needs.detect-changes.outputs.api-changed == 'true'
+    if: false  # DISABLED FOR TESTING - Only frontend should deploy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
