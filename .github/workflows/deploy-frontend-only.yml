@@ -37,8 +37,8 @@ jobs:
           echo "Working directory: $(pwd)"
           echo "Project configuration:"
           cat .vercel/project.json
-          echo "Deploying to frontuna-app..."
-          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes
+          echo "Deploying with explicit project name..."
+          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes --name frontuna-app
         env:
           VERCEL_ORG_ID: frontunas-projects-11c7fb14
 
