@@ -41,7 +41,7 @@ jobs:
           vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes
         env:
           VERCEL_ORG_ID: frontunas-projects-11c7fb14
-          VERCEL_PROJECT_ID: prj_frontuna_app
+          VERCEL_PROJECT_ID: frontuna-app
 
       - name: Success notification
         run: |
