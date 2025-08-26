@@ -111,4 +111,11 @@ export class AppComponent implements OnInit {
     // Show header on public routes when not authenticated
     return true;
   }
+
+  /**
+   * Get current timestamp for frontend connection test
+   */
+  getCurrentTimestamp(): string {
+    return new Date().toLocaleString();
+  }
 }
