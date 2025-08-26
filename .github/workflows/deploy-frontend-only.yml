@@ -36,11 +36,12 @@ jobs:
           echo "🎯 DEPLOYING TO FRONTUNA-APP PROJECT DIRECTLY"
           echo "Working directory: $(pwd)"
           echo "Project configuration:"
-          cat .vercel/project.json
-          echo "Deploying with explicit project name..."
-          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes --name frontuna-app
+          cat .vercel/project.json || echo "No project.json found"
+          echo "Deploying with project ID from manual deployment..."
+          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --yes
         env:
           VERCEL_ORG_ID: frontunas-projects-11c7fb14
+          VERCEL_PROJECT_ID: prj_ixhgzg7fzjvx9ybqvwqo5k7l
 
       - name: Success notification
         run: |
