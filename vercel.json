@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm install && npm run build:prod",
+  "buildCommand": "vercel-build",
   "outputDirectory": "dist/frontuna-app/",
   "installCommand": "npm install"
 }
