@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "ls -la && pwd && cd frontend && npm ci && npm run build:prod",
-  "outputDirectory": "frontend/dist/frontuna-app/browser",
-  "installCommand": "ls -la && pwd && cd frontend && npm ci"
+  "buildCommand": "npm ci && npm run build:prod",
+  "outputDirectory": "dist/frontuna-app/browser",
+  "installCommand": "npm ci"
 }
