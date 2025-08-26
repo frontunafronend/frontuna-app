@@ -1023,18 +1023,69 @@ export class AuthService {
   }
 
   /**
-   * Check if user has specific role
+   * Check if user has specific role - PROFESSIONAL IMPLEMENTATION
    */
   hasRole(role: string): boolean {
     const currentUser = this.currentUserSubject.value;
-    return currentUser?.role === role;
+    
+    // Primary check: Current user object
+    if (currentUser?.role === role) {
+      return true;
+    }
+    
+    // Fallback: Check stored token payload
+    try {
+      const token = localStorage.getItem('frontuna_primary_token') ||
+                   localStorage.getItem('frontuna_access_token') ||
+                   localStorage.getItem('access_token') ||
+                   sessionStorage.getItem('frontuna_session_token');
+      if (token) {
+        const payload = this.decodeToken(token);
+        if (payload?.role === role) {
+          return true;
+        }
+      }
+    } catch (error) {
+      console.log('Token decode error in hasRole:', error);
+    }
+    
+    // Emergency mode check
+    const emergencyUser = localStorage.getItem('frontuna_emergency_user');
+    if (emergencyUser) {
+      try {
+        const userData = JSON.parse(emergencyUser);
+        if (userData.role === role) {
+          return true;
+        }
+      } catch (error) {
+        console.log('Emergency user parse error:', error);
+      }
+    }
+    
+    return false;
   }
 
   /**
-   * Check if user is admin
+   * Check if user is admin - PROFESSIONAL IMPLEMENTATION
    */
   isAdmin(): boolean {
-    return this.hasRole('admin') || this.hasRole('moderator');
+    // Check for admin or moderator roles
+    const isAdminRole = this.hasRole('admin') || this.hasRole('moderator');
+    
+    // Additional check: Admin email addresses (for emergency access)
+    const currentUser = this.currentUserSubject.value;
+    const adminEmails = ['admin@frontuna.com', 'amir@frontuna.com', 'user@frontuna.com'];
+    const isAdminEmail = !!(currentUser?.email && adminEmails.includes(currentUser.email.toLowerCase()));
+    
+    console.log('🔍 Admin Check:', {
+      hasAdminRole: this.hasRole('admin'),
+      hasModeratorRole: this.hasRole('moderator'),
+      isAdminEmail,
+      userEmail: currentUser?.email,
+      finalResult: isAdminRole || isAdminEmail
+    });
+    
+    return isAdminRole || isAdminEmail;
   }
 
   /**

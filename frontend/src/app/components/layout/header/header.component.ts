@@ -1163,7 +1163,6 @@ export class HeaderComponent {
   private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
   private readonly userDataService = inject(UserDataService);
-  private readonly adminFixService = inject(AdminFixService);
 
   constructor() {
     // Initialize user data when component loads
@@ -1296,7 +1295,7 @@ export class HeaderComponent {
       // Check 5: Force admin flag
       localStorage.getItem('frontuna_is_admin') === 'true',
       // Check 6: Admin fix service
-      this.adminFixService?.isAdminUser(),
+      this.authService.isAdmin(),
       // Check 7: Computed isAdmin
       this.isAdmin(),
       // Check 8: Emergency user in storage
@@ -1356,7 +1355,7 @@ export class HeaderComponent {
   getUserPlan(): string {
     const user = this.currentUser();
     const userProfile = this.userDataService.userProfile();
-    const enhancedUserData = this.adminFixService?.getEnhancedUserData();
+    const enhancedUserData: any = null; // AdminFixService not available
     
     console.log('🔍 COMPREHENSIVE USER PLAN ANALYSIS (LOCAL & LIVE):', {
       user: user ? 'EXISTS' : 'NULL',
@@ -1437,7 +1436,7 @@ export class HeaderComponent {
   getUserUsage(): { used: number; limit: number } {
     const user = this.currentUser();
     const userProfile = this.userDataService.userProfile();
-    const enhancedUserData = this.adminFixService?.getEnhancedUserData();
+    const enhancedUserData: any = null; // AdminFixService not available
     
     console.log('🔍 COMPREHENSIVE USER USAGE ANALYSIS (LOCAL & LIVE):', {
       user: user ? 'EXISTS' : 'NULL',

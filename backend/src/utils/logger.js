@@ -68,7 +68,6 @@ if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
       format: format
     })
   );
-}
 
   // Combined log - all levels
   transports.push(
