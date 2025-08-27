@@ -96,9 +96,9 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard/ai-copilot',
-    loadComponent: () => import('./pages/dashboard/ai-copilot.component').then(m => m.AICopilotComponent),
+    loadComponent: () => import('./pages/dashboard/ai-copilot-ultimate.component').then(m => m.AICopilotUltimateComponent),
     canActivate: [AuthGuard],
-    title: 'AI Copilot - Frontuna.com'
+    title: 'AI Copilot Ultimate - Frontuna.com'
   },
   {
     path: 'dashboard/scaffold',

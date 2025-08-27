@@ -71,6 +71,18 @@ export class AIPromptCoreService {
   }
 
   /**
+   * Check backend health status
+   */
+  checkHealth(): Observable<boolean> {
+    return this.http.get<{success: boolean}>(`${this.baseUrl}/health`)
+      .pipe(
+        map(response => response.success),
+        catchError(() => of(false)),
+        timeout(5000)
+      );
+  }
+
+  /**
    * Send prompt to AI and get response
    */
   sendPrompt(
