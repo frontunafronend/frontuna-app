@@ -2,6 +2,7 @@
   "name": "frontuna-frontend",
   "version": "1.0.0",
   "scripts": {
+    "vercel-build": "ng build --configuration production",
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 4200",
     "build": "ng build",
