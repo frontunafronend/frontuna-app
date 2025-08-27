@@ -174,14 +174,7 @@ import { DashboardNavComponent } from '../../components/shared/dashboard-nav/das
             <h1>Welcome back, {{ currentUser()?.firstName || 'Developer' }}!</h1>
             <p class="dashboard-subtitle">Ready to create amazing components?</p>
             
-            <!-- 🐛 DEBUG INFO - Remove after testing -->
-            <div class="debug-info" style="background: #f0f0f0; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 12px;">
-              <strong>🔍 DEBUG:</strong><br>
-              Email: {{ currentUser()?.email || 'None' }}<br>
-              Role: {{ currentUser()?.role || 'None' }}<br>
-              Is Admin: {{ isAdmin() ? 'YES ✅' : 'NO ❌' }}<br>
-              <em>Check browser console for full details</em>
-            </div>
+
           </div>
           <div class="header-actions">
             <button (click)="generateComponent()" 
