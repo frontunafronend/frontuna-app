@@ -507,11 +507,43 @@ export class UltimateAuthService {
     }
   }
 
+  // ===== CREDENTIAL ANALYSIS METHODS =====
+  
+  private isLocalCredentials(email: string): boolean {
+    // Check if this is a local user (fallback registration)
+    const localUser = localStorage.getItem('frontuna_local_user');
+    if (localUser) {
+      try {
+        const user = JSON.parse(localUser);
+        return user.email === email;
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
+  }
+  
+  private isLiveCredentials(email: string): boolean {
+    // Admin credentials are always considered live
+    if (email === 'admin@frontuna.com') {
+      return true;
+    }
+    
+    // Check if we have backend tokens for this user
+    const backendToken = localStorage.getItem('frontuna_backend_token');
+    return !!backendToken && !this.isLocalCredentials(email);
+  }
+
   // ===== ULTIMATE AUTH METHODS =====
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     console.log('🚀 ULTIMATE LOGIN - Starting bulletproof authentication...');
-    console.log('🔍 Credentials:', { email: credentials.email, hasPassword: !!credentials.password });
+    console.log('🔍 Credentials:', { 
+      email: credentials.email, 
+      hasPassword: !!credentials.password,
+      isLocal: this.isLocalCredentials(credentials.email),
+      isLive: this.isLiveCredentials(credentials.email)
+    });
     
     try {
       this.authStatusSignal.set('loading');
@@ -721,7 +753,8 @@ export class UltimateAuthService {
             return {
               user,
               accessToken: localToken,
-              refreshToken: ''
+              refreshToken: '',
+              expiresIn: 86400 // 24 hours for local auth
             };
           } else {
             // Wrong password for local user
@@ -735,7 +768,7 @@ export class UltimateAuthService {
       }
       
       // Show user-friendly error message for other login failures
-      const errorMessage = error?.error?.message || error?.message || 'Login failed. Please check your credentials and try again.';
+      const errorMessage = (error as any)?.error?.message || (error as any)?.message || 'Login failed. Please check your credentials and try again.';
       this.notificationService.showError(errorMessage);
       
       this.authStatusSignal.set('unauthenticated');
@@ -763,8 +796,9 @@ export class UltimateAuthService {
           
           const { user, accessToken, refreshToken } = response.data;
           
-          // Store tokens and authenticate user
+          // Store tokens and authenticate user (backend auth)
           await this.storeTokenInAllLocations(accessToken);
+          localStorage.setItem('frontuna_backend_token', accessToken); // Mark as backend auth
           if (refreshToken) {
             localStorage.setItem('frontuna_refresh_token', refreshToken);
           }
@@ -791,7 +825,8 @@ export class UltimateAuthService {
           return {
             user,
             accessToken,
-            refreshToken: refreshToken || ''
+            refreshToken: refreshToken || '',
+            expiresIn: 3600 // 1 hour for backend auth
           };
         }
       } catch (backendError) {
@@ -881,7 +916,8 @@ export class UltimateAuthService {
       return {
         user: fallbackUser,
         accessToken: fallbackToken,
-        refreshToken: ''
+        refreshToken: '',
+        expiresIn: 86400 // 24 hours for local fallback auth
       };
 
     } catch (error) {
@@ -889,7 +925,7 @@ export class UltimateAuthService {
       this.authStatusSignal.set('unauthenticated');
       
       // Show user-friendly error message
-      const errorMessage = error?.error?.message || error?.message || 'Registration failed. Please try again.';
+      const errorMessage = (error as any)?.error?.message || (error as any)?.message || 'Registration failed. Please try again.';
       this.notificationService.showError(errorMessage);
       
       throw error;
