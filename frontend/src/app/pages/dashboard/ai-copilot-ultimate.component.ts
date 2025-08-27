@@ -42,10 +42,11 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ProfessionalLoaderComponent } from '@app/components/ui/professional-loader/professional-loader.component';
 import { MonacoCodeEditorComponent } from '@app/components/shared/monaco-code-editor/monaco-code-editor.component';
 import { EnhancedAIPreviewComponent } from '@app/components/ai/enhanced-ai-preview/enhanced-ai-preview.component';
-import { AICopilotPanelComponent } from '@app/components/ai/ai-copilot-panel/ai-copilot-panel.component';
+// import { AICopilotPanelComponent } from '@app/components/ai/ai-copilot-panel/ai-copilot-panel.component';
 
 // Services
-import { AIPromptCoreService, AIResponse } from '@app/services/ai/ai-prompt-core.service';
+import { AIPromptCoreService } from '@app/services/ai/ai-prompt-core.service';
+import { AIResponse } from '@app/models/ai.model';
 import { AICopilotService } from '@app/services/ai/ai-copilot.service';
 import { EditorStateService, EditorBuffers } from '@app/services/editor-state.service';
 import { NotificationService } from '@app/services/notification/notification.service';
@@ -105,8 +106,8 @@ interface UltimateChatMessage extends ChatMessage {
     // Custom Components
     ProfessionalLoaderComponent,
     MonacoCodeEditorComponent,
-    EnhancedAIPreviewComponent,
-    AICopilotPanelComponent
+    EnhancedAIPreviewComponent
+    // AICopilotPanelComponent
   ],
   template: `
     <!-- 🚀 ULTIMATE AI COPILOT INTERFACE -->
@@ -344,7 +345,7 @@ interface UltimateChatMessage extends ChatMessage {
               <mat-form-field class="chat-input-field" appearance="outline">
                 <textarea matInput 
                           [(ngModel)]="currentMessage"
-                          (keydown.enter)="onEnterPress($event)"
+                          (keydown.enter)="onEnterPress($any($event))"
                           placeholder="Ask me anything about coding... (Shift+Enter for new line)"
                           rows="1"
                           cdkTextareaAutosize
@@ -427,7 +428,7 @@ interface UltimateChatMessage extends ChatMessage {
                 <app-monaco-code-editor
                   [value]="editorState.buffers().typescript"
                   [language]="'typescript'"
-                  [height]="editorHeight"
+                  [height]="editorHeight()"
                   [theme]="'vs-dark'"
                   [options]="monacoOptions"
                   (valueChange)="onCodeChange('typescript', $event)">
@@ -440,7 +441,7 @@ interface UltimateChatMessage extends ChatMessage {
                 <app-monaco-code-editor
                   [value]="editorState.buffers().html"
                   [language]="'html'"
-                  [height]="editorHeight"
+                  [height]="editorHeight()"
                   [theme]="'vs-dark'"
                   [options]="monacoOptions"
                   (valueChange)="onCodeChange('html', $event)">
@@ -453,7 +454,7 @@ interface UltimateChatMessage extends ChatMessage {
                 <app-monaco-code-editor
                   [value]="editorState.buffers().scss"
                   [language]="'scss'"
-                  [height]="editorHeight"
+                  [height]="editorHeight()"
                   [theme]="'vs-dark'"
                   [options]="monacoOptions"
                   (valueChange)="onCodeChange('scss', $event)">
@@ -475,10 +476,7 @@ interface UltimateChatMessage extends ChatMessage {
             </div>
             
             <app-enhanced-ai-preview
-              [typescriptCode]="editorState.buffers().typescript"
-              [htmlCode]="editorState.buffers().html"
-              [scssCode]="editorState.buffers().scss"
-              [autoRefresh]="true">
+              [aiResponse]="null">
             </app-enhanced-ai-preview>
           </div>
         </div>
