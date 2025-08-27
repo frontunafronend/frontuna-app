@@ -40,14 +40,14 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 // Custom Components
 import { ProfessionalLoaderComponent } from '@app/components/ui/professional-loader/professional-loader.component';
-import { MonacoCodeEditorComponent } from '@app/components/editing/monaco-code-editor/monaco-code-editor.component';
+import { MonacoCodeEditorComponent } from '@app/components/shared/monaco-code-editor/monaco-code-editor.component';
 import { EnhancedAIPreviewComponent } from '@app/components/ai/enhanced-ai-preview/enhanced-ai-preview.component';
 import { AICopilotPanelComponent } from '@app/components/ai/ai-copilot-panel/ai-copilot-panel.component';
 
 // Services
 import { AIPromptCoreService, AIResponse } from '@app/services/ai/ai-prompt-core.service';
 import { AICopilotService } from '@app/services/ai/ai-copilot.service';
-import { EditorStateService, EditorBuffers } from '@app/services/editor/editor-state.service';
+import { EditorStateService, EditorBuffers } from '@app/services/editor-state.service';
 import { NotificationService } from '@app/services/notification/notification.service';
 import { AnalyticsService } from '@app/services/analytics/analytics.service';
 import { AuthService } from '@app/services/auth/auth.service';
@@ -510,7 +510,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   // 🔧 SERVICES & DEPENDENCIES
   private readonly aiPromptCore = inject(AIPromptCoreService);
   private readonly aiCopilotService = inject(AICopilotService);
-  private readonly editorState = inject(EditorStateService);
+  readonly editorState = inject(EditorStateService);
   private readonly notificationService = inject(NotificationService);
   private readonly analytics = inject(AnalyticsService);
   private readonly authService = inject(AuthService);
@@ -623,7 +623,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       const isHealthy = await this.aiPromptCore.checkHealth().toPromise();
       this.copilotGuards.update(guards => ({
         ...guards,
-        isBackendAvailable: isHealthy
+        isBackendAvailable: isHealthy || false
       }));
     } catch (error) {
       this.copilotGuards.update(guards => ({
@@ -696,7 +696,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     }
     
     // Track analytics
-    this.analytics.trackAIInteraction('message_sent', 'chat');
+    this.analytics.trackAIInteraction('prompt_sent', 'chat');
     
     this.isGenerating.set(true);
     
@@ -754,7 +754,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     this.notificationService.showSuccess('Code applied to editor successfully!');
     
     // Track analytics
-    this.analytics.trackAIInteraction('code_applied', 'editor');
+    this.analytics.trackAIInteraction('code_generated', 'editor');
   }
   
   // 🛠️ UTILITY METHODS
