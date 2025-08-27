@@ -84,7 +84,7 @@ import { SeoService } from '@app/services/seo/seo.service';
 import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics.service';
 import { GlobalLoaderService } from '@app/services/ui/global-loader.service';
 import { NotificationService } from '@app/services/notification/notification.service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-signup',
@@ -761,6 +761,7 @@ export class SignupComponent implements OnInit {
   private readonly globalLoader = inject(GlobalLoaderService);
   private readonly notificationService = inject(NotificationService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   public hidePassword = true;
   public hideConfirmPassword = true;
@@ -802,6 +803,15 @@ export class SignupComponent implements OnInit {
       action: 'page_visit',
       category: 'signup',
       label: 'signup_page_loaded'
+    });
+
+    // 🎯 ENHANCED UX - Prefill email from query params (from login redirect)
+    this.route.queryParams.subscribe(params => {
+      if (params['email']) {
+        console.log('🔄 Prefilling email from login redirect:', params['email']);
+        this.signupForm.patchValue({ email: params['email'] });
+        this.notificationService.showInfo('We prefilled your email address. Please complete your registration.');
+      }
     });
 
     // Watch password changes for strength indicator

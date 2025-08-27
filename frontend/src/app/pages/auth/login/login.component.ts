@@ -8,7 +8,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '@app/services/auth/auth.service';
+import { NotificationService } from '@app/services/notification/notification.service';
 
 @Component({
   selector: 'app-login',
@@ -22,7 +24,8 @@ import { AuthService } from '@app/services/auth/auth.service';
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSnackBarModule
   ],
   template: `
     <div class="auth-container">
@@ -114,6 +117,7 @@ import { AuthService } from '@app/services/auth/auth.service';
 export class LoginComponent {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly notificationService = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
 
   loginForm: FormGroup = this.fb.group({
@@ -124,30 +128,71 @@ export class LoginComponent {
   isLoading = false;
 
   login(): void {
-    console.log('Login attempt started');
+    console.log('🔐 AI COPILOT LOGIN - Starting professional authentication...');
     console.log('Form valid:', this.loginForm.valid);
-    console.log('Form value:', this.loginForm.value);
-    console.log('Form errors:', this.loginForm.errors);
     
     if (this.loginForm.invalid) {
-      console.log('Form is invalid, marking all as touched');
+      console.log('Form is invalid, showing user feedback');
       this.loginForm.markAllAsTouched();
+      
+      // 🎯 ENHANCED USER FEEDBACK - Show specific validation errors
+      if (this.loginForm.get('email')?.hasError('required')) {
+        this.notificationService.showError('Please enter your email address');
+      } else if (this.loginForm.get('email')?.hasError('email')) {
+        this.notificationService.showError('Please enter a valid email address');
+      } else if (this.loginForm.get('password')?.hasError('required')) {
+        this.notificationService.showError('Please enter your password');
+      }
       return;
     }
 
     this.isLoading = true;
     const credentials = this.loginForm.value;
-    console.log('Sending credentials to auth service:', credentials);
+    
+    // 🎯 ENHANCED USER FEEDBACK - Show loading state
+    this.notificationService.showInfo('Signing you in...');
+    console.log('🚀 Sending credentials to Ultimate Auth Service');
 
     this.authService.login(credentials).subscribe({
       next: (response) => {
-        console.log('Login successful!', response);
-        this.router.navigate(['/dashboard']);
+        console.log('✅ LOGIN SUCCESS - User authenticated!', response);
+        
+        // 🎯 ENHANCED USER FEEDBACK - Show success and guide user
+        this.notificationService.showSuccess(`Welcome back, ${response.user.firstName}! 🎉`);
+        
+        // 🎯 SMART NAVIGATION - Give user immediate feedback before redirect
+        setTimeout(() => {
+          this.notificationService.showInfo('Redirecting to your dashboard...');
+          this.router.navigate(['/dashboard']).then(success => {
+            if (!success) {
+              console.warn('Navigation failed, trying fallback');
+              window.location.href = '/dashboard';
+            }
+          });
+        }, 500);
       },
       error: (error) => {
-        console.error('Login failed:', error);
+        console.error('❌ LOGIN FAILED:', error);
         this.isLoading = false;
-        // Error handling is done in AuthService via NotificationService
+        
+        // 🎯 ENHANCED ERROR HANDLING - Provide helpful guidance
+        const email = credentials.email;
+        if (email && !localStorage.getItem('frontuna_local_user')) {
+          // User doesn't exist, guide them to signup
+          this.notificationService.showWarning(
+            `No account found for ${email}. Would you like to create an account?`
+          );
+          
+          setTimeout(() => {
+            const shouldSignup = confirm(`No account found for ${email}.\n\nWould you like to create a new account?`);
+            if (shouldSignup) {
+              this.router.navigate(['/auth/signup'], { 
+                queryParams: { email: email } 
+              });
+            }
+          }, 2000);
+        }
+        // Error details are already handled by Ultimate Auth Service
       },
       complete: () => {
         this.isLoading = false;

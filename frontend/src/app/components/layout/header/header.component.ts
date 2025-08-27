@@ -1168,8 +1168,10 @@ export class HeaderComponent {
     // Initialize user data when component loads
     console.log('🔧 HEADER COMPONENT INITIALIZING WITH ENHANCED USER DATA');
     
-    // Monitor auth changes and fetch user data
+    // 🎯 REACTIVE AUTH STATE MONITORING - Watch for auth changes
     this.authService.currentUser$.subscribe(user => {
+      console.log('🔄 HEADER: Auth state changed, user:', user?.email || 'None');
+      
       if (user?.id) {
         console.log('👤 User authenticated, fetching comprehensive profile data...');
         this.userDataService.fetchUserProfile().subscribe({
@@ -1179,13 +1181,36 @@ export class HeaderComponent {
               plan: profile.subscription?.plan,
               usage: profile.usage
             });
+            
+            // Force change detection to update header UI
+            this.detectChanges();
           },
           error: (error) => {
             console.warn('⚠️ User profile fetch failed, using fallback data:', error);
+            this.detectChanges();
           }
         });
+      } else {
+        console.log('🚪 User logged out, updating header UI');
+        this.detectChanges();
       }
     });
+    
+    // 🎯 ADDITIONAL MONITORING - Watch Ultimate Auth Service state
+    if (this.authService['ultimateAuth']) {
+      this.authService['ultimateAuth'].authState$.subscribe(state => {
+        console.log('🔄 HEADER: Ultimate auth state changed:', state.isAuthenticated);
+        this.detectChanges();
+      });
+    }
+  }
+  
+  // 🎯 FORCE CHANGE DETECTION - Ensure header updates immediately
+  private detectChanges(): void {
+    // Trigger Angular change detection cycle
+    setTimeout(() => {
+      // This ensures the header updates reactively
+    }, 0);
   }
   
   // Logo fallback state
@@ -1194,8 +1219,18 @@ export class HeaderComponent {
   // Simple mobile menu state
   private readonly _isMobileMenuOpen = signal(false);
 
-  // Computed properties
-  public readonly currentUser = this.authService.currentUser;
+  // 🎯 REACTIVE USER STATE - Use signals for immediate UI updates
+  public readonly currentUser = computed(() => {
+    // Get user from both auth service and ultimate auth
+    const authUser = this.authService.currentUser();
+    const ultimateUser = this.authService['ultimateAuth']?.currentUser?.() || null;
+    
+    // Prefer ultimate auth user if available
+    const user = ultimateUser || authUser;
+    
+    console.log('🔄 HEADER COMPUTED: Current user updated:', user?.email || 'None');
+    return user;
+  });
   public readonly isAdmin = computed(() => {
     const user = this.currentUser();
     

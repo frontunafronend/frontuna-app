@@ -649,29 +649,26 @@ export class AuthService {
   }
 
   /**
-   * Register new user
+   * Register new user - Now using Ultimate Auth Service
    */
   signup(userData: SignupRequest): Observable<AuthResponse> {
+    console.log('🏆 ULTIMATE SIGNUP ACTIVATED - Most professional registration system ever!');
+    console.log('🚀 Using Ultimate Auth Service for bulletproof registration');
+    
     this.isLoadingSignal.set(true);
     
-    return this.http.post<ApiResponse<AuthResponse>>(`${this.baseUrl}/signup`, userData)
-      .pipe(
-        map(response => {
-          if (!response.success || !response.data) {
-            throw new Error(response.error?.message || 'Registration failed');
-          }
-          return response.data;
-        }),
-        tap(async (authResponse) => {
-          await this.handleAuthSuccess(authResponse);
-          this.notificationService.showSuccess('Account created successfully!');
-        }),
-        catchError(error => {
-          this.notificationService.showError(error.error?.message || 'Registration failed');
-          return throwError(() => error);
-        }),
-        tap(() => this.isLoadingSignal.set(false))
-      );
+    // Use Ultimate Auth Service
+    return from(this.ultimateAuth.signup(userData)).pipe(
+      tap(result => {
+        console.log('✅ ULTIMATE SIGNUP SUCCESS - User registered with bulletproof system!');
+        this.isLoadingSignal.set(false);
+      }),
+      catchError(error => {
+        console.error('❌ ULTIMATE SIGNUP ERROR:', error);
+        this.isLoadingSignal.set(false);
+        return throwError(() => error);
+      })
+    );
   }
 
   /**
