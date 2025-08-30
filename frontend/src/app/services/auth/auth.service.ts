@@ -1063,26 +1063,45 @@ export class AuthService {
   }
 
   /**
-   * Check if user is admin - PROFESSIONAL IMPLEMENTATION
+   * Check if user is admin - BULLETPROOF SECURITY IMPLEMENTATION
    */
   isAdmin(): boolean {
-    // Check for admin or moderator roles
-    const isAdminRole = this.hasRole('admin') || this.hasRole('moderator');
-    
-    // Additional check: Admin email addresses (for emergency access)
     const currentUser = this.currentUserSubject.value;
-    const adminEmails = ['admin@frontuna.com', 'amir@frontuna.com', 'user@frontuna.com'];
-    const isAdminEmail = !!(currentUser?.email && adminEmails.includes(currentUser.email.toLowerCase()));
     
-    console.log('🔍 Admin Check:', {
-      hasAdminRole: this.hasRole('admin'),
-      hasModeratorRole: this.hasRole('moderator'),
-      isAdminEmail,
+    // 🛡️ BULLETPROOF ADMIN CHECK - Only specific admin emails with admin role
+    const allowedAdminEmails = ['admin@frontuna.com', 'admin@frontuna.ai'];
+    const hasAdminRole = currentUser?.role === 'admin';
+    const hasAdminEmail = allowedAdminEmails.includes(currentUser?.email || '');
+    const isVerifiedAdmin = hasAdminRole && hasAdminEmail;
+    
+    console.log('🔍 BULLETPROOF ADMIN CHECK (AuthService):', {
       userEmail: currentUser?.email,
-      finalResult: isAdminRole || isAdminEmail
+      userRole: currentUser?.role,
+      hasAdminRole,
+      hasAdminEmail,
+      allowedEmails: allowedAdminEmails,
+      isVerifiedAdmin,
+      finalResult: isVerifiedAdmin
     });
     
-    return isAdminRole || isAdminEmail;
+    // STRICT: Only return true if BOTH role is admin AND email is in allowed list
+    if (!currentUser) {
+      console.log('❌ ADMIN CHECK: No user logged in');
+      return false;
+    }
+    
+    if (!hasAdminRole) {
+      console.log('❌ ADMIN CHECK: User role is not admin:', currentUser.role);
+      return false;
+    }
+    
+    if (!hasAdminEmail) {
+      console.log('❌ ADMIN CHECK: User email not in admin list:', currentUser.email);
+      return false;
+    }
+    
+    console.log('✅ ADMIN CHECK: User is verified admin');
+    return true;
   }
 
   /**

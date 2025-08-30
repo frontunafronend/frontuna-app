@@ -264,6 +264,111 @@ app.post('/api/ai/test', async (req, res) => {
   }
 });
 
+// 🤖 AI Copilot Chat Endpoint
+app.post('/api/ai/copilot/chat', async (req, res) => {
+  try {
+    console.log('🤖 AI Copilot chat called:', req.body);
+    
+    if (!openai) {
+      return res.json({
+        success: false,
+        error: 'OpenAI not initialized',
+        message: 'OpenAI API key not found'
+      });
+    }
+    
+    const { message, context, sessionId } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Message is required',
+        message: 'Please provide a message'
+      });
+    }
+    
+    console.log('🧠 Generating AI response for:', message);
+    
+    // Create AI completion
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an expert Angular developer and coding assistant. You help users create professional, modern Angular components with TypeScript, HTML, and SCSS.
+          
+Context: ${context || 'No context provided'}
+          
+Always provide:
+1. Clear, professional code
+2. Best practices
+3. Proper TypeScript typing
+4. Modern Angular features
+5. Responsive design
+          
+Format your response as helpful explanations with code examples when appropriate.`
+        },
+        {
+          role: 'user',
+          content: message
+        }
+      ],
+      max_tokens: 1500,
+      temperature: 0.7
+    });
+    
+    const aiResponse = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+    
+    console.log('✅ AI response generated successfully');
+    
+    res.json({
+      success: true,
+      data: {
+        message: aiResponse,
+        sessionId: sessionId || `session_${Date.now()}`,
+        tokensUsed: completion.usage?.total_tokens || 0,
+        model: 'gpt-3.5-turbo',
+        responseTime: Date.now(),
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ AI Copilot error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Failed to generate AI response'
+    });
+  }
+});
+
+// 🤖 AI Copilot Session Start
+app.post('/api/ai/copilot/session/start', async (req, res) => {
+  try {
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    console.log('🆕 New AI Copilot session started:', sessionId);
+    
+    res.json({
+      success: true,
+      data: {
+        sessionId,
+        timestamp: new Date().toISOString(),
+        message: 'AI Copilot session started successfully'
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Session start error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Failed to start session'
+    });
+  }
+});
+
 // 🌟 ULTIMATE SERVER STARTUP
 async function startUltimateServer() {
   try {
