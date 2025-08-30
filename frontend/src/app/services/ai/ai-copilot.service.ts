@@ -203,6 +203,7 @@ export class AICopilotService {
       .pipe(
         timeout(30000), // 30 second timeout
         tap(response => {
+          console.log('🔄 Service received response:', response);
           if (response.success) {
             // Add both user message and AI response to chat history
             const currentHistory = this.chatHistorySubject.value;
@@ -252,7 +253,10 @@ export class AICopilotService {
           
           return of({ success: false, error: error.message, fallback: true });
         }),
-        tap(() => this.isLoadingSubject.next(false))
+        tap(() => {
+          console.log('🔄 Setting loading to false');
+          this.isLoadingSubject.next(false);
+        })
       );
   }
 

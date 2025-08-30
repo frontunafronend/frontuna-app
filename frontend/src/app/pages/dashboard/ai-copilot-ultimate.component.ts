@@ -607,7 +607,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   // 🧠 SIGNALS & STATE
   chatMessages = signal<UltimateChatMessage[]>([]);
   isGenerating = signal(false);
-  isInitializing = signal(true);
+  isInitializing = signal(false);
   hasError = signal(false);
   copilotGuards = signal<AICopilotGuards>({
     isBackendAvailable: false,
@@ -737,16 +737,13 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     this.isGenerating.set(false);
     this.hasError.set(false);
     this.currentThinkingStep.set('');
+    this.isInitializing.set(false);
     
     // Initialize services and state
     this.initializeServices();
     this.setupEventListeners();
     
-    // Complete initialization
-    timer(1000).subscribe(() => {
-      this.isInitializing.set(false);
-      console.log('✅ AI COPILOT ULTIMATE - Ready for action!');
-    });
+    console.log('✅ AI COPILOT ULTIMATE - Ready for action!');
   }
   
   ngOnDestroy() {
@@ -793,12 +790,15 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     // Subscribe to loading state with safety checks
     this.aiCopilotService.isLoading$.pipe(takeUntil(this.destroy$)).subscribe(loading => {
       console.log('⏳ Loading state changed:', loading);
+      
+      // Always handle loading state changes
       this.isGenerating.set(loading);
       
-      if (loading) {
+      if (loading && this.chatMessages().length > 0) {
+        // Only show thinking steps if we have messages (real conversation)
         this.simulateThinkingSteps();
       } else {
-        // Clear thinking step when not loading
+        // Always clear thinking step when not loading
         this.currentThinkingStep.set('');
       }
     });
@@ -868,8 +868,6 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     // Track analytics
     this.analytics.trackAIInteraction('prompt_sent', 'chat');
     
-    this.isGenerating.set(true);
-    
     try {
       // Include file contents in context
       const fileContext = this.uploadedFiles().map(file => ({
@@ -898,17 +896,25 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         timestamp: new Date().toISOString()
       };
       
-      await this.aiCopilotService.sendMessage(message, JSON.stringify(context)).toPromise();
-      
-      // Always scroll to bottom after sending a message (user action)
-      console.log('📤 Message sent - scrolling to bottom');
-      this.isUserInitiatedScroll = true;
-      this.scrollToBottom();
+      this.aiCopilotService.sendMessage(message, JSON.stringify(context))
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            console.log('✅ AI Response received:', response);
+            // Always scroll to bottom after receiving response
+            console.log('📤 Response received - scrolling to bottom');
+            this.isUserInitiatedScroll = true;
+            this.scrollToBottom();
+          },
+          error: (error) => {
+            console.error('❌ AI Copilot Ultimate error:', error);
+            this.handleError(error);
+          }
+        });
       
     } catch (error) {
       console.error('❌ AI Copilot Ultimate error:', error);
       this.handleError(error);
-    } finally {
       this.isGenerating.set(false);
     }
   }
