@@ -180,6 +180,16 @@ app.post('/api/ai/copilot/session/start', (req, res) => {
   }
 });
 
+// 🤖 AI Prompt Core Health Check
+app.get('/api/ai/prompt/health', (req, res) => {
+  res.json({
+    success: true,
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    service: 'ai-prompt-core'
+  });
+});
+
 // 🤖 AI Copilot Chat (Mock Response)
 app.post('/api/ai/copilot/chat', (req, res) => {
   try {

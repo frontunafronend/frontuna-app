@@ -34,6 +34,7 @@ import { EnhancedAIPreviewComponent } from '@app/components/ai/enhanced-ai-previ
 import { AIPromptCoreService } from '@app/services/ai/ai-prompt-core.service';
 import { AIResponse } from '@app/models/ai.model';
 import { AICopilotService } from '@app/services/ai/ai-copilot.service';
+import { UltimateAIGuardService } from '@app/services/ai/ultimate-ai-guard.service';
 import { EditorStateService, EditorBuffers } from '@app/services/editor-state.service';
 import { NotificationService } from '@app/services/notification/notification.service';
 import { AnalyticsService } from '@app/services/analytics/analytics.service';
@@ -63,6 +64,10 @@ interface UltimateChatMessage extends ChatMessage {
   processingTime?: number;
   confidence?: number;
   suggestions?: string[];
+  showLivePreview?: boolean;
+  livePreviewHtml?: SafeHtml;
+  extractedHtml?: string;
+  extractedCss?: string;
 }
 
 @Component({
@@ -141,6 +146,23 @@ interface UltimateChatMessage extends ChatMessage {
                 <div class="stat-label">Status</div>
               </div>
             </div>
+            
+            <!-- 🛡️ ULTIMATE AI GUARD DIAGNOSTICS -->
+            <div class="stat-card diagnostic-card" [class.healthy]="ultimateAIGuard.isHealthy()">
+              <mat-icon>{{ ultimateAIGuard.isHealthy() ? 'security' : 'warning' }}</mat-icon>
+              <div class="stat-info">
+                <div class="stat-value">{{ ultimateAIGuard.successRate() | number:'1.0-1' }}%</div>
+                <div class="stat-label">Success Rate</div>
+              </div>
+            </div>
+            
+            <div class="stat-card session-card" [class.active]="ultimateAIGuard.hasActiveSession()">
+              <mat-icon>{{ ultimateAIGuard.hasActiveSession() ? 'link' : 'link_off' }}</mat-icon>
+              <div class="stat-info">
+                <div class="stat-value">{{ ultimateAIGuard.hasActiveSession() ? 'Active' : 'Inactive' }}</div>
+                <div class="stat-label">Session</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -212,8 +234,26 @@ interface UltimateChatMessage extends ChatMessage {
                   <div class="code-header">
                     <mat-icon>code</mat-icon>
                     <span>Generated Code</span>
+                    <div class="code-actions">
+                      <button mat-icon-button (click)="togglePreview(message)" [class.active]="message.showLivePreview">
+                        <mat-icon>{{ message.showLivePreview ? 'code_off' : 'visibility' }}</mat-icon>
+                      </button>
+                    </div>
                   </div>
-                  <pre class="code-block"><code [innerHTML]="message.code"></code></pre>
+                  
+                  <!-- Live Preview of Generated Component -->
+                  <div *ngIf="message.showLivePreview" class="live-preview-container">
+                    <div class="live-preview-header">
+                      <mat-icon>play_circle</mat-icon>
+                      <span>Live Preview</span>
+                    </div>
+                    <div class="live-preview-content" [innerHTML]="message.livePreviewHtml"></div>
+                  </div>
+                  
+                  <!-- Code Block -->
+                  <div [class.collapsed]="message.showLivePreview">
+                    <pre class="code-block"><code [innerHTML]="message.code"></code></pre>
+                  </div>
                 </div>
                 
                 <!-- Message Actions -->
@@ -242,12 +282,20 @@ interface UltimateChatMessage extends ChatMessage {
               <div class="message-content">
                 <app-professional-loader 
                   type="thinking" 
-                  message="AI is analyzing your request..."
+                  message="AI is processing..."
                   size="small">
                 </app-professional-loader>
                 <div class="thinking-details" *ngIf="currentThinkingStep()">
                   <small>{{ currentThinkingStep() }}</small>
                 </div>
+                <!-- 🚨 EMERGENCY STOP BUTTON -->
+                <button mat-button 
+                        color="warn" 
+                        (click)="forceStopThinking()"
+                        class="emergency-stop-btn">
+                  <mat-icon>stop</mat-icon>
+                  Stop Processing
+                </button>
               </div>
             </div>
           </div>
@@ -381,6 +429,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   // 🔧 SERVICES & DEPENDENCIES
   private readonly aiPromptCore = inject(AIPromptCoreService);
   private readonly aiCopilotService = inject(AICopilotService);
+  readonly ultimateAIGuard = inject(UltimateAIGuardService);
   readonly editorState = inject(EditorStateService);
   private readonly notificationService = inject(NotificationService);
   private readonly analytics = inject(AnalyticsService);
@@ -434,15 +483,11 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   private initializeGuards() {
     console.log('🛡️ Initializing AI Copilot Guards...');
     
-    // Check backend availability
-    this.aiPromptCore.checkHealth().subscribe({
-      next: (isHealthy) => {
-        console.log('🏥 Backend health check:', isHealthy ? '✅ Healthy' : '❌ Unhealthy');
-        this.updateGuards({ isBackendAvailable: isHealthy });
-      },
-      error: (error) => {
-        console.error('🚨 Backend health check failed:', error);
-        this.updateGuards({ isBackendAvailable: false });
+    // 🛡️ USE ULTIMATE AI GUARD HEALTH MONITORING
+    this.ultimateAIGuard.healthStatus$.subscribe({
+      next: (healthStatus) => {
+        console.log('🛡️ Ultimate AI Guard health:', healthStatus.isHealthy ? '✅ Healthy' : '❌ Unhealthy');
+        this.updateGuards({ isBackendAvailable: healthStatus.isHealthy });
       }
     });
 
@@ -589,6 +634,22 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     this.analytics.trackAIInteraction('prompt_sent', 'chat');
     
     this.isGenerating.set(true);
+    this.currentThinkingStep.set('Preparing request...');
+    
+    // 🚨 AGGRESSIVE TIMEOUT - KILL THINKING STATE IMMEDIATELY
+    const safetyTimeout = setTimeout(() => {
+      console.warn('🚨 KILLING THINKING STATE NOW!');
+      this.isGenerating.set(false);
+      this.currentThinkingStep.set('');
+      this.notificationService.showError('Request completed - try again if needed.');
+    }, 10000); // 10 second aggressive timeout
+    
+    // 🔥 EMERGENCY BACKUP TIMEOUT
+    const emergencyTimeout = setTimeout(() => {
+      console.error('🔥 EMERGENCY: Force stopping all AI states');
+      this.isGenerating.set(false);
+      this.currentThinkingStep.set('');
+    }, 5000); // 5 second emergency backup
     
     try {
       // Use AI Copilot service
@@ -603,24 +664,92 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         timestamp: new Date().toISOString()
       };
       
-      await this.aiCopilotService.sendMessage(message, JSON.stringify(context)).toPromise();
-      
-      // Always scroll to bottom after sending a message
-      console.log('📤 Message sent - scrolling to bottom');
-      this.isUserInitiatedScroll = true;
-      this.scrollToBottom();
+      // 🚨 EMERGENCY FIX - Use direct AI Copilot service to get it working NOW!
+      console.log('🚀 EMERGENCY: Using direct AI Copilot service');
+      this.aiCopilotService.sendMessage(message, JSON.stringify(context)).subscribe({
+        next: (response) => {
+          console.log('✅ DIRECT AI Copilot SUCCESS:', response);
+          clearTimeout(safetyTimeout);
+          clearTimeout(emergencyTimeout);
+          this.handleAIResponse(response, message);
+        },
+        error: (error) => {
+          console.error('❌ DIRECT AI Copilot ERROR:', error);
+          clearTimeout(safetyTimeout);
+          clearTimeout(emergencyTimeout);
+          this.handleError(error);
+          this.isGenerating.set(false);
+        },
+        complete: () => {
+          console.log('🏁 DIRECT AI Copilot completed');
+        }
+      });
       
     } catch (error) {
       console.error('❌ AI Copilot Ultimate error:', error);
       this.handleError(error);
-    } finally {
       this.isGenerating.set(false);
     }
   }
   
+  /**
+   * 🤖 HANDLE AI RESPONSE - Process successful AI responses
+   */
+  private handleAIResponse(response: any, originalMessage: string) {
+    console.log('🤖 Processing AI response:', response);
+    
+    // Clear any safety timeouts
+    this.currentThinkingStep.set('');
+    
+    if (response && response.success) {
+      // Add AI response to chat with live preview capability
+      const aiMessage: UltimateChatMessage = {
+        id: this.generateMessageId(),
+        type: 'ai',
+        sender: 'AI Copilot Ultimate',
+        content: response.data.message,
+        timestamp: new Date(),
+        isCodeMessage: this.containsCode(response.data.message),
+        code: this.extractCode(response.data.message),
+        tokenCount: response.data.tokensUsed || 0,
+        processingTime: response.data.responseTime || 0,
+        confidence: 0.95,
+        showLivePreview: false,
+        livePreviewHtml: undefined,
+        extractedHtml: '',
+        extractedCss: ''
+      };
+      
+      this.chatMessages.update(messages => [...messages, aiMessage]);
+      
+      // Auto-enable live preview if the response contains HTML/CSS
+      if (this.containsHtmlOrCss(response.data.message)) {
+        setTimeout(() => this.togglePreview(aiMessage), 500);
+      }
+      
+      // Always scroll to bottom after adding AI response
+      console.log('📤 AI response added - scrolling to bottom');
+      this.isUserInitiatedScroll = true;
+      this.scrollToBottom();
+    }
+    
+    // Stop generating indicator
+    this.isGenerating.set(false);
+  }
+
   sendSuggestion(suggestion: string) {
     this.currentMessage = suggestion;
     this.sendMessage();
+  }
+  
+  /**
+   * 🚨 EMERGENCY FORCE STOP - Kill all thinking states immediately
+   */
+  forceStopThinking() {
+    console.log('🚨 FORCE STOPPING ALL AI PROCESSING');
+    this.isGenerating.set(false);
+    this.currentThinkingStep.set('');
+    this.notificationService.showInfo('AI processing stopped');
   }
   
   // 📝 CODE EDITOR FUNCTIONALITY
@@ -665,9 +794,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     return message.id;
   }
   
-  private containsCode(content: string): boolean {
-    return /```|<[^>]+>|{|}|\(\)|=>|function|class|interface|import|export/.test(content);
-  }
+
   
   private parseCodeStructure(code: string): { typescript?: string; html?: string; scss?: string } {
     const structure: { typescript?: string; html?: string; scss?: string } = {};
@@ -748,6 +875,168 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   copyMessage(message: UltimateChatMessage) {
     navigator.clipboard.writeText(message.content);
     this.notificationService.showSuccess('Message copied to clipboard');
+  }
+
+  /**
+   * 👁️ TOGGLE LIVE PREVIEW - The amazing feature from yesterday!
+   */
+  togglePreview(message: UltimateChatMessage) {
+    message.showLivePreview = !message.showLivePreview;
+    
+    if (message.showLivePreview && !message.livePreviewHtml) {
+      // Extract and process HTML/CSS from the AI response
+      this.generateLivePreview(message);
+    }
+    
+    // Update the messages array to trigger change detection
+    const messages = this.chatMessages();
+    const index = messages.findIndex(m => m.id === message.id);
+    if (index !== -1) {
+      messages[index] = { ...message };
+      this.chatMessages.set([...messages]);
+    }
+  }
+
+  /**
+   * 🎨 GENERATE LIVE PREVIEW - Extract HTML/CSS and create live preview
+   */
+  private generateLivePreview(message: UltimateChatMessage) {
+    try {
+      console.log('🎨 Generating live preview for message:', message.content);
+      
+      // Extract HTML from code blocks
+      const htmlMatch = message.content.match(/```html\n([\s\S]*?)\n```/);
+      const cssMatch = message.content.match(/```css\n([\s\S]*?)\n```/) || 
+                      message.content.match(/```scss\n([\s\S]*?)\n```/);
+      
+      let html = '';
+      let css = '';
+      
+      if (htmlMatch) {
+        html = htmlMatch[1].trim();
+      } else {
+        // Try to extract HTML from template blocks
+        const templateMatch = message.content.match(/template:\s*`\n([\s\S]*?)\n\s*`/);
+        if (templateMatch) {
+          html = templateMatch[1].trim();
+        }
+      }
+      
+      if (cssMatch) {
+        css = cssMatch[1].trim();
+      } else {
+        // Try to extract CSS from styles blocks
+        const stylesMatch = message.content.match(/styles:\s*\[\s*`\n([\s\S]*?)\n\s*`\s*\]/);
+        if (stylesMatch) {
+          css = stylesMatch[1].trim();
+        }
+      }
+      
+      // If no HTML found, try to generate a simple preview from the description
+      if (!html && message.content.includes('component')) {
+        html = this.generatePreviewFromDescription(message.content);
+      }
+      
+      // Create the live preview HTML
+      const previewHtml = this.createLivePreviewHtml(html, css);
+      message.livePreviewHtml = this.sanitizer.bypassSecurityTrustHtml(previewHtml);
+      message.extractedHtml = html;
+      message.extractedCss = css;
+      
+      console.log('✅ Live preview generated successfully');
+      
+    } catch (error) {
+      console.error('❌ Error generating live preview:', error);
+      message.livePreviewHtml = this.sanitizer.bypassSecurityTrustHtml(
+        '<div class="preview-error">⚠️ Could not generate preview</div>'
+      );
+    }
+  }
+
+  /**
+   * 🏗️ CREATE LIVE PREVIEW HTML
+   */
+  private createLivePreviewHtml(html: string, css: string): string {
+    const styleTag = css ? `<style>${css}</style>` : '';
+    
+    return `
+      <div class="live-preview-wrapper">
+        ${styleTag}
+        <div class="preview-content">
+          ${html || '<div class="no-preview">No HTML content to preview</div>'}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * 🤖 GENERATE PREVIEW FROM DESCRIPTION
+   */
+  private generatePreviewFromDescription(content: string): string {
+    // Simple preview generation based on content description
+    if (content.toLowerCase().includes('button')) {
+      return '<button class="preview-btn">Sample Button</button>';
+    }
+    
+    if (content.toLowerCase().includes('card')) {
+      return `
+        <div class="preview-card">
+          <h3>Sample Card</h3>
+          <p>This is a preview of the generated component.</p>
+          <button>Action</button>
+        </div>
+      `;
+    }
+    
+    if (content.toLowerCase().includes('form')) {
+      return `
+        <form class="preview-form">
+          <input type="text" placeholder="Sample Input" />
+          <button type="submit">Submit</button>
+        </form>
+      `;
+    }
+    
+    return '<div class="preview-placeholder">🎨 Component Preview</div>';
+  }
+
+  /**
+   * 🔍 CHECK IF CONTENT CONTAINS HTML OR CSS
+   */
+  private containsHtmlOrCss(content: string): boolean {
+    return content.includes('```html') || 
+           content.includes('```css') || 
+           content.includes('```scss') ||
+           content.includes('template:') ||
+           content.includes('styles:');
+  }
+
+  /**
+   * 🔍 CHECK IF CONTENT CONTAINS CODE
+   */
+  private containsCode(content: string): boolean {
+    return content.includes('```') || 
+           content.includes('template:') ||
+           content.includes('styles:') ||
+           content.includes('@Component');
+  }
+
+  /**
+   * 📝 EXTRACT CODE FROM CONTENT
+   */
+  private extractCode(content: string): string {
+    const codeBlocks = content.match(/```[\s\S]*?```/g);
+    if (codeBlocks) {
+      return codeBlocks.join('\n\n');
+    }
+    return '';
+  }
+
+  /**
+   * 🆔 GENERATE MESSAGE ID
+   */
+  private generateMessageId(): string {
+    return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
   
   private scrollToBottom() {
