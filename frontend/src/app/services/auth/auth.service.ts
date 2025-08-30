@@ -165,21 +165,15 @@ export class AuthService {
     console.log('🔧 Initializing auth state synchronously - preventing login redirect...');
     
     try {
-      // Check for any stored tokens immediately
-      const token = localStorage.getItem('frontuna_primary_token') ||
-                   localStorage.getItem('frontuna_access_token') ||
-                   localStorage.getItem('access_token') ||
-                   sessionStorage.getItem('frontuna_session_token') ||
-                   localStorage.getItem('frontuna_backup1_token') ||
-                   localStorage.getItem('frontuna_emergency_token');
+      // 🔧 SIMPLIFIED: Check only primary token location
+      const token = localStorage.getItem('frontuna_access_token');
       
       // Check for emergency mode
       const isEmergencyMode = localStorage.getItem('frontuna_emergency_mode') === 'true' ||
                              sessionStorage.getItem('frontuna_emergency_mode') === 'true';
       
       // Check for stored user data (indicates active session)
-      const storedUserData = localStorage.getItem('frontuna_emergency_user') ||
-                            sessionStorage.getItem('frontuna_emergency_user');
+      const storedUserData = localStorage.getItem('frontuna_user_data');
       
       // 🎯 MAIN FIX: Set authenticated if we have ANY indication of authentication
       if (token || isEmergencyMode || storedUserData) {
@@ -198,16 +192,16 @@ export class AuthService {
             const user = JSON.parse(storedUserData);
             this.currentUserSignal.set(user);
             this.currentUserSubject.next(user);
-            console.log('✅ User data restored:', user.email);
+            console.log('✅ User data restored:', user.email, 'Role:', user.role);
           } catch (error) {
             console.log('⚠️ Could not parse stored user data, but keeping authenticated');
-            // Create a fallback user to prevent UI issues
-            this.createFallbackUser();
+            // Try to restore from token if available
+            this.restoreUserFromToken();
           }
         } else if (token) {
-          // Have token but no user data - create fallback user
-          console.log('🔄 Token found but no user data, creating fallback user');
-          this.createFallbackUser();
+          // Have token but no user data - try to restore from token
+          console.log('🔄 Token found but no user data, restoring from token');
+          this.restoreUserFromToken();
         }
       } else {
         console.log('ℹ️ No authentication indicators found');
@@ -227,6 +221,70 @@ export class AuthService {
         this.createFallbackUser();
       }
     }
+  }
+
+  // 🔧 RESTORE USER FROM TOKEN 🔧
+  private restoreUserFromToken(): void {
+    try {
+      const token = localStorage.getItem('frontuna_access_token');
+      if (token) {
+        const payload = this.decodeToken(token);
+        if (payload) {
+          const user: User = {
+            id: payload.sub || (payload as any).userId || 'token-user',
+            email: payload.email || (payload as any).username || 'user@frontuna.com',
+            firstName: (payload as any).firstName || (payload as any).given_name || 'User',
+            lastName: (payload as any).lastName || (payload as any).family_name || '',
+            role: ((payload as any).role || 'user') as UserRole,
+            isActive: true,
+            isEmailVerified: true,
+            subscription: {
+              plan: 'free' as SubscriptionPlan,
+              status: 'active' as SubscriptionStatus,
+              startDate: new Date(),
+              endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+              isTrialActive: false
+            },
+            usage: {
+              generationsUsed: 0,
+              generationsLimit: 1000,
+              storageUsed: 0,
+              storageLimit: 100,
+              lastResetDate: new Date()
+            },
+            preferences: {
+              theme: 'light',
+              language: 'en',
+              timezone: 'UTC',
+              notifications: {
+                email: true,
+                push: true,
+                updates: true,
+                marketing: false
+              },
+              ui: {
+                enableAnimations: true,
+                enableTooltips: true,
+                compactMode: false
+              }
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          
+          this.currentUserSignal.set(user);
+          this.currentUserSubject.next(user);
+          localStorage.setItem('frontuna_user_data', JSON.stringify(user));
+          console.log('✅ User restored from token:', user.email, 'Role:', user.role);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error restoring user from token:', error);
+    }
+    
+    // Fallback to generic user
+    this.createFallbackUser();
   }
 
   // 🔧 CREATE FALLBACK USER TO PREVENT UI ISSUES 🔧
@@ -986,13 +1044,8 @@ export class AuthService {
     console.log('🔑 Getting stored token...');
     
     try {
-      // Check all possible token locations in order of preference
-      const token = localStorage.getItem('frontuna_primary_token') ||
-                   localStorage.getItem('frontuna_access_token') ||
-                   localStorage.getItem('access_token') ||
-                   sessionStorage.getItem('frontuna_session_token') ||
-                   localStorage.getItem('frontuna_backup1_token') ||
-                   localStorage.getItem('frontuna_emergency_token');
+      // 🔧 SIMPLIFIED: Use only primary token location
+      const token = localStorage.getItem('frontuna_access_token');
       
       if (token && token.trim()) {
         console.log('✅ Token found in storage');
@@ -1111,19 +1164,15 @@ export class AuthService {
     try {
       console.log('🔐 Handling auth success...');
       
-      // 🔧 FIX: Store tokens in multiple locations for reliability
-      localStorage.setItem('frontuna_primary_token', authResponse.accessToken);
+      // 🔧 SIMPLIFIED: Store token in single location only
       localStorage.setItem('frontuna_access_token', authResponse.accessToken);
-      localStorage.setItem('access_token', authResponse.accessToken);
-      sessionStorage.setItem('frontuna_session_token', authResponse.accessToken);
       
       if (authResponse.refreshToken) {
         localStorage.setItem('frontuna_refresh_token', authResponse.refreshToken);
       }
       
-      // Store user data
-      localStorage.setItem('frontuna_emergency_user', JSON.stringify(authResponse.user));
-      sessionStorage.setItem('frontuna_emergency_user', JSON.stringify(authResponse.user));
+      // Store user data consistently
+      localStorage.setItem('frontuna_user_data', JSON.stringify(authResponse.user));
       
       // Update state immediately
       this.updateCurrentUser(authResponse.user);

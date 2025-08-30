@@ -107,10 +107,33 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
         </div>
 
         <!-- Main Content Tabs -->
-        <mat-tab-group class="admin-tabs">
+        <div class="admin-tabs">
+          <!-- Tab Navigation -->
+          <div class="tab-navigation">
+            <button class="tab-button" 
+                    [class.active]="activeTab() === 'analytics'"
+                    (click)="setActiveTab('analytics')">
+              Analytics
+            </button>
+            <button class="tab-button" 
+                    [class.active]="activeTab() === 'users'"
+                    (click)="setActiveTab('users')">
+              Users
+            </button>
+            <button class="tab-button" 
+                    [class.active]="activeTab() === 'system'"
+                    (click)="setActiveTab('system')">
+              System
+            </button>
+            <button class="tab-button" 
+                    [class.active]="activeTab() === 'ai'"
+                    (click)="setActiveTab('ai')">
+              AI System
+            </button>
+          </div>
+
           <!-- Analytics Tab -->
-          <mat-tab label="Analytics">
-            <div class="tab-content">
+          <div class="tab-content" *ngIf="activeTab() === 'analytics'">
               <div class="charts-section">
                 <div class="charts-grid">
                   <mat-card class="chart-card">
@@ -171,11 +194,10 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
                 </div>
               </div>
             </div>
-          </mat-tab>
+          </div>
 
           <!-- Users Tab -->
-          <mat-tab label="Users">
-            <div class="tab-content">
+          <div class="tab-content" *ngIf="activeTab() === 'users'">
               <div class="users-section">
                 <div class="users-header">
                   <h2>User Management</h2>
@@ -285,11 +307,10 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
                 </mat-card>
               </div>
             </div>
-          </mat-tab>
+          </div>
 
           <!-- System Tab -->
-          <mat-tab label="System">
-            <div class="tab-content">
+          <div class="tab-content" *ngIf="activeTab() === 'system'">
               <div class="system-section">
                 <div class="system-grid">
                   <mat-card class="system-card">
@@ -409,11 +430,9 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
                 </div>
               </div>
             </div>
-          </mat-tab>
 
           <!-- AI System Tab -->
-          <mat-tab label="AI System">
-            <div class="tab-content">
+          <div class="tab-content" *ngIf="activeTab() === 'ai'">
               <div class="ai-system-section">
                 <!-- Quick Access Card -->
                 <mat-card class="quick-access-card">
@@ -498,10 +517,7 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
                 </mat-card>
               </div>
             </div>
-          </mat-tab>
-        </mat-tab-group>
-      </div>
-    </div>
+          </div>
   `,
   styles: [`
     .admin-layout {
@@ -600,6 +616,46 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
       background: white;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .tab-navigation {
+      display: flex;
+      border-bottom: 1px solid #e0e0e0;
+      background: #f8f9fa;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 16px 24px;
+      border: none;
+      background: transparent;
+      color: #666;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab-button:hover {
+      background: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+    }
+
+    .tab-button.active {
+      background: white;
+      color: #667eea;
+      border-bottom-color: #667eea;
+      font-weight: 600;
+    }
+
+    .tab-button:first-child {
+      border-radius: 12px 0 0 0;
+    }
+
+    .tab-button:last-child {
+      border-radius: 0 12px 0 0;
     }
 
     .tab-content {
@@ -948,6 +1004,9 @@ export class AdminDashboardComponent implements OnInit {
   public readonly isLoadingUsers = signal(false);
   public readonly userError = signal<string | null>(null);
 
+  // 🎯 TAB MANAGEMENT
+  public readonly activeTab = signal<string>('analytics');
+
   public readonly aiInsights = [
     {
       type: 'optimization',
@@ -1062,6 +1121,9 @@ export class AdminDashboardComponent implements OnInit {
     
     // 🚀 Load LIVE data from Neon database
     this.loadLiveData();
+    
+    // 🎯 Set default tab to users to show the user list immediately
+    this.activeTab.set('users');
   }
 
   /**
@@ -1097,21 +1159,22 @@ export class AdminDashboardComponent implements OnInit {
       const response = await this.http.get<any>(`${this.API_BASE_URL}/admin/users`).toPromise();
       
       if (response?.success && response?.data) {
+        // Use the data directly from server (already transformed)
         const users = response.data.map((user: any) => ({
           id: user.id,
-          name: user.name || 'Unknown User',
+          name: user.name || user.email.split('@')[0],
           email: user.email,
-          avatar: null, // Can be added later
-          plan: 'free', // Default plan, can be enhanced
-          generationsUsed: 0, // Can be calculated from usage data
-          generationsLimit: 10, // Default limit
-          status: user.isActive ? 'active' : 'inactive',
-          joinedAt: new Date(user.createdAt),
+          avatar: user.avatar,
+          plan: user.plan,
+          generationsUsed: user.generationsUsed,
+          generationsLimit: user.generationsLimit,
+          status: user.status,
+          joinedAt: new Date(user.joinedAt || user.createdAt),
           role: user.role
         }));
         
         this.liveUsers.set(users);
-        console.log(`✅ Loaded ${users.length} LIVE users from Neon database!`);
+        console.log(`✅ Loaded ${users.length} LIVE users from Neon database!`, users);
         
       } else {
         throw new Error('Invalid response format');
@@ -1191,5 +1254,18 @@ export class AdminDashboardComponent implements OnInit {
       category: 'admin',
       label: action.action
     });
+  }
+
+  /**
+   * 🎯 Set active tab
+   */
+  setActiveTab(tab: string) {
+    console.log('🎯 Switching to tab:', tab);
+    this.activeTab.set(tab);
+    
+    // Load data when switching to users tab
+    if (tab === 'users' && this.liveUsers().length === 0) {
+      this.loadLiveUsers();
+    }
   }
 }

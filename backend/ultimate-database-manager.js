@@ -197,11 +197,8 @@ class UltimateDatabaseManager {
         select: {
           id: true,
           email: true,
-          name: true,
           role: true,
-          createdAt: true,
-          updatedAt: true,
-          isActive: true
+          createdAt: true
         }
       });
       
@@ -225,11 +222,8 @@ class UltimateDatabaseManager {
         select: {
           id: true,
           email: true,
-          name: true,
           role: true,
-          createdAt: true,
-          updatedAt: true,
-          isActive: true
+          createdAt: true
         },
         orderBy: { createdAt: 'desc' }
       });
