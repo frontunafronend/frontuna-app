@@ -42,13 +42,10 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 // Custom Components
 import { ProfessionalLoaderComponent } from '@app/components/ui/professional-loader/professional-loader.component';
 import { MonacoCodeEditorComponent } from '@app/components/shared/monaco-code-editor/monaco-code-editor.component';
-import { UltimateLivePreviewComponent } from '../../components/ai/ultimate-live-preview/ultimate-live-preview.component';
 import { EnhancedAIPreviewComponent } from '@app/components/ai/enhanced-ai-preview/enhanced-ai-preview.component';
 // import { AICopilotPanelComponent } from '@app/components/ai/ai-copilot-panel/ai-copilot-panel.component';
 
 // Services
-import { ImageService } from '../../services/shared/image.service';
-import { FallbackImageDirective } from '../../directives/fallback-image.directive';
 import { AIPromptCoreService } from '@app/services/ai/ai-prompt-core.service';
 import { AIResponse } from '@app/models/ai.model';
 import { AICopilotService } from '@app/services/ai/ai-copilot.service';
@@ -56,7 +53,6 @@ import { EditorStateService, EditorBuffers } from '@app/services/editor-state.se
 import { NotificationService } from '@app/services/notification/notification.service';
 import { AnalyticsService } from '@app/services/analytics/analytics.service';
 import { AuthService } from '@app/services/auth/auth.service';
-import { PreviewAIGuardService } from '../../guards/preview-ai-guard.service';
 
 // Models
 import { ChatMessage } from '@app/models/chat.model';
@@ -133,9 +129,7 @@ interface DataSource {
     // Custom Components
     ProfessionalLoaderComponent,
     MonacoCodeEditorComponent,
-    UltimateLivePreviewComponent,
-    EnhancedAIPreviewComponent,
-    FallbackImageDirective
+    EnhancedAIPreviewComponent
     // AICopilotPanelComponent
   ],
   template: `
@@ -545,12 +539,9 @@ interface DataSource {
       <div class="preview-fullwidth-content">
         <!-- Monaco-based Preview -->
         <div class="monaco-preview-section" *ngIf="previewSource === 'monaco' || !latestChatPreview">
-          <app-ultimate-live-preview
-            [htmlContent]="editorState.buffers().html"
-            [cssContent]="editorState.buffers().scss"
-            [jsContent]="editorState.buffers().typescript"
-            [autoRefresh]="true">
-          </app-ultimate-live-preview>
+          <app-enhanced-ai-preview
+            [aiResponse]="createPreviewResponse()">
+          </app-enhanced-ai-preview>
         </div>
         
         <!-- Chat-based Preview -->
@@ -603,9 +594,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   private readonly notificationService = inject(NotificationService);
   private readonly analytics = inject(AnalyticsService);
   private readonly authService = inject(AuthService);
-  private readonly previewGuard = inject(PreviewAIGuardService);
   private readonly sanitizer = inject(DomSanitizer);
-  private readonly imageService = inject(ImageService);
   
   // 🧠 SIGNALS & STATE
   chatMessages = signal<UltimateChatMessage[]>([]);
@@ -670,7 +659,6 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   };
   
   // 🔄 LIFECYCLE
-  private destroy$ = new Subject<void>();
   @ViewChild('chatContainer') chatContainer!: ElementRef;
   
   constructor() {
@@ -1269,5 +1257,30 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     } else {
       console.log('⚠️ No content to refresh');
     }
+  }
+
+  createPreviewResponse(): AIResponse | null {
+    const buffers = this.editorState.buffers();
+    
+    if (!buffers.html && !buffers.scss && !buffers.typescript) {
+      return null;
+    }
+    
+    // Combine all code into a single string for the AIResponse
+    const combinedCode = [
+      buffers.html ? `<!-- HTML -->\n${buffers.html}` : '',
+      buffers.scss ? `/* CSS */\n${buffers.scss}` : '',
+      buffers.typescript ? `// TypeScript\n${buffers.typescript}` : ''
+    ].filter(Boolean).join('\n\n');
+    
+    return {
+      id: 'monaco-preview',
+      promptId: 'monaco-editor',
+      content: 'Monaco Editor Preview',
+      code: combinedCode,
+      confidence: 1.0,
+      processingTime: 0,
+      timestamp: new Date()
+    };
   }
 }
