@@ -1092,20 +1092,41 @@ export class DashboardComponent implements OnInit {
   public readonly isAdmin = computed(() => {
     const user = this.currentUser();
     
-    // Only show admin panel for actual admin users
-    const isAdminRole = user?.role === 'admin';
-    const isRealAdmin = isAdminRole && (user?.email === 'admin@frontuna.com' || user?.email === 'admin@frontuna.ai');
+    // BULLETPROOF ADMIN CHECK - Only specific admin emails with admin role
+    const allowedAdminEmails = ['admin@frontuna.com', 'admin@frontuna.ai'];
+    const hasAdminRole = user?.role === 'admin';
+    const hasAdminEmail = allowedAdminEmails.includes(user?.email || '');
+    const isVerifiedAdmin = hasAdminRole && hasAdminEmail;
     
-    console.log('🔍 ADMIN CHECK:', { 
-      user: user?.email, 
-      role: user?.role, 
-      isAdminRole,
-      isRealAdmin,
-      showAdminPanel: isRealAdmin
+    // Enhanced logging for debugging
+    console.log('🔍 BULLETPROOF ADMIN CHECK:', { 
+      userEmail: user?.email, 
+      userRole: user?.role, 
+      hasAdminRole,
+      hasAdminEmail,
+      allowedEmails: allowedAdminEmails,
+      isVerifiedAdmin,
+      finalResult: isVerifiedAdmin
     });
     
-    // Only return true for verified admin users
-    return isRealAdmin;
+    // STRICT: Only return true if BOTH role is admin AND email is in allowed list
+    if (!user) {
+      console.log('❌ ADMIN CHECK: No user logged in');
+      return false;
+    }
+    
+    if (!hasAdminRole) {
+      console.log('❌ ADMIN CHECK: User role is not admin:', user.role);
+      return false;
+    }
+    
+    if (!hasAdminEmail) {
+      console.log('❌ ADMIN CHECK: User email not in admin list:', user.email);
+      return false;
+    }
+    
+    console.log('✅ ADMIN CHECK: User is verified admin');
+    return true;
   });
   public readonly savedComponentsCount = computed(() => this.componentStateService.savedComponents().length);
   public readonly allComponents = this.componentStateService.components;
