@@ -192,17 +192,19 @@
 
 // 💬 CHAT PANEL
 .chat-panel {
-  background: var(--copilot-bg-chat);
+  background: #f8fafc;
   display: flex;
   flex-direction: column;
   color: #1f2937;
   flex: 1;
   min-height: 600px;
+  border-right: 1px solid #e2e8f0;
   
   .chat-header {
     padding: 1rem;
-    background: #ffffff;
-    border-bottom: 1px solid var(--copilot-border-light);
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -236,6 +238,7 @@
     gap: 1rem;
     min-height: 400px;
     max-height: 70vh;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
     
     // Custom scrollbar
     &::-webkit-scrollbar {
@@ -354,6 +357,38 @@
         background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
         border: 1px solid #f59e0b;
         box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+        
+        .thinking-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.5rem;
+          
+          .emergency-stop-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+            transition: all 0.2s ease;
+            
+            &:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+            }
+            
+            &:active {
+              transform: translateY(0);
+            }
+            
+            mat-icon {
+              margin-right: 0.25rem;
+              font-size: 1rem;
+            }
+          }
+        }
       }
     }
     

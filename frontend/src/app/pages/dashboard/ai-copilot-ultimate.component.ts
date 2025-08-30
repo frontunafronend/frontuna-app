@@ -43,6 +43,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ProfessionalLoaderComponent } from '@app/components/ui/professional-loader/professional-loader.component';
 import { MonacoCodeEditorComponent } from '@app/components/shared/monaco-code-editor/monaco-code-editor.component';
 import { EnhancedAIPreviewComponent } from '@app/components/ai/enhanced-ai-preview/enhanced-ai-preview.component';
+import { ResponsiveCardComponent } from '@app/components/shared/responsive-card/responsive-card.component';
 // import { AICopilotPanelComponent } from '@app/components/ai/ai-copilot-panel/ai-copilot-panel.component';
 
 // Services
@@ -137,7 +138,8 @@ interface DataSource {
     // Custom Components
     ProfessionalLoaderComponent,
     MonacoCodeEditorComponent,
-    EnhancedAIPreviewComponent
+    EnhancedAIPreviewComponent,
+    ResponsiveCardComponent
     // AICopilotPanelComponent
   ],
   template: `
@@ -358,11 +360,20 @@ interface DataSource {
                 <mat-icon class="thinking-icon">psychology</mat-icon>
               </div>
               <div class="message-content">
-                <app-professional-loader 
-                  type="thinking" 
-                  message="AI is analyzing your request..."
-                  size="small">
-                </app-professional-loader>
+                <div class="thinking-header">
+                  <app-professional-loader 
+                    type="thinking" 
+                    message="AI is analyzing your request..."
+                    size="small">
+                  </app-professional-loader>
+                  <button mat-raised-button 
+                          color="warn" 
+                          class="emergency-stop-btn" 
+                          (click)="emergencyStopThinking()">
+                    <mat-icon>stop</mat-icon>
+                    STOP NOW!
+                  </button>
+                </div>
                 <div class="thinking-details" *ngIf="currentThinkingStep()">
                   <small>{{ currentThinkingStep() }}</small>
                 </div>
@@ -421,6 +432,37 @@ interface DataSource {
                 <mat-icon>quiz</mat-icon>
                 Add Tests
               </button>
+            </div>
+
+            <!-- Demo Responsive Card -->
+            <div class="demo-card-section" style="margin-top: 1rem;">
+              <app-responsive-card 
+                title="Responsive Card Demo"
+                subtitle="Hover to see animations!"
+                icon="widgets"
+                [elevated]="true"
+                [clickable]="true"
+                [showActions]="true">
+                
+                <p>This is a responsive card component with:</p>
+                <ul>
+                  <li>✅ <strong>Black text</strong> for perfect readability</li>
+                  <li>🎨 <strong>Hover animations</strong> with smooth transitions</li>
+                  <li>📱 <strong>Responsive design</strong> for all screen sizes</li>
+                  <li>🌙 <strong>Dark theme support</strong> built-in</li>
+                </ul>
+                
+                <div slot="actions">
+                  <button mat-button color="primary">
+                    <mat-icon>favorite</mat-icon>
+                    Like
+                  </button>
+                  <button mat-raised-button color="primary">
+                    <mat-icon>share</mat-icon>
+                    Share
+                  </button>
+                </div>
+              </app-responsive-card>
             </div>
           </div>
         </div>
@@ -922,6 +964,35 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   sendSuggestion(suggestion: string) {
     this.currentMessage = suggestion;
     this.sendMessage();
+  }
+
+  // 🚨 EMERGENCY STOP METHOD
+  emergencyStopThinking() {
+    console.log('🚨 EMERGENCY STOP ACTIVATED!');
+    
+    // FORCE STOP everything
+    this.isGenerating.set(false);
+    this.currentThinkingStep.set('');
+    
+    // Force stop the service loading state
+    this.aiCopilotService['isLoadingSubject'].next(false);
+    
+    // Add emergency stop message
+    const emergencyMessage: UltimateChatMessage = {
+      id: Date.now().toString(),
+      type: 'ai',
+      sender: 'AI Copilot',
+      content: '🚨 **EMERGENCY STOP ACTIVATED** - Analysis interrupted by user request.',
+      timestamp: new Date(),
+      isCodeMessage: false
+    };
+    
+    this.chatMessages.update(messages => [...messages, emergencyMessage]);
+    
+    // Scroll to bottom
+    this.scrollToBottom();
+    
+    console.log('✅ Emergency stop completed!');
   }
   
   // 📝 CODE EDITOR FUNCTIONALITY

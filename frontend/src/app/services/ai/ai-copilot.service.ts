@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { tap, catchError, switchMap, timeout } from 'rxjs/operators';
+import { tap, catchError, switchMap, timeout, finalize } from 'rxjs/operators';
 import { AISuggestion, AICodeEdit, AITestingResult } from '@app/models/ai.model';
 import { EnvironmentService } from '../core/environment.service';
 import { NotificationService } from '../notification/notification.service';
@@ -190,6 +190,7 @@ export class AICopilotService {
       );
     }
 
+    console.log('🚀 STARTING REQUEST - Setting loading to TRUE');
     this.isLoadingSubject.next(true);
 
     const requestPayload = {
@@ -198,10 +199,16 @@ export class AICopilotService {
       context
     };
 
-    // Add timeout handling (30 seconds)
+    // FORCE STOP loading after 10 seconds MAX
+    setTimeout(() => {
+      console.log('⏰ TIMEOUT FORCE STOP - Setting loading to FALSE');
+      this.isLoadingSubject.next(false);
+    }, 10000);
+
+    // Add timeout handling (10 seconds)
     return this.http.post<any>(`${this.baseUrl}/chat`, requestPayload)
       .pipe(
-        timeout(30000), // 30 second timeout
+        timeout(10000), // 10 second timeout
         tap(response => {
           console.log('🔄 Service received response:', response);
           if (response.success) {
@@ -253,8 +260,8 @@ export class AICopilotService {
           
           return of({ success: false, error: error.message, fallback: true });
         }),
-        tap(() => {
-          console.log('🔄 Setting loading to false');
+        finalize(() => {
+          console.log('🔄 Finalizing - setting loading to false');
           this.isLoadingSubject.next(false);
         })
       );

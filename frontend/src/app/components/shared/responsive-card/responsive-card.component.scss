@@ -1,0 +1,312 @@
+// 🎨 RESPONSIVE CARD COMPONENT STYLES
+.responsive-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  border: 1px solid #e5e7eb;
+  
+  // Hover animations
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: #3b82f6;
+    
+    .card-image img {
+      transform: scale(1.05);
+    }
+    
+    .card-title {
+      color: #3b82f6;
+    }
+    
+    .header-icon mat-icon {
+      transform: rotate(5deg) scale(1.1);
+      color: #3b82f6;
+    }
+  }
+  
+  // Elevated variant
+  &.elevated {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    
+    &:hover {
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    }
+  }
+  
+  // Clickable variant
+  &.clickable {
+    cursor: pointer;
+    
+    &:active {
+      transform: translateY(-2px);
+    }
+  }
+}
+
+// Card Header
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 20px 16px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  
+  .header-content {
+    flex: 1;
+  }
+  
+  .card-title {
+    margin: 0 0 4px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.4;
+    transition: color 0.3s ease;
+  }
+  
+  .card-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.4;
+  }
+  
+  .header-icon {
+    margin-left: 12px;
+    
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      color: #9ca3af;
+      transition: all 0.3s ease;
+    }
+  }
+}
+
+// Card Image
+.card-image {
+  position: relative;
+  overflow: hidden;
+  height: 200px;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+}
+
+// Card Content
+.card-content {
+  padding: 20px;
+  color: #374151;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  
+  // Ensure all text is readable
+  * {
+    color: #374151;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    color: #1f2937;
+    margin-top: 0;
+  }
+  
+  p {
+    margin-bottom: 12px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  ul, ol {
+    margin: 12px 0;
+    padding-left: 20px;
+    
+    li {
+      margin-bottom: 4px;
+    }
+  }
+  
+  code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875em;
+    color: #1f2937;
+  }
+  
+  pre {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 12px;
+    overflow-x: auto;
+    margin: 12px 0;
+    
+    code {
+      background: none;
+      padding: 0;
+    }
+  }
+}
+
+// Card Actions
+.card-actions {
+  padding: 16px 20px 20px 20px;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+  
+  button {
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .responsive-card {
+    border-radius: 8px;
+    
+    .card-header {
+      padding: 16px 16px 12px 16px;
+      
+      .card-title {
+        font-size: 1.125rem;
+      }
+      
+      .card-subtitle {
+        font-size: 0.8125rem;
+      }
+    }
+    
+    .card-content {
+      padding: 16px;
+      font-size: 0.9rem;
+    }
+    
+    .card-actions {
+      padding: 12px 16px 16px 16px;
+    }
+    
+    .card-image {
+      height: 160px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .responsive-card {
+    .card-header {
+      flex-direction: column;
+      align-items: flex-start;
+      
+      .header-icon {
+        margin-left: 0;
+        margin-top: 8px;
+      }
+    }
+    
+    .card-actions {
+      flex-direction: column;
+      align-items: stretch;
+      
+      button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+// Animation keyframes
+@keyframes cardPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+// Loading state
+.responsive-card.loading {
+  animation: cardPulse 1.5s ease-in-out infinite;
+  
+  .card-content {
+    opacity: 0.7;
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .responsive-card {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+    
+    .card-header {
+      border-bottom-color: #374151;
+    }
+    
+    .card-title {
+      color: #f9fafb;
+    }
+    
+    .card-subtitle {
+      color: #9ca3af;
+    }
+    
+    .card-content {
+      color: #e5e7eb;
+      
+      * {
+        color: #e5e7eb;
+      }
+      
+      h1, h2, h3, h4, h5, h6 {
+        color: #f9fafb;
+      }
+      
+      code {
+        background: #374151;
+        color: #f9fafb;
+      }
+      
+      pre {
+        background: #111827;
+        border-color: #374151;
+      }
+    }
+    
+    .card-actions {
+      border-top-color: #374151;
+    }
+    
+    &:hover {
+      border-color: #60a5fa;
+      
+      .card-title {
+        color: #60a5fa;
+      }
+      
+      .header-icon mat-icon {
+        color: #60a5fa;
+      }
+    }
+  }
+}
