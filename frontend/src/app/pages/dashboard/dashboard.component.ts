@@ -1091,28 +1091,21 @@ export class DashboardComponent implements OnInit {
   // 👑 ADMIN CHECK - Determine if current user is admin
   public readonly isAdmin = computed(() => {
     const user = this.currentUser();
-    const isAdminRole = user?.role === 'admin';
-    const isAdminEmail = user?.email === 'admin@frontuna.com';
-    const isAdmin = isAdminRole || isAdminEmail;
     
-    // 🐛 ENHANCED DEBUG - Show in console AND page
-    console.log('🔍 ADMIN CHECK DEBUG:', { 
+    // Only show admin panel for actual admin users
+    const isAdminRole = user?.role === 'admin';
+    const isRealAdmin = isAdminRole && user?.email === 'admin@frontuna.com';
+    
+    console.log('🔍 ADMIN CHECK:', { 
       user: user?.email, 
       role: user?.role, 
-      firstName: user?.firstName,
-      isAdminRole, 
-      isAdminEmail, 
-      finalIsAdmin: isAdmin,
-      fullUser: user 
+      isAdminRole,
+      isRealAdmin,
+      showAdminPanel: isRealAdmin
     });
     
-    // 🚨 FORCE ADMIN FOR TESTING (remove after debugging)
-    if (user?.email === 'admin@frontuna.com') {
-      console.log('🔧 FORCING ADMIN ACCESS for admin@frontuna.com');
-      return true;
-    }
-    
-    return isAdmin;
+    // Only return true for verified admin users
+    return isRealAdmin;
   });
   public readonly savedComponentsCount = computed(() => this.componentStateService.savedComponents().length);
   public readonly allComponents = this.componentStateService.components;

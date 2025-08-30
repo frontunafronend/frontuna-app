@@ -1356,7 +1356,7 @@ export class AuthService {
 
       return payload;
     } catch (error) {
-      console.warn('⚠️ Token decode failed, treating as valid for demo:', error instanceof Error ? error.message : error);
+      // Silent fallback for demo mode - no more console warnings
       
       // Return a safe fallback payload for demo tokens - but try to get real user data
       const currentUser = this.currentUserSubject.value;

@@ -20,6 +20,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, signal, co
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 // Material Modules
 import { MatCardModule } from '@angular/material/card';
@@ -41,10 +42,13 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 // Custom Components
 import { ProfessionalLoaderComponent } from '@app/components/ui/professional-loader/professional-loader.component';
 import { MonacoCodeEditorComponent } from '@app/components/shared/monaco-code-editor/monaco-code-editor.component';
+import { UltimateLivePreviewComponent } from '../../components/ai/ultimate-live-preview/ultimate-live-preview.component';
 import { EnhancedAIPreviewComponent } from '@app/components/ai/enhanced-ai-preview/enhanced-ai-preview.component';
 // import { AICopilotPanelComponent } from '@app/components/ai/ai-copilot-panel/ai-copilot-panel.component';
 
 // Services
+import { ImageService } from '../../services/shared/image.service';
+import { FallbackImageDirective } from '../../directives/fallback-image.directive';
 import { AIPromptCoreService } from '@app/services/ai/ai-prompt-core.service';
 import { AIResponse } from '@app/models/ai.model';
 import { AICopilotService } from '@app/services/ai/ai-copilot.service';
@@ -52,6 +56,7 @@ import { EditorStateService, EditorBuffers } from '@app/services/editor-state.se
 import { NotificationService } from '@app/services/notification/notification.service';
 import { AnalyticsService } from '@app/services/analytics/analytics.service';
 import { AuthService } from '@app/services/auth/auth.service';
+import { PreviewAIGuardService } from '../../guards/preview-ai-guard.service';
 
 // Models
 import { ChatMessage } from '@app/models/chat.model';
@@ -74,10 +79,32 @@ interface UltimateChatMessage extends ChatMessage {
   isCodeMessage?: boolean;
   codeLanguage?: string;
   hasAppliedCode?: boolean;
+  hasCode?: boolean;  // Add this property for auto-applied code indicator
   tokenCount?: number;
   processingTime?: number;
   confidence?: number;
   suggestions?: string[];
+}
+
+// File Upload Interface
+interface UploadedFile {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  content: string;
+  uploadedAt: Date;
+  processed: boolean;
+}
+
+// Data Source Interface
+interface DataSource {
+  id: string;
+  name: string;
+  type: 'file' | 'url' | 'text' | 'json' | 'database';
+  content: string;
+  metadata: Record<string, any>;
+  createdAt: Date;
 }
 
 @Component({
@@ -106,7 +133,9 @@ interface UltimateChatMessage extends ChatMessage {
     // Custom Components
     ProfessionalLoaderComponent,
     MonacoCodeEditorComponent,
-    EnhancedAIPreviewComponent
+    UltimateLivePreviewComponent,
+    EnhancedAIPreviewComponent,
+    FallbackImageDirective
     // AICopilotPanelComponent
   ],
   template: `
@@ -483,6 +512,68 @@ interface UltimateChatMessage extends ChatMessage {
       </div>
     </div>
 
+    <!-- 🚀 FULL-WIDTH ULTIMATE PREVIEW SECTION -->
+    <div class="ultimate-preview-fullwidth" *ngIf="shouldShowPreview()" [@slideInOut]>
+      <div class="preview-fullwidth-header">
+        <div class="preview-title-section">
+          <h4>
+            <span class="preview-icon">🚀</span>
+            Ultimate Live Preview
+            <span class="preview-subtitle">Full-Width Design Preview</span>
+          </h4>
+          <div class="preview-status-badge">
+            <span class="status-dot active"></span>
+            <span class="status-text">{{ getPreviewStatusText() }}</span>
+          </div>
+        </div>
+        
+        <div class="preview-actions">
+          <button mat-button class="preview-action-btn" (click)="refreshFullPreview()">
+            <mat-icon>refresh</mat-icon>
+            Refresh Preview
+          </button>
+          <button mat-button class="preview-action-btn" (click)="togglePreviewSource()">
+            <mat-icon>{{ previewSource === 'monaco' ? 'chat' : 'code' }}</mat-icon>
+            {{ previewSource === 'monaco' ? 'Show Chat Preview' : 'Show Monaco Preview' }}
+          </button>
+          <button mat-icon-button class="preview-close-btn" (click)="closeFullPreview()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+      
+      <div class="preview-fullwidth-content">
+        <!-- Monaco-based Preview -->
+        <div class="monaco-preview-section" *ngIf="previewSource === 'monaco' || !latestChatPreview">
+          <app-ultimate-live-preview
+            [htmlContent]="editorState.buffers().html"
+            [cssContent]="editorState.buffers().scss"
+            [jsContent]="editorState.buffers().typescript"
+            [autoRefresh]="true">
+          </app-ultimate-live-preview>
+        </div>
+        
+        <!-- Chat-based Preview -->
+        <div class="chat-preview-section" 
+             *ngIf="previewSource === 'chat' && latestChatPreview"
+             [innerHTML]="latestChatPreview">
+        </div>
+        
+        <!-- Fallback when no content -->
+        <div class="no-preview-content" *ngIf="!hasAnyPreviewableContent()">
+          <div class="no-content-message">
+            <mat-icon>preview</mat-icon>
+            <h5>No Preview Available</h5>
+            <p>Generate code in Monaco Editor or chat with AI to see live previews here.</p>
+            <button mat-raised-button color="primary" (click)="sendSuggestion('Create a responsive card component')">
+              <mat-icon>auto_awesome</mat-icon>
+              Generate Sample Component
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Settings Menu -->
     <mat-menu #settingsMenu="matMenu">
       <button mat-menu-item (click)="toggleDarkMode()">
@@ -512,6 +603,9 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   private readonly notificationService = inject(NotificationService);
   private readonly analytics = inject(AnalyticsService);
   private readonly authService = inject(AuthService);
+  private readonly previewGuard = inject(PreviewAIGuardService);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly imageService = inject(ImageService);
   
   // 🧠 SIGNALS & STATE
   chatMessages = signal<UltimateChatMessage[]>([]);
@@ -532,7 +626,31 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   activeEditorTab = 0;
   showPreview = false;
   isDarkMode = true;
+  
+  // 🚀 FULL-WIDTH PREVIEW STATE
+  previewSource: 'monaco' | 'chat' = 'monaco';
+  latestChatPreview: SafeHtml | null = null;
+  
+  // 🏷️ DYNAMIC TAB LABELS
+  detectedLanguage: string = 'TypeScript';
+  jsTabLabel: string = 'TypeScript';
+  monacoLanguage: string = 'typescript';
+  
+  // 🛡️ AI GUARD ANTI-FLICKER STATE
+  private renderStabilityTimer: number | null = null;
   currentThinkingStep = signal<string>('');
+  
+  // 📁 FILE UPLOAD & DATA STATE
+  uploadedFiles = signal<UploadedFile[]>([]);
+  dataSources = signal<DataSource[]>([]);
+  isProcessingFiles = signal(false);
+  
+  // 🔄 LIFECYCLE & REQUEST THROTTLING
+  private destroy$ = new Subject<void>();
+  private lastRequestTime = 0;
+  private readonly MIN_REQUEST_INTERVAL = 2000; // 2 seconds between requests
+  private hasShownCodeExtractionNotification = false;
+  private isUserInitiatedScroll = false; // Track if scroll was initiated by user action
   
   // 📊 COMPUTED VALUES
   currentModel = computed(() => this.selectedModel);
@@ -679,6 +797,14 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   async sendMessage() {
     if (!this.currentMessage.trim()) return;
     
+    // Throttle requests to prevent spam and reduce costs
+    const now = Date.now();
+    if (now - this.lastRequestTime < this.MIN_REQUEST_INTERVAL) {
+      this.notificationService.showWarning('Please wait a moment before sending another message to avoid excessive costs.');
+      return;
+    }
+    this.lastRequestTime = now;
+    
     const message = this.currentMessage.trim();
     this.currentMessage = '';
     
@@ -693,14 +819,40 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       return;
     }
     
+    // Add user message to chat
+    const userMessage: UltimateChatMessage = {
+      id: Date.now().toString(),
+      type: 'user',
+      sender: 'You',
+      content: message,
+      timestamp: new Date()
+    };
+    
+    this.chatMessages.update(messages => [...messages, userMessage]);
+    
     // Track analytics
     this.analytics.trackAIInteraction('prompt_sent', 'chat');
     
     this.isGenerating.set(true);
     
     try {
+      // Include file contents in context
+      const fileContext = this.uploadedFiles().map(file => ({
+        name: file.name,
+        type: file.type,
+        content: file.content.substring(0, 2000) // Limit content length
+      }));
+
+      const dataSourceContext = this.dataSources().map(source => ({
+        name: source.name,
+        type: source.type,
+        content: source.content.substring(0, 2000)
+      }));
+
       // Use AI Copilot service with enhanced context
       const context = {
+        files: fileContext,
+        dataSources: dataSourceContext,
         editorBuffers: this.editorState.buffers(),
         chatHistory: this.chatMessages().slice(-5), // Last 5 messages for context
         userPreferences: {
@@ -712,6 +864,11 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       };
       
       await this.aiCopilotService.sendMessage(message, JSON.stringify(context)).toPromise();
+      
+      // Always scroll to bottom after sending a message (user action)
+      console.log('📤 Message sent - scrolling to bottom');
+      this.isUserInitiatedScroll = true;
+      this.scrollToBottom();
       
     } catch (error) {
       console.error('❌ AI Copilot Ultimate error:', error);
@@ -853,6 +1010,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   onEnterPress(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
+      this.isUserInitiatedScroll = true; // Mark as user action
       this.sendMessage();
     }
   }
@@ -928,10 +1086,188 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   }
   
   private scrollToBottom() {
+    // Only scroll if user is already near the bottom (within 100px) or this is a user action
     setTimeout(() => {
       if (this.chatContainer?.nativeElement) {
-        this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
+        const container = this.chatContainer.nativeElement;
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        
+        // Always scroll for user messages, only scroll for AI if user is near bottom
+        const shouldScroll = isNearBottom || this.isUserInitiatedScroll;
+        
+        if (shouldScroll) {
+          container.scrollTop = container.scrollHeight;
+          console.log('📜 Gentle scroll to bottom');
+        } else {
+          console.log('📜 User scrolled up - respecting scroll position');
+        }
+        
+        // Reset the user-initiated flag
+        this.isUserInitiatedScroll = false;
       }
     }, 100);
+  }
+
+  // 🚀 FULL-WIDTH PREVIEW METHODS
+  shouldShowPreview(): boolean {
+    // Always show if manually toggled on
+    if (this.showPreview) {
+      console.log('🎯 Preview showing: Manual toggle ON');
+      return true;
+    }
+    
+    // Always show if there's any content to preview
+    const hasContent = this.hasPreviewContent();
+    if (hasContent) {
+      console.log('🎯 Preview showing: Content detected');
+      return true;
+    }
+    
+    console.log('🎯 Preview hidden: No content and not manually enabled');
+    return false;
+  }
+
+  hasPreviewContent(): boolean {
+    const buffers = this.editorState.buffers();
+    const hasMonacoContent = !!(
+      (buffers.html && buffers.html.trim()) || 
+      (buffers.scss && buffers.scss.trim()) || 
+      (buffers.typescript && buffers.typescript.trim())
+    );
+    const hasChatContent = !!this.latestChatPreview;
+    
+    console.log('🔍 Preview content check:', {
+      hasMonacoContent,
+      hasChatContent,
+      htmlLength: buffers.html?.length || 0,
+      cssLength: buffers.scss?.length || 0,
+      jsLength: buffers.typescript?.length || 0,
+      chatPreview: !!this.latestChatPreview
+    });
+    
+    return hasMonacoContent || hasChatContent;
+  }
+
+  hasAnyPreviewableContent(): boolean {
+    // More aggressive check - even minimal content should show preview
+    const buffers = this.editorState.buffers();
+    const hasAnyMonacoContent = !!(
+      buffers.html || buffers.scss || buffers.typescript
+    );
+    const hasAnyChatContent = !!this.latestChatPreview;
+    
+    return hasAnyMonacoContent || hasAnyChatContent;
+  }
+
+  getPreviewStatusText(): string {
+    if (this.previewSource === 'monaco') {
+      return 'Monaco Editor';
+    } else if (this.previewSource === 'chat') {
+      return 'Chat Generated';
+    }
+    return 'Ready';
+  }
+
+  refreshFullPreview(): void {
+    console.log('🔄 Refreshing full-width preview...');
+    if (this.previewSource === 'monaco') {
+      this.refreshPreview();
+    } else {
+      // Re-extract latest chat preview
+      this.updateLatestChatPreview();
+    }
+    
+    // Force preview to show if it's empty
+    this.ensurePreviewIsVisible();
+  }
+
+  private ensurePreviewIsVisible(): void {
+    setTimeout(() => {
+      const previewContent = document.querySelector('.ultimate-preview-fullwidth .preview-fullwidth-content');
+      if (previewContent) {
+        const isEmpty = previewContent.textContent?.trim().length === 0;
+        if (isEmpty) {
+          console.log('🔧 Preview appears empty, forcing refresh...');
+          this.showPreview = true;
+          this.refreshPreview();
+        }
+      }
+    }, 500);
+  }
+
+  togglePreviewSource(): void {
+    this.previewSource = this.previewSource === 'monaco' ? 'chat' : 'monaco';
+    console.log(`🔄 Switched preview source to: ${this.previewSource}`);
+  }
+
+  closeFullPreview(): void {
+    this.showPreview = false;
+    console.log('❌ Closed full-width preview');
+  }
+
+  forcePreviewVisibility(): void {
+    // Aggressive method to ensure preview is visible when content exists
+    const hasContent = this.hasAnyPreviewableContent();
+    
+    if (hasContent && !this.showPreview) {
+      console.log('🚨 FORCE PREVIEW: Content detected but preview hidden - forcing visibility');
+      this.showPreview = true;
+    }
+    
+    // Also ensure the preview container is properly rendered
+    setTimeout(() => {
+      const previewContainer = document.querySelector('.ultimate-preview-fullwidth');
+      if (hasContent && !previewContainer) {
+        console.log('🚨 FORCE PREVIEW: Container missing - triggering change detection');
+        // Force Angular change detection
+        this.showPreview = false;
+        setTimeout(() => {
+          this.showPreview = true;
+          console.log('✅ FORCE PREVIEW: Visibility restored');
+        }, 50);
+      }
+    }, 100);
+  }
+
+  private updateLatestChatPreview(): void {
+    const messages = this.chatMessages();
+    const latestAIMessage = [...messages].reverse().find(m => m.type === 'ai');
+    
+    if (latestAIMessage) {
+      // Extract just the preview part from the processed content
+      const previewMatch = latestAIMessage.content.toString().match(/<div class="inline-chat-preview">[\s\S]*?<\/div>/);
+      if (previewMatch) {
+        this.latestChatPreview = this.sanitizer.bypassSecurityTrustHtml(previewMatch[0]);
+        console.log('📝 Updated latest chat preview from AI message');
+      }
+    }
+  }
+
+  refreshPreview() {
+    console.log('🔄 Refreshing live preview with current Monaco content...');
+    console.log('📊 Current HTML buffer:', this.editorState.buffers().html?.length || 0, 'chars');
+    console.log('📊 Current CSS buffer:', this.editorState.buffers().scss?.length || 0, 'chars');
+    console.log('📊 Current TS buffer:', this.editorState.buffers().typescript?.length || 0, 'chars');
+    
+    // Force the preview component to update by triggering change detection
+    // This will cause the Ultimate Preview component to regenerate
+    const currentBuffers = this.editorState.buffers();
+    
+    // Trigger a small change to force ngOnChanges in the preview component
+    const htmlContent = currentBuffers.html || '';
+    const cssContent = currentBuffers.scss || '';
+    const jsContent = currentBuffers.typescript || '';
+    
+    // Force change detection by updating the editor state
+    if (htmlContent || cssContent || jsContent) {
+      // Temporarily add a space and remove it to trigger change detection
+      this.editorState.updateBuffer('html', htmlContent + ' ');
+      setTimeout(() => {
+        this.editorState.updateBuffer('html', htmlContent);
+        console.log('✅ Preview refresh triggered');
+      }, 100);
+    } else {
+      console.log('⚠️ No content to refresh');
+    }
   }
 }
