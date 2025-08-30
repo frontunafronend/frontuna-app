@@ -1094,7 +1094,7 @@ export class DashboardComponent implements OnInit {
     
     // Only show admin panel for actual admin users
     const isAdminRole = user?.role === 'admin';
-    const isRealAdmin = isAdminRole && user?.email === 'admin@frontuna.com';
+    const isRealAdmin = isAdminRole && (user?.email === 'admin@frontuna.com' || user?.email === 'admin@frontuna.ai');
     
     console.log('🔍 ADMIN CHECK:', { 
       user: user?.email, 

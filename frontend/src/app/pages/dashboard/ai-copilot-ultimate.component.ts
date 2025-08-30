@@ -82,6 +82,14 @@ interface UltimateChatMessage extends ChatMessage {
   suggestions?: string[];
 }
 
+interface AICopilotGuards {
+  isBackendAvailable: boolean;
+  hasValidSession: boolean;
+  isRateLimited: boolean;
+  hasNetworkConnection: boolean;
+  isUserAuthenticated: boolean;
+}
+
 // File Upload Interface
 interface UploadedFile {
   id: string;
@@ -672,9 +680,63 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  // 🛡️ AI COPILOT GUARDS IMPLEMENTATION
+  private initializeGuards() {
+    console.log('🛡️ Initializing AI Copilot Guards...');
+    
+    // Check backend availability
+    this.aiPromptCore.checkHealth().subscribe({
+      next: (isHealthy) => {
+        console.log('🏥 Backend health check:', isHealthy ? '✅ Healthy' : '❌ Unhealthy');
+        this.updateGuards({ isBackendAvailable: isHealthy });
+      },
+      error: (error) => {
+        console.error('🚨 Backend health check failed:', error);
+        this.updateGuards({ isBackendAvailable: false });
+      }
+    });
+
+    // Check authentication status
+    const user = this.authService.currentUser();
+    const isAuthenticated = !!user;
+    console.log('🔐 Authentication check:', isAuthenticated ? '✅ Authenticated' : '❌ Not authenticated');
+    this.updateGuards({ 
+      isUserAuthenticated: isAuthenticated,
+      hasValidSession: isAuthenticated 
+    });
+
+    // Check network connection
+    const hasNetwork = navigator.onLine;
+    console.log('🌐 Network check:', hasNetwork ? '✅ Online' : '❌ Offline');
+    this.updateGuards({ hasNetworkConnection: hasNetwork });
+
+    // Listen for network changes
+    window.addEventListener('online', () => {
+      console.log('🌐 Network restored');
+      this.updateGuards({ hasNetworkConnection: true });
+    });
+    
+    window.addEventListener('offline', () => {
+      console.log('🌐 Network lost');
+      this.updateGuards({ hasNetworkConnection: false });
+    });
+  }
+
+  private updateGuards(updates: Partial<AICopilotGuards>) {
+    const currentGuards = this.copilotGuards();
+    const newGuards = { ...currentGuards, ...updates };
+    this.copilotGuards.set(newGuards);
+    console.log('🛡️ Guards updated:', newGuards);
+  }
   
   ngOnInit() {
     console.log('🚀 AI COPILOT ULTIMATE - Initializing the most advanced AI coding assistant...');
+    
+    // Reset all states to ensure clean initialization
+    this.isGenerating.set(false);
+    this.hasError.set(false);
+    this.currentThinkingStep.set('');
     
     // Initialize services and state
     this.initializeServices();
@@ -690,35 +752,6 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-  
-  // 🛡️ AI COPILOT GUARDS IMPLEMENTATION
-  private initializeGuards() {
-    // Check backend availability
-    this.checkBackendHealth();
-    
-    // Check authentication
-    this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
-      this.copilotGuards.update(guards => ({
-        ...guards,
-        isUserAuthenticated: !!user
-      }));
-    });
-    
-    // Monitor network connection
-    window.addEventListener('online', () => {
-      this.copilotGuards.update(guards => ({
-        ...guards,
-        hasNetworkConnection: true
-      }));
-    });
-    
-    window.addEventListener('offline', () => {
-      this.copilotGuards.update(guards => ({
-        ...guards,
-        hasNetworkConnection: false
-      }));
-    });
   }
   
   private async checkBackendHealth() {
@@ -739,8 +772,11 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   
   // 🚀 CORE FUNCTIONALITY
   private initializeServices() {
+    console.log('🔧 Initializing AI Copilot services...');
+    
     // Subscribe to AI Copilot service observables
     this.aiCopilotService.chatHistory$.pipe(takeUntil(this.destroy$)).subscribe(history => {
+      console.log('💬 Chat history updated:', history.length, 'messages');
       const enhancedMessages: UltimateChatMessage[] = history.map(msg => ({
         id: `${msg.type}_${Date.now()}_${Math.random()}`,
         type: msg.type === 'user' ? 'user' : 'ai',
@@ -754,13 +790,24 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       this.chatMessages.set(enhancedMessages);
     });
     
-    // Subscribe to loading state
+    // Subscribe to loading state with safety checks
     this.aiCopilotService.isLoading$.pipe(takeUntil(this.destroy$)).subscribe(loading => {
+      console.log('⏳ Loading state changed:', loading);
       this.isGenerating.set(loading);
+      
       if (loading) {
         this.simulateThinkingSteps();
+      } else {
+        // Clear thinking step when not loading
+        this.currentThinkingStep.set('');
       }
     });
+
+    // Initialize with empty chat if no history
+    if (this.chatMessages().length === 0) {
+      console.log('📝 Initializing empty chat history');
+      this.chatMessages.set([]);
+    }
   }
   
   private setupEventListeners() {
