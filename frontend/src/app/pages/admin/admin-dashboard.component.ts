@@ -15,6 +15,7 @@ import { HttpClient } from '@angular/common/http';
 
 import { SeoService } from '@app/services/seo/seo.service';
 import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics.service';
+import { AuthAgentService } from '@app/services/auth/auth-agent.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -201,12 +202,21 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
               <div class="users-section">
                 <div class="users-header">
                   <h2>User Management</h2>
+                  
+                  <!-- Data Source Indicator -->
+                  <div *ngIf="isUsingRealData()" class="real-data-indicator">
+                    🌟 Showing REAL data from Neon Database ({{ liveUsers().length }} users)
+                  </div>
+                  <div *ngIf="!isUsingRealData()" class="fallback-data-indicator">
+                    ⚠️ Using fallback data - Backend unavailable ({{ liveUsers().length }} mock users)
+                  </div>
+                  
                   <div class="users-actions">
                     <button mat-button color="primary">
                       <mat-icon>download</mat-icon>
                       Export Users
                     </button>
-                    <button mat-raised-button color="primary">
+                    <button mat-raised-button color="primary" (click)="addNewUser()">
                       <mat-icon>person_add</mat-icon>
                       Add User
                     </button>
@@ -280,13 +290,13 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
                             <mat-icon>more_vert</mat-icon>
                           </button>
                           <mat-menu #userMenu="matMenu">
-                            <button mat-menu-item>
-                              <mat-icon>visibility</mat-icon>
-                              View Details
-                            </button>
-                            <button mat-menu-item>
+                            <button mat-menu-item (click)="editUser(user)">
                               <mat-icon>edit</mat-icon>
                               Edit User
+                            </button>
+                            <button mat-menu-item (click)="deleteUser(user)" class="delete-action">
+                              <mat-icon>delete</mat-icon>
+                              Delete User
                             </button>
                             <button mat-menu-item>
                               <mat-icon>block</mat-icon>
@@ -976,12 +986,39 @@ import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics
         padding: 1rem;
       }
     }
+    
+    .delete-action {
+      color: #f44336 !important;
+    }
+    
+    .delete-action mat-icon {
+      color: #f44336 !important;
+    }
+    
+    .real-data-indicator {
+      background: #e8f5e8;
+      color: #2e7d32;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    
+    .fallback-data-indicator {
+      background: #fff3e0;
+      color: #f57c00;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
   `]
 })
 export class AdminDashboardComponent implements OnInit {
   private readonly seoService = inject(SeoService);
   private readonly analyticsService = inject(GoogleAnalyticsService);
   private readonly http = inject(HttpClient);
+  private readonly authAgent = inject(AuthAgentService);
   
   // 🌐 API Configuration
   private readonly API_BASE_URL = 'http://localhost:3000/api';
@@ -1003,6 +1040,7 @@ export class AdminDashboardComponent implements OnInit {
   public readonly liveUsers = signal<any[]>([]);
   public readonly isLoadingUsers = signal(false);
   public readonly userError = signal<string | null>(null);
+  public readonly isUsingRealData = signal<boolean>(false);
 
   // 🎯 TAB MANAGEMENT
   public readonly activeTab = signal<string>('analytics');
@@ -1147,16 +1185,20 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   /**
-   * 👥 Load LIVE users from Neon database
+   * 👥 Load REAL users from Neon database (prioritize real data)
    */
   private async loadLiveUsers() {
     this.isLoadingUsers.set(true);
     this.userError.set(null);
     
     try {
-      console.log('👥 Fetching LIVE users from Neon database...');
+      console.log('🌟 Fetching REAL users from Neon database...');
       
-      const response = await this.http.get<any>(`${this.API_BASE_URL}/admin/users`).toPromise();
+      // Try to fetch from backend with timeout
+      const response = await Promise.race([
+        this.http.get<any>(`${this.API_BASE_URL}/admin/users`).toPromise(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+      ]) as any;
       
       if (response?.success && response?.data) {
         // Use the data directly from server (already transformed)
@@ -1174,7 +1216,9 @@ export class AdminDashboardComponent implements OnInit {
         }));
         
         this.liveUsers.set(users);
-        console.log(`✅ Loaded ${users.length} LIVE users from Neon database!`, users);
+        this.isUsingRealData.set(true);
+        console.log(`🌟 SUCCESS: Loaded ${users.length} REAL users from Neon database!`, users);
+        this.userError.set(null); // Clear any previous errors
         
       } else {
         throw new Error('Invalid response format');
@@ -1182,15 +1226,190 @@ export class AdminDashboardComponent implements OnInit {
       
     } catch (error: any) {
       console.error('❌ Failed to load LIVE users:', error);
-      this.userError.set(error.message || 'Failed to load users');
+      console.log('🔄 Using fallback user data...');
       
-      // Don't show empty table, keep previous data if any
-      if (this.liveUsers().length === 0) {
-        this.liveUsers.set([]);
-      }
+      // Fallback to mock data if backend is not available
+      const fallbackUsers = [
+        {
+          id: 'admin-1',
+          name: 'Admin User',
+          email: 'admin@frontuna.com',
+          avatar: null,
+          plan: 'enterprise',
+          generationsUsed: 45,
+          generationsLimit: 10000,
+          status: 'active',
+          joinedAt: new Date('2024-01-15'),
+          role: 'admin'
+        },
+        {
+          id: 'admin-2', 
+          name: 'Admin AI',
+          email: 'admin@frontuna.ai',
+          avatar: null,
+          plan: 'enterprise',
+          generationsUsed: 23,
+          generationsLimit: 10000,
+          status: 'active',
+          joinedAt: new Date('2024-01-20'),
+          role: 'admin'
+        },
+        {
+          id: 'user-1',
+          name: 'John Doe',
+          email: 'john@example.com',
+          avatar: null,
+          plan: 'basic',
+          generationsUsed: 12,
+          generationsLimit: 100,
+          status: 'active',
+          joinedAt: new Date('2024-02-01'),
+          role: 'user'
+        },
+        {
+          id: 'user-2',
+          name: 'Jane Smith',
+          email: 'jane@example.com',
+          avatar: null,
+          plan: 'pro',
+          generationsUsed: 67,
+          generationsLimit: 500,
+          status: 'active',
+          joinedAt: new Date('2024-02-10'),
+          role: 'user'
+        },
+        {
+          id: 'user-3',
+          name: 'Bob Wilson',
+          email: 'bob@example.com',
+          avatar: null,
+          plan: 'basic',
+          generationsUsed: 8,
+          generationsLimit: 100,
+          status: 'active',
+          joinedAt: new Date('2024-02-15'),
+          role: 'user'
+        }
+      ];
+      
+      this.liveUsers.set(fallbackUsers);
+      this.isUsingRealData.set(false);
+      this.userError.set(null); // Clear error since we have fallback data
+      console.log('⚠️ Using FALLBACK data:', fallbackUsers.length, 'mock users loaded')
       
     } finally {
       this.isLoadingUsers.set(false);
+    }
+  }
+
+  /**
+   * ✏️ EDIT USER - Make user data editable
+   */
+  editUser(user: any) {
+    console.log('✏️ Editing user:', user.email);
+    
+    const newName = prompt(`Edit name for ${user.email}:`, user.name);
+    if (newName && newName !== user.name) {
+      this.updateUser(user.id, { name: newName });
+    }
+  }
+
+  /**
+   * 🗑️ DELETE USER - Remove user from database
+   */
+  async deleteUser(user: any) {
+    if (!confirm(`Are you sure you want to delete user ${user.email}?`)) {
+      return;
+    }
+    
+    console.log('🗑️ Deleting user:', user.email);
+    
+    try {
+      const response = await this.http.delete(`${this.API_BASE_URL}/admin/users/${user.id}`).toPromise();
+      
+      if (response) {
+        // Remove from local list
+        const currentUsers = this.liveUsers();
+        const updatedUsers = currentUsers.filter(u => u.id !== user.id);
+        this.liveUsers.set(updatedUsers);
+        
+        console.log('✅ User deleted successfully');
+        alert('User deleted successfully!');
+      }
+    } catch (error) {
+      console.error('❌ Failed to delete user:', error);
+      alert('Failed to delete user. Please try again.');
+    }
+  }
+
+  /**
+   * 🔄 UPDATE USER - Update user in database
+   */
+  private async updateUser(userId: string, updates: any) {
+    try {
+      console.log('🔄 Updating user:', userId, updates);
+      
+      const response = await this.http.put(`${this.API_BASE_URL}/admin/users/${userId}`, updates).toPromise();
+      
+      if (response) {
+        // Update local list
+        const currentUsers = this.liveUsers();
+        const updatedUsers = currentUsers.map(user => 
+          user.id === userId ? { ...user, ...updates } : user
+        );
+        this.liveUsers.set(updatedUsers);
+        
+        console.log('✅ User updated successfully');
+        alert('User updated successfully!');
+      }
+    } catch (error) {
+      console.error('❌ Failed to update user:', error);
+      alert('Failed to update user. Please try again.');
+    }
+  }
+
+  /**
+   * ➕ ADD NEW USER - Create new user
+   */
+  async addNewUser() {
+    const email = prompt('Enter new user email:');
+    if (!email) return;
+    
+    const name = prompt('Enter user name:') || email.split('@')[0];
+    const role = confirm('Is this user an admin?') ? 'admin' : 'user';
+    
+    try {
+      console.log('➕ Creating new user:', email);
+      
+      const newUser = {
+        email,
+        name,
+        role,
+        plan: role === 'admin' ? 'enterprise' : 'basic',
+        status: 'active'
+      };
+      
+      const response = await this.http.post(`${this.API_BASE_URL}/admin/users`, newUser).toPromise();
+      
+      if (response) {
+        // Add to local list
+        const currentUsers = this.liveUsers();
+        const updatedUsers = [...currentUsers, {
+          id: 'new-' + Date.now(),
+          ...newUser,
+          generationsUsed: 0,
+          generationsLimit: role === 'admin' ? 10000 : 100,
+          joinedAt: new Date(),
+          avatar: null
+        }];
+        this.liveUsers.set(updatedUsers);
+        
+        console.log('✅ User created successfully');
+        alert('User created successfully!');
+      }
+    } catch (error) {
+      console.error('❌ Failed to create user:', error);
+      alert('Failed to create user. Please try again.');
     }
   }
 

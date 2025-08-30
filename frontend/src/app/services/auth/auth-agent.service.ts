@@ -18,7 +18,7 @@
 
 import { Injectable, signal, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { User, UserRole } from '@app/models/auth.model';
+import { User, UserRole, SubscriptionPlan, SubscriptionStatus } from '@app/models/auth.model';
 
 @Injectable({
   providedIn: 'root'
@@ -118,8 +118,8 @@ export class AuthAgentService {
         isActive: true,
         isEmailVerified: true,
         subscription: {
-          plan: isAdmin ? 'enterprise' : 'free',
-          status: 'active',
+          plan: isAdmin ? SubscriptionPlan.ENTERPRISE : SubscriptionPlan.FREE,
+          status: SubscriptionStatus.ACTIVE,
           startDate: new Date(),
           endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           isTrialActive: false
