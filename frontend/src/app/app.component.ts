@@ -30,7 +30,7 @@ export class AppComponent implements OnInit {
 
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
-  
+
   private currentRoute = signal('');
   private readonly seoService = inject(SeoService);
   private readonly analyticsService = inject(GoogleAnalyticsService);
@@ -43,7 +43,7 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     // Set initial route
     this.currentRoute.set(this.router.url);
-    
+
     // Track route changes to determine header visibility
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -52,7 +52,7 @@ export class AppComponent implements OnInit {
         this.currentRoute.set(event.url);
       }
     });
-    
+
     // Initialize SEO defaults
     this.seoService.setDefaultMetaTags();
 
@@ -98,7 +98,7 @@ export class AppComponent implements OnInit {
   shouldShowHeader(): boolean {
     const route = this.currentRoute();
     const isAuthenticated = !!this.authService.currentUser();
-    
+
     // Always show header for authenticated users (they need access to navigation)
     if (isAuthenticated) {
       // Only hide on auth pages when already authenticated (prevent going back)
@@ -107,7 +107,7 @@ export class AppComponent implements OnInit {
       }
       return true;
     }
-    
+
     // Show header on public routes when not authenticated
     return true;
   }

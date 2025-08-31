@@ -158,7 +158,7 @@ export class AICopilotService {
     
     this.isLoadingSubject.next(true);
     
-    return this.http.post<any>(`${this.baseUrl}/session`, { title, context })
+    return this.http.post<any>(`${this.baseUrl}/session/start`, { title, context })
       .pipe(
         tap(response => {
           if (response.success) {
