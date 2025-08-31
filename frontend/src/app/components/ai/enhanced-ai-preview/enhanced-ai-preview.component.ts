@@ -80,7 +80,7 @@ export interface CodeChangeEvent {
       <mat-tab-group 
         [(selectedIndex)]="activeTabIndex" 
         (selectedIndexChange)="onTabChange($event)"
-        class="code-tabs">
+        class="code-tabs preview-only-tabs">
         
         <!-- TypeScript/JavaScript Tab -->
         <mat-tab label="TypeScript/JS">
@@ -278,6 +278,24 @@ export interface CodeChangeEvent {
       overflow: hidden;
     }
 
+    // 🔧 HIDE TAB HEADERS - Show only preview content
+    .preview-only-tabs {
+      ::ng-deep .mat-mdc-tab-header {
+        display: none !important; // Hide tab headers completely
+      }
+      
+      ::ng-deep .mat-mdc-tab-body-wrapper {
+        height: 100% !important;
+        min-height: 800px !important; // 🔧 ENSURE 800px minimum height
+      }
+      
+      ::ng-deep .mat-mdc-tab-body-content {
+        height: 100% !important;
+        min-height: 800px !important; // 🔧 ENSURE 800px minimum height
+        overflow: visible !important; // Allow content to expand
+      }
+    }
+
     .tab-content {
       height: 100%;
       display: flex;
@@ -313,13 +331,15 @@ export interface CodeChangeEvent {
       padding: 16px;
       background: var(--surface-variant, #f5f5f5);
       display: flex;
-      align-items: center;
+      align-items: stretch; // 🔧 CHANGED: stretch instead of center for full height
       justify-content: center;
+      min-height: 800px; // 🔧 ENSURE 800px minimum height
     }
 
     .preview-frame {
       width: 100%;
       height: 100%;
+      min-height: 800px; // 🔧 ENSURE 800px minimum height for iframe
       border: 1px solid var(--outline, #e0e0e0);
       border-radius: 4px;
       background: white;
@@ -395,7 +415,7 @@ export class EnhancedAIPreviewComponent {
   private readonly editorState = inject(EditorStateService);
 
   // State
-  activeTabIndex = 0;
+  activeTabIndex = 3; // 🔧 DEFAULT TO PREVIEW TAB (index 3) instead of TypeScript (index 0)
   selectedLanguage: 'typescript' | 'javascript' = 'typescript';
   autoRefresh = true;
   isRefreshing = false;

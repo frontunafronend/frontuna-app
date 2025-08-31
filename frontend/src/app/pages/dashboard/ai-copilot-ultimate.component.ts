@@ -199,9 +199,9 @@ interface DataSource {
                 <div class="stat-value">{{ currentModel() }}</div>
                 <div class="stat-label">AI Model</div>
               </div>
+              </div>
             </div>
-          </div>
-          
+            
           <!-- Quick Actions -->
           <div class="header-actions">
             <button mat-icon-button 
@@ -310,8 +310,8 @@ interface DataSource {
                     <mat-icon>code</mat-icon>
                     <span>Generated Code</span>
                     <mat-chip class="language-chip">{{ message.codeLanguage || 'typescript' }}</mat-chip>
-                  </div>
-                  <pre class="code-block"><code [innerHTML]="message.code"></code></pre>
+                    </div>
+                    <pre class="code-block"><code [innerHTML]="message.code"></code></pre>
                 </div>
                 
                 <!-- Message Actions -->
@@ -361,18 +361,18 @@ interface DataSource {
               </div>
               <div class="message-content">
                 <div class="thinking-header">
-                  <app-professional-loader 
-                    type="thinking" 
+                <app-professional-loader 
+                  type="thinking" 
                     message="AI is analyzing your request..."
-                    size="small">
-                  </app-professional-loader>
+                  size="small">
+                </app-professional-loader>
                   <button mat-raised-button 
-                          color="warn" 
+                        color="warn" 
                           class="emergency-stop-btn" 
                           (click)="emergencyStopThinking()">
-                    <mat-icon>stop</mat-icon>
+                  <mat-icon>stop</mat-icon>
                     STOP NOW!
-                  </button>
+                </button>
                 </div>
                 <div class="thinking-details" *ngIf="currentThinkingStep()">
                   <small>{{ currentThinkingStep() }}</small>
@@ -516,56 +516,45 @@ interface DataSource {
 
     <!-- 🚀 ALWAYS-VISIBLE ULTIMATE PREVIEW SECTION -->
     <div class="ultimate-preview-fullwidth" [@slideInOut]>
-      <div class="preview-fullwidth-header">
-        <div class="preview-title-section">
-          <h4>
-            <span class="preview-icon">🚀</span>
-            Ultimate Live Preview
-            <span class="preview-subtitle">Full-Width Design Preview</span>
-          </h4>
-          <div class="preview-status-badge">
-            <span class="status-dot active"></span>
-            <span class="status-text">{{ getPreviewStatusText() }}</span>
-          </div>
-        </div>
-        
-        <div class="preview-actions">
-          <button mat-button class="preview-action-btn" (click)="refreshFullPreview()">
+      <!-- 🔧 REDESIGNED: Side buttons + no header + direct content -->
+      <div class="preview-container">
+        <!-- Side buttons -->
+        <div class="preview-side-actions">
+          <button mat-icon-button class="side-action-btn" (click)="refreshFullPreview()" title="Refresh Preview">
             <mat-icon>refresh</mat-icon>
-            Refresh Preview
           </button>
-          <button mat-button class="preview-action-btn" (click)="togglePreviewSource()">
-            <mat-icon>{{ previewSource === 'monaco' ? 'chat' : 'code' }}</mat-icon>
-            {{ previewSource === 'monaco' ? 'Show Chat Preview' : 'Show Monaco Preview' }}
-          </button>
-          <!-- 🔧 CLOSE BUTTON REMOVED - Preview always visible -->
-        </div>
-      </div>
-      
-      <div class="preview-fullwidth-content">
+          <button mat-icon-button class="side-action-btn" (click)="togglePreviewSource()" 
+                  [title]="previewSource === 'monaco' ? 'Show HTML Source' : 'Show Live Preview'">
+            <mat-icon>{{ previewSource === 'monaco' ? 'html' : 'preview' }}</mat-icon>
+              </button>
+            </div>
+            
+        <!-- Direct preview content -->
+        <div class="preview-content">
         <!-- Monaco-based Preview -->
         <div class="monaco-preview-section" *ngIf="previewSource === 'monaco' || !latestChatPreview">
-          <app-enhanced-ai-preview
-            [aiResponse]="createPreviewResponse()">
-          </app-enhanced-ai-preview>
-        </div>
+            <app-enhanced-ai-preview
+              [aiResponse]="createPreviewResponse()">
+            </app-enhanced-ai-preview>
+          </div>
         
-        <!-- Chat-based Preview -->
-        <div class="chat-preview-section" 
-             *ngIf="previewSource === 'chat' && latestChatPreview"
-             [innerHTML]="latestChatPreview">
-        </div>
-        
-        <!-- Fallback when no content -->
-        <div class="no-preview-content" *ngIf="!hasAnyPreviewableContent()">
-          <div class="no-content-message">
-            <mat-icon>preview</mat-icon>
-            <h5>No Preview Available</h5>
-            <p>Generate code in Monaco Editor or chat with AI to see live previews here.</p>
-            <button mat-raised-button color="primary" (click)="sendSuggestion('Create a responsive card component')">
-              <mat-icon>auto_awesome</mat-icon>
-              Generate Sample Component
-            </button>
+          <!-- Chat-based Preview -->
+          <div class="chat-preview-section" 
+               *ngIf="previewSource === 'chat' && latestChatPreview"
+               [innerHTML]="latestChatPreview">
+          </div>
+          
+          <!-- Fallback when no content -->
+          <div class="no-preview-content" *ngIf="!hasAnyPreviewableContent()">
+            <div class="no-content-message">
+              <mat-icon>preview</mat-icon>
+              <h5>No Preview Available</h5>
+              <p>Generate code in Monaco Editor or chat with AI to see live previews here.</p>
+              <button mat-raised-button color="primary" (click)="sendSuggestion('Create a responsive card component')">
+                <mat-icon>auto_awesome</mat-icon>
+                Generate Sample Component
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -748,7 +737,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     // 🎯 ADD SAMPLE CONTENT TO DEMONSTRATE PREVIEW
     this.addSampleContentToEditor();
     
-    console.log('✅ AI COPILOT ULTIMATE - Ready for action!');
+      console.log('✅ AI COPILOT ULTIMATE - Ready for action!');
   }
   
   ngOnDestroy() {
@@ -932,18 +921,18 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       this.aiCopilotService.sendMessage(message, JSON.stringify(context))
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: (response) => {
+        next: (response) => {
             console.log('✅ AI Response received:', response);
             // Always scroll to bottom after receiving response
             console.log('📤 Response received - scrolling to bottom');
             this.isUserInitiatedScroll = true;
             this.scrollToBottom();
-          },
-          error: (error) => {
+        },
+        error: (error) => {
             console.error('❌ AI Copilot Ultimate error:', error);
-            this.handleError(error);
-          }
-        });
+          this.handleError(error);
+        }
+      });
       
     } catch (error) {
       console.error('❌ AI Copilot Ultimate error:', error);
@@ -1204,7 +1193,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     navigator.clipboard.writeText(message.content);
     this.notificationService.showSuccess('Message copied to clipboard');
   }
-  
+
   toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
     // Implement theme switching
@@ -1235,7 +1224,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         if (shouldScroll) {
           container.scrollTop = container.scrollHeight;
           console.log('📜 Gentle scroll to bottom');
-        } else {
+      } else {
           console.log('📜 User scrolled up - respecting scroll position');
         }
         
@@ -1390,7 +1379,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       setTimeout(() => {
         this.editorState.updateBuffer('html', htmlContent);
         console.log('✅ Preview refresh triggered');
-      }, 100);
+    }, 100);
     } else {
       console.log('⚠️ No content to refresh');
     }

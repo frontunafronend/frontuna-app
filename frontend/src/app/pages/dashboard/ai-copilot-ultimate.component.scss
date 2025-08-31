@@ -304,13 +304,13 @@
     
     &.ai-message {
       .message-content {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid #e2e8f0;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; // 🔧 FORCE: Ensure background shows
+        border: 1px solid #e2e8f0 !important; // 🔧 FORCE: Ensure border shows
         border-radius: 1rem 1rem 1rem 0.25rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important; // 🔧 ENHANCED: Stronger shadow for visibility
         
         .message-text {
-          color: #1f2937; // 🔧 EXPLICIT: Dark text for readability
+          color: #1f2937 !important; // 🔧 FORCE: Dark text for readability
         }
       }
       
@@ -546,6 +546,11 @@
       
       .suggestions {
         margin-top: 0.75rem;
+        padding: 0.75rem; // 🔧 ADD: Padding for suggestions container
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); // 🔧 ADD: Light background for suggestions
+        border: 1px solid #e2e8f0; // 🔧 ADD: Subtle border
+        border-radius: 0.75rem; // 🔧 ADD: Rounded corners
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); // 🔧 ADD: Subtle shadow
         
         .suggestions-header {
           font-size: 0.75rem;
@@ -564,12 +569,17 @@
             height: 1.75rem;
             cursor: pointer;
             transition: var(--copilot-transition-fast);
-            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%); // 🔧 ENHANCED: Light gradient background
-            color: #475569; // 🔧 ENHANCED: Darker text for better contrast
-            border: 1px solid #cbd5e1;
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%) !important; // 🔧 FORCE: Light gradient background
+            color: #475569 !important; // 🔧 FORCE: Darker text for better contrast
+            border: 1px solid #cbd5e1 !important; // 🔧 FORCE: Border visibility
+            border-radius: 0.5rem; // 🔧 ADD: Rounded corners
+            padding: 0.25rem 0.75rem; // 🔧 ADD: Proper padding
+            display: inline-flex; // 🔧 ADD: Better alignment
+            align-items: center; // 🔧 ADD: Center text
+            font-weight: 500; // 🔧 ADD: Medium weight text
             
             &:hover {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); // 🔧 ENHANCED: Primary gradient on hover
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; // 🔧 FORCE: Primary gradient on hover
               color: white;
               transform: translateY(-1px); // 🔧 ENHANCED: Subtle lift effect
               box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3); // 🔧 ENHANCED: Shadow on hover
@@ -840,23 +850,57 @@
 
 // 🚀 ALWAYS-VISIBLE PREVIEW SECTION (underneath main content)
 .ultimate-preview-fullwidth {
-  // 🔧 CHANGED: Normal layout flow instead of fixed overlay
+  // 🔧 REDESIGNED: No header, side buttons, stick to top, 800px height
   position: relative;
   background: var(--copilot-bg-secondary);
-  border-top: 2px solid var(--copilot-primary);
+  // border-top: 2px solid var(--copilot-primary); // 🔧 REMOVED: No space between Monaco/chat and preview
   display: flex;
   flex-direction: column;
-  min-height: 400px; // Minimum height to always show preview
-  max-height: 60vh; // Don't take up too much space
+  min-height: 800px; // 🔧 INCREASED: 400px -> 800px as requested
+  max-height: none; // 🔧 REMOVED: No max height restriction
   overflow: hidden;
   
-  .preview-fullwidth-header {
+  // 🔧 NEW: Container with side buttons layout
+  .preview-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem 2rem;
-    background: linear-gradient(135deg, var(--copilot-primary) 0%, var(--copilot-secondary) 100%);
-    border-bottom: 1px solid var(--copilot-border);
+    height: 100%;
+    
+    .preview-side-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 1rem 0.5rem;
+      background: rgba(0, 0, 0, 0.1);
+      border-right: 1px solid var(--copilot-border);
+      
+      .side-action-btn {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--copilot-text-primary);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background: var(--copilot-primary);
+          transform: scale(1.05);
+        }
+        
+        mat-icon {
+          font-size: 20px;
+        }
+      }
+    }
+    
+    .preview-content {
+      flex: 1;
+      overflow: auto;
+    }
+  }
+  
+  // 🔧 REMOVED OLD HEADER - keeping for reference but will be deleted
+  .preview-fullwidth-header-OLD {
+    display: none; // This will be removed
     
     .preview-title-section {
       display: flex;
@@ -865,19 +909,19 @@
       
       h4 {
         margin: 0;
-        font-size: 1.5rem;
+        font-size: 1rem; // 🔧 SMALLER: 1.5rem -> 1rem (33% reduction)
         font-weight: 600;
         color: white;
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 0.5rem; // 🔧 SMALLER: 0.75rem -> 0.5rem gap
         
         .preview-icon {
-          font-size: 1.75rem;
+          font-size: 1.25rem; // 🔧 SMALLER: 1.75rem -> 1.25rem (28% reduction)
         }
         
         .preview-subtitle {
-          font-size: 0.875rem;
+          font-size: 0.75rem; // 🔧 SMALLER: 0.875rem -> 0.75rem
           font-weight: 400;
           opacity: 0.8;
           margin-left: 0.5rem;
@@ -937,16 +981,13 @@
     }
   }
   
-  .preview-fullwidth-content {
-    flex: 1;
-    overflow: auto;
-    padding: 1.5rem;
-    
+  // 🔧 UPDATED: Preview content now inside .preview-content
+  .preview-content {
     .monaco-preview-section,
     .chat-preview-section {
       height: 100%;
-      min-height: 900px; // 🔧 3X HIGHER: 300px -> 900px for much taller iframe content
-      max-height: 150vh; // 🔧 3X HIGHER: 50vh -> 150vh for much more space
+      min-height: 800px; // 🔧 EXACTLY 800px as requested
+      padding: 1rem; // 🔧 REDUCED: Less padding for more content space
     }
     
     .no-preview-content {
