@@ -1,0 +1,13 @@
+# Ignore files that might cause build issues
+src/
+tests/
+tsconfig.json
+*.ts
+*.test.js
+*.spec.js
+node_modules/
+.env*
+.git/
+README*.md
+docs/
+*.md
