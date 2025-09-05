@@ -54,7 +54,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { AuthService } from '../../services/auth/auth.service';
+import { SecureAuthService } from '@app/services/auth/secure-auth.service';
 import { SettingsService, UserPreferences, NotificationSettings, ApiKey } from '../../services/api/settings.service';
 import { NotificationService } from '../../services/notification/notification.service';
 import { UserDataService } from '../../services/user/user-data.service';
@@ -86,7 +86,7 @@ import { Subscription } from 'rxjs';
   styleUrl: './settings.component.scss'
 })
 export class SettingsComponent implements OnInit, OnDestroy {
-  private readonly authService = inject(AuthService);
+  private readonly authService = inject(SecureAuthService);
   private readonly settingsService = inject(SettingsService);
   private readonly userDataService = inject(UserDataService);
   private readonly notificationService = inject(NotificationService);

@@ -268,6 +268,106 @@ This component follows Angular best practices with proper TypeScript typing, mod
   }
 });
 
+// 🔐 AUTH ENDPOINTS FOR LOCAL TESTING
+app.post('/api/auth/signup', (req, res) => {
+  const { email, password, firstName, lastName } = req.body;
+  
+  // Check if user already exists
+  const existingUser = mockUsers.find(u => u.email === email);
+  if (existingUser) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'USER_EXISTS', message: 'User already exists' }
+    });
+  }
+  
+  // Create new user
+  const newUser = {
+    id: String(mockUsers.length + 1),
+    email,
+    role: 'user',
+    name: `${firstName} ${lastName}`,
+    firstName,
+    lastName,
+    joinedAt: new Date(),
+    avatar: null,
+    plan: 'basic',
+    generationsUsed: 0,
+    generationsLimit: 100,
+    status: 'active',
+    isActive: true,
+    emailVerifiedAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+  
+  mockUsers.push(newUser);
+  
+  // Return auth response
+  res.json({
+    success: true,
+    data: {
+      user: newUser,
+      accessToken: 'mock-access-token-' + Date.now(),
+      refreshToken: 'mock-refresh-token-' + Date.now(),
+      expiresIn: 900 // 15 minutes
+    },
+    message: 'Signup successful'
+  });
+});
+
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  
+  // Find user
+  const user = mockUsers.find(u => u.email === email);
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' }
+    });
+  }
+  
+  // Return auth response
+  res.json({
+    success: true,
+    data: {
+      user,
+      accessToken: 'mock-access-token-' + Date.now(),
+      refreshToken: 'mock-refresh-token-' + Date.now(),
+      expiresIn: 900 // 15 minutes
+    },
+    message: 'Login successful'
+  });
+});
+
+app.post('/api/auth/refresh', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      accessToken: 'mock-access-token-' + Date.now(),
+      refreshToken: 'mock-refresh-token-' + Date.now(),
+      expiresIn: 900
+    }
+  });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Logout successful'
+  });
+});
+
+app.get('/api/auth/profile', (req, res) => {
+  // Return first user as mock profile
+  const user = mockUsers[0];
+  res.json({
+    success: true,
+    data: user
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log('🌟 ================================');
@@ -278,6 +378,8 @@ app.listen(PORT, () => {
   console.log(`👥 Users: http://localhost:${PORT}/api/admin/users`);
   console.log(`📊 Stats: http://localhost:${PORT}/api/admin/stats`);
   console.log(`🤖 AI Chat: POST http://localhost:${PORT}/api/ai/copilot/chat`);
+  console.log(`🔐 Auth: POST http://localhost:${PORT}/api/auth/login`);
+  console.log(`🔐 Auth: POST http://localhost:${PORT}/api/auth/signup`);
   console.log('🌟 ================================');
   console.log(`👑 Admin Users: ${mockUsers.filter(u => u.role === 'admin').length}`);
   console.log(`👥 Total Users: ${mockUsers.length}`);

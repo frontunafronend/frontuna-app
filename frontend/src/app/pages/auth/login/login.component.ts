@@ -9,7 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { AuthService } from '@app/services/auth/auth.service';
+import { SecureAuthService } from '@app/services/auth/secure-auth.service';
 import { NotificationService } from '@app/services/notification/notification.service';
 
 @Component({
@@ -116,7 +116,7 @@ import { NotificationService } from '@app/services/notification/notification.ser
 })
 export class LoginComponent {
   private readonly router = inject(Router);
-  private readonly authService = inject(AuthService);
+  private readonly authService = inject(SecureAuthService);
   private readonly notificationService = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
 

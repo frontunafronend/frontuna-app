@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDividerModule } from '@angular/material/divider';
-import { AuthService } from '../../services/auth/auth.service';
+import { SecureAuthService } from '@app/services/auth/secure-auth.service';
 
 @Component({
   selector: 'app-billing',
@@ -478,7 +478,7 @@ import { AuthService } from '../../services/auth/auth.service';
   `]
 })
 export class BillingComponent implements OnInit {
-  private readonly authService = inject(AuthService);
+  private readonly authService = inject(SecureAuthService);
 
   // Mock current user data - replace with actual auth service
   public readonly currentUser = computed(() => this.authService.currentUser());

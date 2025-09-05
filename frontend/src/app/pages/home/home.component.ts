@@ -8,7 +8,7 @@ import { MatChipsModule } from '@angular/material/chips';
 
 import { SeoService } from '@app/services/seo/seo.service';
 import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics.service';
-import { AuthService } from '@app/services/auth/auth.service';
+import { SecureAuthService } from '@app/services/auth/secure-auth.service';
 
 @Component({
   selector: 'app-home',
@@ -1513,7 +1513,7 @@ import { AuthService } from '@app/services/auth/auth.service';
 export class HomeComponent implements OnInit {
   private readonly seoService = inject(SeoService);
   private readonly analyticsService = inject(GoogleAnalyticsService);
-  private readonly authService = inject(AuthService);
+  private readonly authService = inject(SecureAuthService);
 
   public readonly features = [
     {

@@ -1,20 +1,22 @@
 {
   "version": 2,
-  "name": "frontuna-api",
   "builds": [
     {
-      "src": "server-production.js",
-      "use": "@vercel/node"
+      "src": "src/server.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["prisma/**"]
+      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/server-production.js"
+      "dest": "/src/server.ts"
     },
     {
       "src": "/(.*)",
-      "dest": "/server-production.js"
+      "dest": "/src/server.ts"
     }
   ],
   "env": {

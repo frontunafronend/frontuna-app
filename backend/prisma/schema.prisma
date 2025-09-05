@@ -8,17 +8,35 @@ generator client {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  role         String   @default("user")
-  createdAt    DateTime @default(now())
-  components   Component[]
-  usageLogs    UsageLog[]
-  subscriptions Subscription[]
+  id              String    @id @default(uuid())
+  email           String    @unique @db.Citext
+  passwordHash    String
+  role            String    @default("user")
+  createdAt       DateTime  @default(now())
+  
+  // Enhanced auth fields
+  emailVerifiedAt DateTime?
+  isActive        Boolean   @default(true)
+  firstName       String?
+  lastName        String?
+  lastLoginAt     DateTime?
+  lastLoginIP     String?
+  twoFASecret     String?
+  
+  // Relations
+  components      Component[]
+  usageLogs       UsageLog[]
+  subscriptions   Subscription[]
+  refreshTokens   RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  emailVerifyTokens EmailVerifyToken[]
+  auditLogs       AuditLog[]
+  userSessions    UserSession[]
   
   @@index([createdAt(sort: Desc)])
   @@index([role])
+  @@index([email])
+  @@index([isActive])
 }
 
 model Component {
@@ -83,4 +101,81 @@ model Subscription {
   @@index([userId])
   @@index([plan, status])
   @@index([stripeId])
+}
+
+// 🔐 SECURE AUTH MODELS
+
+model RefreshToken {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hashedToken       String    @unique
+  expiresAt         DateTime
+  createdAt         DateTime  @default(now())
+  revokedAt         DateTime?
+  replacedByTokenId String?
+  ip                String?
+  userAgent         String?
+  
+  @@index([hashedToken])
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+model PasswordResetToken {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hashedToken String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  
+  @@index([hashedToken])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model EmailVerifyToken {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hashedToken String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  
+  @@index([hashedToken])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  event     String   // SIGNUP, LOGIN_OK, LOGIN_FAIL, etc.
+  meta      Json?    // Additional event data
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([event])
+  @@index([createdAt(sort: Desc)])
+  @@index([ip])
+}
+
+model UserSession {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip        String?
+  userAgent String?
+  createdAt DateTime  @default(now())
+  endedAt   DateTime?
+  
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
 }

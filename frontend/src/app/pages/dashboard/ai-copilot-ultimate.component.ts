@@ -53,7 +53,7 @@ import { AICopilotService } from '@app/services/ai/ai-copilot.service';
 import { EditorStateService, EditorBuffers } from '@app/services/editor-state.service';
 import { NotificationService } from '@app/services/notification/notification.service';
 import { AnalyticsService } from '@app/services/analytics/analytics.service';
-import { AuthService } from '@app/services/auth/auth.service';
+import { SecureAuthService } from '@app/services/auth/secure-auth.service';
 
 // Models
 import { ChatMessage } from '@app/models/chat.model';
@@ -588,7 +588,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   readonly editorState = inject(EditorStateService);
   private readonly notificationService = inject(NotificationService);
   private readonly analytics = inject(AnalyticsService);
-  private readonly authService = inject(AuthService);
+  private readonly authService = inject(SecureAuthService);
   private readonly sanitizer = inject(DomSanitizer);
   
   // 🧠 SIGNALS & STATE

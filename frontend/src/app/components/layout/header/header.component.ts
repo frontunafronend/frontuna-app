@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, inject, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -8,7 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
 
-import { AuthService } from '@app/services/auth/auth.service';
+import { SecureAuthService } from '@app/services/auth/secure-auth.service';
 import { NotificationService } from '@app/services/notification/notification.service';
 import { UserDataService } from '@app/services/user/user-data.service';
 import { ForceAdminService } from '@app/services/admin/force-admin.service';
@@ -1160,7 +1160,7 @@ import { ForceAdminService } from '@app/services/admin/force-admin.service';
   `]
 })
 export class HeaderComponent {
-  private readonly authService = inject(AuthService);
+  private readonly authService = inject(SecureAuthService);
   private readonly notificationService = inject(NotificationService);
   private readonly userDataService = inject(UserDataService);
 
@@ -1169,7 +1169,9 @@ export class HeaderComponent {
     console.log('🔧 HEADER COMPONENT INITIALIZING WITH ENHANCED USER DATA');
     
     // 🎯 REACTIVE AUTH STATE MONITORING - Watch for auth changes
-    this.authService.currentUser$.subscribe(user => {
+    // Subscribe to current user changes using signal effect
+    effect(() => {
+      const user = this.authService.currentUser();
       console.log('🔄 HEADER: Auth state changed, user:', user?.email || 'None');
       
       if (user?.id) {
@@ -1196,13 +1198,7 @@ export class HeaderComponent {
       }
     });
     
-    // 🎯 ADDITIONAL MONITORING - Watch Ultimate Auth Service state
-    if (this.authService['ultimateAuth']) {
-      this.authService['ultimateAuth'].authState$.subscribe(state => {
-        console.log('🔄 HEADER: Ultimate auth state changed:', state.isAuthenticated);
-        this.detectChanges();
-      });
-    }
+    // Auth state monitoring is now handled by the effect above
   }
   
   // 🎯 FORCE CHANGE DETECTION - Ensure header updates immediately
@@ -1221,12 +1217,8 @@ export class HeaderComponent {
 
   // 🎯 REACTIVE USER STATE - Use signals for immediate UI updates
   public readonly currentUser = computed(() => {
-    // Get user from both auth service and ultimate auth
-    const authUser = this.authService.currentUser();
-    const ultimateUser = this.authService['ultimateAuth']?.currentUser?.() || null;
-    
-    // Prefer ultimate auth user if available
-    const user = ultimateUser || authUser;
+    // Get user from secure auth service
+    const user = this.authService.currentUser();
     
     console.log('🔄 HEADER COMPUTED: Current user updated:', user?.email || 'None');
     return user;

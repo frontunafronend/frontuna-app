@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthGuard } from './guards/auth.guard';
-import { AdminGuard } from './guards/admin.guard';
+import { SecureAuthGuard, AdminGuard as SecureAdminGuard } from './guards/secure-auth.guard';
 
 export const routes: Routes = [
   // Public routes
@@ -37,11 +36,6 @@ export const routes: Routes = [
         title: 'Sign Up - Frontuna.com'
       },
       {
-        path: 'emergency',
-        loadComponent: () => import('./components/auth/emergency-login/emergency-login.component').then(m => m.EmergencyLoginComponent),
-        title: '🚨 Emergency Login - Frontuna.com'
-      },
-      {
         path: '',
         redirectTo: 'login',
         pathMatch: 'full'
@@ -52,7 +46,7 @@ export const routes: Routes = [
   // 🚨 EMERGENCY ACCESS ROUTES 🚨
   {
     path: 'emergency-admin',
-    loadComponent: () => import('./components/auth/emergency-login/emergency-login.component').then(m => m.EmergencyLoginComponent),
+    loadComponent: () => import('./pages/auth/login/login.component').then(m => m.LoginComponent),
     title: '🚨 Emergency Admin Access - Frontuna.com'
   },
   
@@ -60,68 +54,68 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'Dashboard - Frontuna.com',
     data: { seoIndex: false } // Protected dashboard should not be indexed
   },
   {
     path: 'dashboard/generate',
     loadComponent: () => import('./pages/dashboard/generate/generate.component').then(m => m.GenerateComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'Generate Component - Frontuna.com'
   },
   {
     path: 'dashboard/templates',
     loadComponent: () => import('./pages/dashboard/templates/templates.component').then(m => m.TemplatesComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'Templates - Frontuna.com'
   },
   {
     path: 'dashboard/history',
     loadComponent: () => import('./pages/dashboard/history/history.component').then(m => m.HistoryComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'Generation History - Frontuna.com'
   },
   {
     path: 'dashboard/export',
     loadComponent: () => import('./pages/dashboard/export/export.component').then(m => m.ExportComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'Export Projects - Frontuna.com'
   },
   {
     path: 'dashboard/components',
     loadComponent: () => import('./pages/dashboard/components/components.component').then(m => m.ComponentsComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'My Components - Frontuna.com'
   },
   {
     path: 'dashboard/ai-copilot',
     loadComponent: () => import('./pages/dashboard/ai-copilot-ultimate.component').then(m => m.AICopilotUltimateComponent),
-    // canActivate: [AuthGuard], // 🔧 TEMPORARILY DISABLED FOR LOCAL TESTING
+    canActivate: [SecureAuthGuard], // ✅ Using new secure auth guard
     title: 'AI Copilot Ultimate - Frontuna.com'
   },
   {
     path: 'dashboard/scaffold',
     loadComponent: () => import('./pages/dashboard/scaffold.component').then(m => m.ScaffoldComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'Scaffold Generator - Frontuna.com'
   },
   {
     path: 'dashboard/playground',
     loadComponent: () => import('./pages/dashboard/component-playground.component').then(m => m.ComponentPlaygroundComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'Component Playground - Frontuna.com'
   },
   {
     path: 'dashboard/editor',
     loadComponent: () => import('./components/editing/code-editor/code-editor.component').then(m => m.CodeEditorComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'AI Code Editor - Frontuna.com'
   },
   {
     path: 'dashboard/gallery',
     loadComponent: () => import('./pages/dashboard/gallery/gallery.component').then(m => m.GalleryPageComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'Component Gallery - Frontuna.com',
     data: { seoIndex: false } // Gallery should not be indexed
   },
@@ -130,20 +124,20 @@ export const routes: Routes = [
   {
     path: 'library',
     loadComponent: () => import('./pages/library/library.component').then(m => m.LibraryComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'Component Library - Frontuna.com'
   },
   {
     path: 'settings',
     loadComponent: () => import('./pages/settings/settings.component').then(m => m.SettingsComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'Settings - Frontuna.com',
     data: { seoIndex: false } // Settings should not be indexed
   },
   {
     path: 'billing',
     loadComponent: () => import('./pages/billing/billing.component').then(m => m.BillingComponent),
-    canActivate: [AuthGuard],
+    canActivate: [SecureAuthGuard],
     title: 'Billing - Frontuna.com',
     data: { seoIndex: false } // Billing should not be indexed
   },
@@ -152,14 +146,14 @@ export const routes: Routes = [
   {
     path: 'admin',
     loadComponent: () => import('./pages/admin/admin-dashboard.component').then(m => m.AdminDashboardComponent),
-    canActivate: [AdminGuard],
+    canActivate: [SecureAdminGuard],
     title: 'Admin Dashboard - Frontuna.com',
     data: { seoIndex: false } // Admin should not be indexed
   },
   {
     path: 'admin/ai-copilots',
     loadComponent: () => import('./pages/admin/ai-copilots.component').then(m => m.AICopilotAdminComponent),
-    canActivate: [AdminGuard],
+    canActivate: [SecureAdminGuard],
     title: 'AI Copilots & Guards - Admin - Frontuna.com',
     data: { seoIndex: false }
   },

@@ -15,7 +15,7 @@ import { HttpClient } from '@angular/common/http';
 
 import { SeoService } from '@app/services/seo/seo.service';
 import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics.service';
-import { AuthAgentService } from '@app/services/auth/auth-agent.service';
+import { SecureAuthService } from '@app/services/auth/secure-auth.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -1319,7 +1319,7 @@ export class AdminDashboardComponent implements OnInit {
   private readonly seoService = inject(SeoService);
   private readonly analyticsService = inject(GoogleAnalyticsService);
   private readonly http = inject(HttpClient);
-  private readonly authAgent = inject(AuthAgentService);
+  private readonly authService = inject(SecureAuthService);
   
   // 🌐 API Configuration
   private readonly API_BASE_URL = 'http://localhost:3000/api';
@@ -1956,7 +1956,7 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   async testAuthAgent() {
-    const isWorking = this.authAgent.isAuthenticated();
+    const isWorking = this.authService.isAuthenticated();
     alert(`🔧 Auth Agent: ${isWorking ? 'WORKING ✅' : 'ISSUES ❌'}`);
   }
 

@@ -9,7 +9,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { AuthService } from '@app/services/auth/auth.service';
+import { SecureAuthService } from '@app/services/auth/secure-auth.service';
 import { SeoService } from '@app/services/seo/seo.service';
 import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics.service';
 import { ComponentStateService, GeneratedComponent } from '../../services/component-state/component-state.service';
@@ -1075,7 +1075,7 @@ import { DashboardNavComponent } from '../../components/shared/dashboard-nav/das
   `]
 })
 export class DashboardComponent implements OnInit {
-  private readonly authService = inject(AuthService);
+  private readonly authService = inject(SecureAuthService);
   private readonly seoService = inject(SeoService);
   private readonly analyticsService = inject(GoogleAnalyticsService);
   private readonly router = inject(Router);

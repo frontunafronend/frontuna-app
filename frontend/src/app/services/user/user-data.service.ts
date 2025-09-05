@@ -1,11 +1,11 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 
 import { EnvironmentService } from '../core/environment.service';
 import { NotificationService } from '../notification/notification.service';
-import { AuthService } from '../auth/auth.service';
+import { SecureAuthService } from '../auth/secure-auth.service';
 import { User } from '@app/models/auth.model';
 
 interface UserProfile {
@@ -42,7 +42,7 @@ export class UserDataService {
   private readonly http = inject(HttpClient);
   private readonly environmentService = inject(EnvironmentService);
   private readonly notificationService = inject(NotificationService);
-  private readonly authService = inject(AuthService);
+  private readonly authService = inject(SecureAuthService);
 
   private readonly apiUrl = `${this.environmentService.apiUrl}/users`;
 
@@ -60,7 +60,9 @@ export class UserDataService {
     console.log('🔧 USER DATA SERVICE INITIALIZED');
     
     // Monitor auth changes and fetch user data when authenticated
-    this.authService.currentUser$.subscribe(user => {
+    // Subscribe to auth changes using effect
+    effect(() => {
+      const user = this.authService.currentUser();
       if (user?.id) {
         console.log('👤 User authenticated, fetching profile data...');
         this.fetchUserProfile(user.id).subscribe();

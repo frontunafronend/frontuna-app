@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { AuthService } from '@app/services/auth/auth.service';
+import { SecureAuthService } from '@app/services/auth/secure-auth.service';
 
 import { SeoService } from '@app/services/seo/seo.service';
 import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics.service';
@@ -29,7 +29,7 @@ import { FooterComponent } from './components/layout/footer/footer.component';
 export class AppComponent implements OnInit {
 
   private readonly router = inject(Router);
-  private readonly authService = inject(AuthService);
+  private readonly authService = inject(SecureAuthService);
 
   private currentRoute = signal('');
   private readonly seoService = inject(SeoService);

@@ -79,7 +79,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ProfessionalLoaderComponent } from '@app/components/ui/professional-loader/professional-loader.component';
 import { MatStepperModule } from '@angular/material/stepper';
 
-import { AuthService } from '@app/services/auth/auth.service';
+import { SecureAuthService } from '@app/services/auth/secure-auth.service';
 import { SeoService } from '@app/services/seo/seo.service';
 import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics.service';
 import { GlobalLoaderService } from '@app/services/ui/global-loader.service';
@@ -755,7 +755,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 })
 export class SignupComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
+  private readonly authService = inject(SecureAuthService);
   private readonly seoService = inject(SeoService);
   private readonly analyticsService = inject(GoogleAnalyticsService);
   private readonly globalLoader = inject(GlobalLoaderService);

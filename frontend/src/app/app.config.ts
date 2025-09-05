@@ -17,11 +17,11 @@ import { provideToastr } from 'ngx-toastr';
 
 // App modules
 import { routes } from './app.routes';
-import { authInterceptor } from './interceptors/auth.interceptor';
+import { secureAuthInterceptor } from './interceptors/secure-auth.interceptor';
 import { errorInterceptor } from './interceptors/error.interceptor';
 import { loadingInterceptor } from './interceptors/loading.interceptor';
 import { environment } from '../environments/environment';
-import { AuthService } from './services/auth/auth.service';
+import { SecureAuthService } from './services/auth/secure-auth.service';
 
 // AI Services
 import { AICopilotService } from './services/ai/ai-copilot.service';
@@ -40,13 +40,13 @@ export function playerFactory() {
   return import('lottie-web');
 }
 
-// 🔧 SIMPLIFIED AUTH INITIALIZATION - RELIABLE AND FAST 🔧
-export function initializeAuth(authService: AuthService) {
+// 🔧 SECURE AUTH INITIALIZATION - RELIABLE AND FAST 🔧
+export function initializeSecureAuth(secureAuthService: SecureAuthService) {
   return () => {
-    console.log('🔧 AUTH INITIALIZER - Simple and reliable startup');
+    console.log('🔐 SECURE AUTH INITIALIZER - Starting secure authentication');
     
-    // 🔧 FIX: Don't do any async work in APP_INITIALIZER - just resolve immediately
-    // The AuthService constructor already handles synchronous initialization
+    // The SecureAuthService constructor already handles initialization
+    // Just ensure it's instantiated
     return Promise.resolve();
   };
 }
@@ -66,8 +66,8 @@ export function initializeSeo(seoService: SeoService) {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Auth Service
-    AuthService,
+    // Auth Service (secure only)
+    SecureAuthService,
     
     // AI Services
     AICopilotService,
@@ -83,11 +83,11 @@ export const appConfig: ApplicationConfig = {
     // Analytics Service
     GoogleAnalyticsService,
     
-    // App Initializer for Authentication
+    // App Initializer for Secure Authentication
     {
       provide: APP_INITIALIZER,
-      useFactory: initializeAuth,
-      deps: [AuthService],
+      useFactory: initializeSecureAuth,
+      deps: [SecureAuthService],
       multi: true
     },
     
@@ -114,7 +114,7 @@ export const appConfig: ApplicationConfig = {
     // HTTP Client with interceptors
     provideHttpClient(
       withInterceptors([
-        authInterceptor,
+        secureAuthInterceptor, // Secure auth interceptor
         loadingInterceptor,
         errorInterceptor
       ])
