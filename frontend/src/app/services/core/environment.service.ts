@@ -103,9 +103,8 @@ export class EnvironmentService {
       return 'https://api-staging.frontuna.com/api';
     }
     
-    // Production environment
-3
-    return 'https://frontuna-api.vercel.app/api';
+    // Production environment - use configured URL from environment
+    return this._environment.apiUrl;
   }
 
   /**
@@ -188,7 +187,7 @@ export class EnvironmentService {
       return 'https://api-staging.frontuna.com';
     }
     
-    return 'https://frontuna-api.vercel.app';
+    return this._environment.socketUrl;
   }
 
   /**
