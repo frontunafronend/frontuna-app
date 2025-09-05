@@ -2,27 +2,21 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/server.ts",
-      "use": "@vercel/node@3.0.0",
-      "config": {
-        "includeFiles": ["prisma/**", "src/**"],
-        "excludeFiles": ["node_modules/**"]
-      }
+      "src": "simple-test-server.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/src/server.ts"
+      "dest": "/simple-test-server.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/src/server.ts"
+      "dest": "/simple-test-server.js"
     }
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "installCommand": "npm ci",
-  "buildCommand": "npm run build"
+  }
 }
