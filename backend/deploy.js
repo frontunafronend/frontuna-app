@@ -11,7 +11,7 @@ console.log('🚀 Starting stable API deployment...');
 
 try {
   // Deploy using the simple server configuration
-  console.log('📦 Deploying simple-test-server.js...');
+  console.log('📦 Deploying secure TypeScript backend with Neon DB...');
   const result = execSync('vercel --prod --force', { encoding: 'utf8' });
   console.log(result);
   

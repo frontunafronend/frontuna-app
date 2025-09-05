@@ -342,13 +342,23 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 app.post('/api/auth/refresh', (req, res) => {
+  // Set httpOnly cookie for refresh token (secure auth feature)
+  res.cookie('frt', 'mock-refresh-token-' + Date.now(), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/api/auth/refresh',
+    maxAge: 45 * 24 * 60 * 60 * 1000 // 45 days
+  });
+  
   res.json({
     success: true,
     data: {
       accessToken: 'mock-access-token-' + Date.now(),
       refreshToken: 'mock-refresh-token-' + Date.now(),
-      expiresIn: 900
-    }
+      expiresIn: 900 // 15 minutes
+    },
+    message: 'Token refreshed successfully'
   });
 });
 
