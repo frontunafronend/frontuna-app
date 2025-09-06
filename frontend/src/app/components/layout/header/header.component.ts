@@ -1292,8 +1292,16 @@ export class HeaderComponent {
   public readonly notificationCount = computed(() => this.notifications().filter((n: any) => !n.isRead).length);
   public readonly isMobileMenuOpen = this._isMobileMenuOpen.asReadonly();
 
-  async logout(): Promise<void> {
-    await this.authService.logout();
+  logout(): void {
+    console.log('🚪 Header: Logout button clicked');
+    this.authService.logout().subscribe({
+      next: () => {
+        console.log('✅ Header: Logout completed successfully');
+      },
+      error: (error) => {
+        console.error('❌ Header: Logout error:', error);
+      }
+    });
   }
 
   // 🚨 EMERGENCY ADMIN BUTTON METHOD - GUARANTEES ADMIN BUTTON SHOWS
