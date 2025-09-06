@@ -20,13 +20,14 @@
     <div class="container">
         <h1>🔐 Frontuna Live API Test</h1>
         <div class="info">
-            <strong>Testing API:</strong> https://frontuna-api.vercel.app<br>
+            <strong>Testing API:</strong> http://localhost:3001<br>
             <strong>Note:</strong> This page must be served from a web server (not file://) to avoid CORS issues.
         </div>
         
         <div class="test-section">
             <h3>🏥 Health Check</h3>
             <button onclick="testHealth()">Test Health</button>
+            <button onclick="testHealthSimple()">Test Health (Simple)</button>
             <div id="health-result"></div>
         </div>
 
@@ -54,7 +55,7 @@
     </div>
 
     <script>
-        const API_BASE = 'https://frontuna-api.vercel.app';
+        const API_BASE = 'http://localhost:3001';
         let currentToken = null;
 
         // Initialize debug info
@@ -95,11 +96,59 @@
                     `;
                 }
             } catch (error) {
+                console.error('Health check error:', error);
+                console.error('Error details:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
                 resultDiv.innerHTML = `
                     <div class="error">
                         <div class="status">❌ Health Check ERROR</div>
-                        <p>${error.message}</p>
-                        <p>This could be a CORS or network issue.</p>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Type:</strong> ${error.name}</p>
+                        <p><strong>API URL:</strong> ${API_BASE}/health</p>
+                        <p>Check browser console for more details.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testHealthSimple() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = '<div class="loading">⏳ Testing health endpoint (simple)...</div>';
+            
+            try {
+                // Simple fetch without extra headers
+                const response = await fetch(`${API_BASE}/health`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <div class="status">✅ Health Check PASSED (Simple)</div>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <div class="status">❌ Health Check FAILED (Simple)</div>
+                            <p>Status: ${response.status} - ${response.statusText}</p>
+                            <pre>${errorText}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Simple health check error:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <div class="status">❌ Health Check ERROR (Simple)</div>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Type:</strong> ${error.name}</p>
+                        <p>This is a simpler test without credentials or custom headers.</p>
                     </div>
                 `;
             }
