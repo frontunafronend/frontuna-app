@@ -20,7 +20,7 @@
     <div class="container">
         <h1>🔐 Frontuna Live API Test</h1>
         <div class="info">
-            <strong>Testing API:</strong> http://localhost:3001<br>
+            <strong>Testing API:</strong> https://frontuna-api.vercel.app<br>
             <strong>Note:</strong> This page must be served from a web server (not file://) to avoid CORS issues.
         </div>
         
@@ -55,7 +55,7 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:3001';
+        const API_BASE = 'https://frontuna-api.vercel.app';
         let currentToken = null;
 
         // Initialize debug info
@@ -72,8 +72,9 @@
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                    },
-                    credentials: 'include'
+                    }
+                    // Temporarily remove credentials for testing
+                    // credentials: 'include'
                 });
                 
                 if (response.ok) {
@@ -169,7 +170,8 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    credentials: 'include',
+                    // Temporarily remove credentials for testing
+                    // credentials: 'include',
                     body: JSON.stringify(testCredentials)
                 });
                 

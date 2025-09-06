@@ -4,21 +4,32 @@ const url = require('url');
 
 console.log('🚀 Starting Simple Production API Server...');
 
-// CORS headers - Production origins
+// CORS headers - Production origins with debugging
 const setCORSHeaders = (res, origin) => {
+  console.log(`🔍 CORS Debug - Origin: ${origin || 'No Origin'}`);
+  
   const allowedOrigins = [
     'https://frontuna.com',
-    'https://www.frontuna.com',
+    'https://www.frontuna.com', 
     'https://frontuna-frontend-app.vercel.app',
     'http://localhost:4200',
     'http://localhost:4201',
-    'http://localhost:8080'
+    'http://localhost:8080',
+    'http://localhost:3000',
+    'http://127.0.0.1:8080'
   ];
   
-  if (origin && allowedOrigins.includes(origin)) {
+  // For development, be more permissive with localhost
+  if (origin && (allowedOrigins.includes(origin) || origin.includes('localhost') || origin.includes('127.0.0.1'))) {
+    console.log(`✅ CORS: Allowing origin ${origin}`);
     res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    // No origin (direct access) - allow it
+    console.log(`✅ CORS: No origin, allowing request`);
+    res.setHeader('Access-Control-Allow-Origin', '*');
   } else {
-    // Default to main production domain
+    // Default fallback
+    console.log(`⚠️ CORS: Unknown origin ${origin}, using default`);
     res.setHeader('Access-Control-Allow-Origin', 'https://frontuna.com');
   }
   
