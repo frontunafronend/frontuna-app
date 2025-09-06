@@ -3,14 +3,14 @@
   "buildCommand": "npm run build",
   "builds": [
     {
-      "src": "minimal-test-api.js",
+      "src": "fast-api.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/minimal-test-api.js"
+      "dest": "/fast-api.js"
     }
   ],
   "env": {
