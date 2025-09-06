@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live API Test - Frontuna</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .loading { background: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Frontuna Live API Test</h1>
+    <p>Testing: <strong>https://frontuna-api.vercel.app</strong></p>
+    
+    <div class="test-section">
+        <h3>1. Health Check</h3>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="health-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. CORS Test</h3>
+        <button onclick="testCORS()">Test CORS Headers</button>
+        <div id="cors-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Signup Test</h3>
+        <button onclick="testSignup()">Test Signup Endpoint</button>
+        <div id="signup-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Login Test</h3>
+        <button onclick="testLogin()">Test Login Endpoint</button>
+        <div id="login-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://frontuna-api.vercel.app';
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = '<div class="loading">⏳ Testing health endpoint...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <p>✅ <strong>Health Check PASSED</strong></p>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <p>❌ Health Check Failed</p>
+                            <p>Status: ${response.status} - ${response.statusText}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p>❌ <strong>Health Check ERROR</strong></p>
+                        <p>${error.message}</p>
+                        <p>This could be a CORS or network issue.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testCORS() {
+            const resultDiv = document.getElementById('cors-result');
+            resultDiv.innerHTML = '<div class="loading">⏳ Testing CORS...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                    'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials')
+                };
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <p>✅ <strong>CORS Preflight Response</strong></p>
+                        <p>Status: ${response.status}</p>
+                        <p>Origin: ${window.location.origin}</p>
+                        <pre>${JSON.stringify(corsHeaders, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p>❌ <strong>CORS Test Failed</strong></p>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testSignup() {
+            const resultDiv = document.getElementById('signup-result');
+            resultDiv.innerHTML = '<div class="loading">⏳ Testing signup endpoint...</div>';
+            
+            const testUser = {
+                email: `test-${Date.now()}@example.com`,
+                password: 'TestPassword123!',
+                firstName: 'Test',
+                lastName: 'User'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(testUser)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <p>✅ <strong>Signup WORKS!</strong></p>
+                            <p>Status: ${response.status}</p>
+                            <p>User created: ${testUser.email}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <p>❌ Signup Failed</p>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p>❌ <strong>Signup ERROR</strong></p>
+                        <p>${error.message}</p>
+                        <p>Likely CORS or network issue</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            resultDiv.innerHTML = '<div class="loading">⏳ Testing login endpoint...</div>';
+            
+            const testCredentials = {
+                email: 'admin@frontuna.com',
+                password: 'admin123'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(testCredentials)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <p>✅ <strong>Login WORKS!</strong></p>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <p>❌ Login Failed</p>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p>❌ <strong>Login ERROR</strong></p>
+                        <p>${error.message}</p>
+                        <p>Likely CORS or network issue</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-run health check on page load
+        window.onload = function() {
+            console.log('🔍 Starting automatic API tests...');
+            testHealth();
+        };
+    </script>
+</body>
+</html>

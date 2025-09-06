@@ -9,9 +9,16 @@ const cors = require('cors');
 const app = express();
 const PORT = 3000;
 
-// Middleware
+// Middleware - Updated CORS for live frontend
 app.use(cors({
-  origin: ['http://localhost:4200', 'http://localhost:4201'],
+  origin: [
+    'http://localhost:4200', 
+    'http://localhost:4201',
+    'https://frontuna.com',
+    'https://www.frontuna.com',
+    'https://frontuna-frontend-app.vercel.app',
+    'https://frontend-ow3k5ujpk-frontunas-projects-11c7fb14.vercel.app'
+  ],
   credentials: true
 }));
 app.use(express.json());

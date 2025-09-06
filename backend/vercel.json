@@ -2,21 +2,18 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/server.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["prisma/schema.prisma", "src/**/*.ts"]
-      }
+      "src": "simple-test-server.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/src/server.ts"
+      "dest": "/simple-test-server.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/src/server.ts"
+      "dest": "/simple-test-server.js"
     }
   ],
   "env": {
