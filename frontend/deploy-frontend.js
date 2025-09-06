@@ -1,6 +1,7 @@
 const { execSync } = require('child_process');
 
-console.log('🚀 Deploying Frontend to fix www.frontuna.com...');
+console.log('🚀 Starting FRONTEND deployment...');
+console.log('⚠️  Note: Use deploy-all.js from root for sequential frontend+backend deployment');
 
 try {
   // Deploy the frontend

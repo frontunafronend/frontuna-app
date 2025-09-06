@@ -7,7 +7,8 @@
 
 const { execSync } = require('child_process');
 
-console.log('🚀 Starting stable API deployment...');
+console.log('🚀 Starting BACKEND API deployment...');
+console.log('⚠️  Note: Use deploy-all.js from root for sequential frontend+backend deployment');
 
 try {
   // Deploy using the simple server configuration
