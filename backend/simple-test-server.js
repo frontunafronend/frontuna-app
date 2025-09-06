@@ -9,19 +9,162 @@ const cors = require('cors');
 const app = express();
 const PORT = 3000;
 
-// Middleware - Updated CORS for live frontend
+// 🔍 REQUEST LOGGING MIDDLEWARE - Debug all requests
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`🌐 [${timestamp}] ${req.method} ${req.url}`);
+  console.log(`   Origin: ${req.headers.origin || 'No Origin'}`);
+  console.log(`   User-Agent: ${req.headers['user-agent'] || 'No User-Agent'}`);
+  console.log(`   Authorization: ${req.headers.authorization ? 'Present' : 'None'}`);
+  console.log(`   Content-Type: ${req.headers['content-type'] || 'None'}`);
+  next();
+});
+
+// 🔐 CORS MIDDLEWARE with detailed logging
 app.use(cors({
-  origin: [
-    'http://localhost:4200', 
-    'http://localhost:4201',
-    'https://frontuna.com',
-    'https://www.frontuna.com',
-    'https://frontuna-frontend-app.vercel.app',
-    'https://frontend-ow3k5ujpk-frontunas-projects-11c7fb14.vercel.app'
-  ],
-  credentials: true
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:4200', 
+      'http://localhost:4201',
+      'https://frontuna.com',
+      'https://www.frontuna.com',
+      'https://frontuna-frontend-app.vercel.app',
+      'https://frontend-ow3k5ujpk-frontunas-projects-11c7fb14.vercel.app'
+    ];
+    
+    console.log(`🔍 CORS Check - Origin: ${origin || 'No Origin'}`);
+    
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) {
+      console.log('✅ CORS: Allowing request with no origin');
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
+      console.log('✅ CORS: Origin allowed');
+      callback(null, true);
+    } else {
+      console.log(`❌ CORS: Origin rejected - ${origin}`);
+      console.log(`   Allowed origins: ${allowedOrigins.join(', ')}`);
+      callback(new Error(`CORS policy violation: Origin ${origin} is not allowed`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['X-Total-Count', 'X-Page-Count']
 }));
+
 app.use(express.json());
+
+// 🔐 AUTH GUARD MIDDLEWARE - Comprehensive authentication checking
+const authGuard = (req, res, next) => {
+  console.log('🔐 AUTH GUARD: Checking authentication...');
+  
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  
+  console.log(`   Token present: ${token ? 'Yes' : 'No'}`);
+  
+  if (!token) {
+    console.log('❌ AUTH GUARD: No token provided');
+    return res.status(401).json({
+      success: false,
+      error: {
+        code: 'TOKEN_MISSING',
+        message: 'Access token is required'
+      }
+    });
+  }
+  
+  // Mock token validation (in real app, verify JWT)
+  if (token.startsWith('mock-access-token')) {
+    console.log('✅ AUTH GUARD: Valid token');
+    // Mock user data based on token
+    req.user = {
+      id: '1',
+      email: 'admin@frontuna.com',
+      role: 'admin',
+      firstName: 'Admin',
+      lastName: 'User'
+    };
+    next();
+  } else {
+    console.log('❌ AUTH GUARD: Invalid token');
+    return res.status(401).json({
+      success: false,
+      error: {
+        code: 'INVALID_TOKEN',
+        message: 'Invalid access token'
+      }
+    });
+  }
+};
+
+// 👑 ADMIN GUARD MIDDLEWARE - Protect admin routes
+const adminGuard = (req, res, next) => {
+  console.log('👑 ADMIN GUARD: Checking admin permissions...');
+  
+  if (!req.user) {
+    console.log('❌ ADMIN GUARD: No user in request');
+    return res.status(401).json({
+      success: false,
+      error: {
+        code: 'AUTHENTICATION_REQUIRED',
+        message: 'Authentication required'
+      }
+    });
+  }
+  
+  console.log(`   User role: ${req.user.role}`);
+  console.log(`   User email: ${req.user.email}`);
+  
+  if (req.user.role !== 'admin') {
+    console.log('❌ ADMIN GUARD: Insufficient permissions');
+    return res.status(403).json({
+      success: false,
+      error: {
+        code: 'INSUFFICIENT_PERMISSIONS',
+        message: 'Admin access required'
+      }
+    });
+  }
+  
+  console.log('✅ ADMIN GUARD: Admin access granted');
+  next();
+};
+
+// 🔍 ROLE GUARD FACTORY - Create guards for specific roles
+const roleGuard = (allowedRoles) => {
+  return (req, res, next) => {
+    console.log(`🔍 ROLE GUARD: Checking roles [${allowedRoles.join(', ')}]...`);
+    
+    if (!req.user) {
+      console.log('❌ ROLE GUARD: No user in request');
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_REQUIRED',
+          message: 'Authentication required'
+        }
+      });
+    }
+    
+    if (!allowedRoles.includes(req.user.role)) {
+      console.log(`❌ ROLE GUARD: Role '${req.user.role}' not in allowed roles`);
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: `Access denied. Required roles: ${allowedRoles.join(', ')}`
+        }
+      });
+    }
+    
+    console.log(`✅ ROLE GUARD: Role '${req.user.role}' authorized`);
+    next();
+  };
+};
 
 // 📊 Mock live users data (simulating Neon database)
 const mockUsers = [
@@ -105,8 +248,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 👥 Get All Users (Admin Only)
-app.get('/api/admin/users', (req, res) => {
+// 👥 Get All Users (Admin Only) - PROTECTED ROUTE
+app.get('/api/admin/users', authGuard, adminGuard, (req, res) => {
   try {
     console.log('📊 Fetching users for admin panel...');
     
@@ -128,8 +271,8 @@ app.get('/api/admin/users', (req, res) => {
   }
 });
 
-// 📊 Get Admin Statistics
-app.get('/api/admin/stats', (req, res) => {
+// 📊 Get Admin Statistics - PROTECTED ROUTE
+app.get('/api/admin/stats', authGuard, adminGuard, (req, res) => {
   try {
     const stats = {
       totalUsers: mockUsers.length,
@@ -376,7 +519,8 @@ app.post('/api/auth/logout', (req, res) => {
   });
 });
 
-app.get('/api/auth/profile', (req, res) => {
+// 👤 Get User Profile - PROTECTED ROUTE
+app.get('/api/auth/profile', authGuard, (req, res) => {
   // Return first user as mock profile
   const user = mockUsers[0];
   res.json({
