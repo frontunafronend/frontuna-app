@@ -25,11 +25,7 @@ async function seedAdmin() {
       data: {
         email: 'admin@frontuna.com',
         passwordHash: hashedPassword,
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'admin',
-        isActive: true,
-        emailVerifiedAt: new Date()
+        role: 'admin'
       }
     });
 
@@ -39,16 +35,20 @@ async function seedAdmin() {
       role: admin.role
     });
 
-    // Log the admin creation
-    await prisma.auditLog.create({
-      data: {
-        userId: admin.id,
-        event: 'ADMIN_CREATED',
-        meta: { email: admin.email, method: 'seed' },
-        ip: 'system',
-        userAgent: 'seed-script'
-      }
-    });
+    // Log the admin creation (skip if auditLog table doesn't exist)
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId: admin.id,
+          event: 'ADMIN_CREATED',
+          meta: { email: admin.email, method: 'seed' },
+          ip: 'system',
+          userAgent: 'seed-script'
+        }
+      });
+    } catch (error) {
+      console.log('⚠️ Audit log not available, skipping...');
+    }
 
     console.log('✅ Admin user seeded successfully!');
     console.log('📧 Email: admin@frontuna.com');

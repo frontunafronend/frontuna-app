@@ -6,8 +6,18 @@ const { PrismaClient } = require('@prisma/client');
 
 console.log('🚀 Production API Starting with Live Database...');
 
-// Initialize Prisma Client
-const prisma = new PrismaClient();
+// Initialize Prisma Client with fallback
+let prisma;
+let databaseConnected = false;
+
+try {
+  prisma = new PrismaClient();
+  databaseConnected = true;
+  console.log('✅ Database connection initialized');
+} catch (error) {
+  console.log('⚠️ Database connection failed, using fallback mode:', error.message);
+  databaseConnected = false;
+}
 
 // Environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
@@ -133,13 +143,30 @@ module.exports = async (req, res) => {
     // Health endpoint
     if (pathname === '/health') {
       console.log('❤️ Health check requested');
+      
+      let dbStatus = 'disconnected';
+      let message = '⚠️ API running in fallback mode - Database not connected';
+      
+      if (databaseConnected && prisma) {
+        try {
+          await prisma.$queryRaw`SELECT 1`;
+          dbStatus = 'connected';
+          message = '✅ Production API with Live Database is healthy!';
+        } catch (error) {
+          console.log('Database health check failed:', error.message);
+          dbStatus = 'error';
+          message = '❌ Database connection error';
+        }
+      }
+      
       return sendJSON(res, 200, {
         status: 'ok',
         timestamp: new Date().toISOString(),
-        message: '✅ Production API with Live Database is healthy!',
+        message: message,
         environment: 'production',
-        database: 'connected',
-        version: '2.0.0'
+        database: dbStatus,
+        version: '2.0.0',
+        fallbackMode: !databaseConnected
       }, origin);
     }
 

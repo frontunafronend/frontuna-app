@@ -1,76 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
-  id              String    @id @default(uuid())
-  email           String    @unique @db.Citext
-  passwordHash    String
-  role            String    @default("user")
-  createdAt       DateTime  @default(now())
-  
-  // Enhanced auth fields
-  emailVerifiedAt DateTime?
-  isActive        Boolean   @default(true)
-  firstName       String?
-  lastName        String?
-  lastLoginAt     DateTime?
-  lastLoginIP     String?
-  twoFASecret     String?
-  
-  // Relations
-  components      Component[]
-  usageLogs       UsageLog[]
-  subscriptions   Subscription[]
-  refreshTokens   RefreshToken[]
-  passwordResetTokens PasswordResetToken[]
-  emailVerifyTokens EmailVerifyToken[]
-  auditLogs       AuditLog[]
-  userSessions    UserSession[]
-  
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String
+  role          String         @default("user")
+  createdAt     DateTime       @default(now())
+  components    Component[]
+  subscriptions Subscription[]
+  usageLogs     UsageLog[]
+
   @@index([createdAt(sort: Desc)])
   @@index([role])
-  @@index([email])
-  @@index([isActive])
 }
 
 model Component {
-  id        String   @id @default(uuid())
+  id        String             @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
-  style     String   // material | bootstrap | html
-  framework String   // "angular"
-  version   Int      @default(1)
+  style     String
+  framework String
+  version   Int                @default(1)
   codeTs    String
   codeHtml  String
   codeScss  String
   meta      Json?
-  createdAt DateTime @default(now())
+  createdAt DateTime           @default(now())
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   versions  ComponentVersion[]
-  
+
+  @@unique([userId, name])
   @@index([userId, createdAt(sort: Desc)])
   @@index([framework])
   @@index([style])
   @@index([name])
-  @@unique([userId, name])
 }
 
 model ComponentVersion {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   componentId String
-  component   Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
   v           Int
   codeTs      String
   codeHtml    String
   codeScss    String
   notes       String?
   createdAt   DateTime  @default(now())
+  component   Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
 
   @@unique([componentId, v])
 }
@@ -78,104 +60,120 @@ model ComponentVersion {
 model UsageLog {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokensIn  Int
   tokensOut Int
   route     String
   createdAt DateTime @default(now())
-  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId, createdAt(sort: Desc)])
   @@index([route])
 }
 
 model Subscription {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan        String   // free | pro
-  status      String   // active | canceled
-  startsAt    DateTime
-  renewsAt    DateTime?
-  stripeId    String?
-  
+  id       String    @id @default(uuid())
+  userId   String
+  plan     String
+  status   String
+  startsAt DateTime
+  renewsAt DateTime?
+  stripeId String?
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([plan, status])
   @@index([stripeId])
 }
 
-// 🔐 SECURE AUTH MODELS
-
-model RefreshToken {
-  id                String    @id @default(uuid())
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hashedToken       String    @unique
-  expiresAt         DateTime
-  createdAt         DateTime  @default(now())
-  revokedAt         DateTime?
-  replacedByTokenId String?
-  ip                String?
-  userAgent         String?
-  
-  @@index([hashedToken])
-  @@index([userId])
-  @@index([expiresAt])
-  @@index([revokedAt])
+model ai_usage {
+  id          Int       @id @default(autoincrement())
+  user_id     Int?
+  prompt      String
+  response    String?
+  mode        String?   @db.VarChar(50)
+  tokens_used Int?      @default(0)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  users       users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-model PasswordResetToken {
-  id          String    @id @default(uuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hashedToken String    @unique
-  expiresAt   DateTime
-  usedAt      DateTime?
-  createdAt   DateTime  @default(now())
-  
-  @@index([hashedToken])
-  @@index([userId])
-  @@index([expiresAt])
+model api_keys {
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  name       String    @db.VarChar(255)
+  key_value  String    @unique @db.VarChar(255)
+  last_used  DateTime? @db.Timestamp(6)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-model EmailVerifyToken {
-  id          String    @id @default(uuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hashedToken String    @unique
-  expiresAt   DateTime
-  usedAt      DateTime?
-  createdAt   DateTime  @default(now())
-  
-  @@index([hashedToken])
-  @@index([userId])
-  @@index([expiresAt])
+model chat_history {
+  id            Int       @id @default(autoincrement())
+  user_id       Int?
+  session_id    String    @db.VarChar(255)
+  message_type  String    @db.VarChar(50)
+  content       String
+  tokens_used   Int?      @default(0)
+  model_used    String?   @db.VarChar(100)
+  response_time Int?
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  users         users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  event     String   // SIGNUP, LOGIN_OK, LOGIN_FAIL, etc.
-  meta      Json?    // Additional event data
-  ip        String?
-  userAgent String?
-  createdAt DateTime @default(now())
-  
-  @@index([userId])
-  @@index([event])
-  @@index([createdAt(sort: Desc)])
-  @@index([ip])
+model copilot_sessions {
+  id            Int       @id @default(autoincrement())
+  user_id       Int?
+  session_id    String    @unique @db.VarChar(255)
+  title         String?   @db.VarChar(255)
+  context       String?
+  total_tokens  Int?      @default(0)
+  message_count Int?      @default(0)
+  status        String?   @default("active") @db.VarChar(50)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+  users         users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-model UserSession {
-  id        String    @id @default(uuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ip        String?
-  userAgent String?
-  createdAt DateTime  @default(now())
-  endedAt   DateTime?
-  
-  @@index([userId])
-  @@index([createdAt(sort: Desc)])
+model notification_settings {
+  id                    Int       @id @default(autoincrement())
+  user_id               Int?      @unique
+  generation_complete   Boolean?  @default(true)
+  weekly_summary        Boolean?  @default(true)
+  plan_updates          Boolean?  @default(true)
+  browser_notifications Boolean?  @default(false)
+  created_at            DateTime? @default(now()) @db.Timestamp(6)
+  updated_at            DateTime? @default(now()) @db.Timestamp(6)
+  users                 users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model user_preferences {
+  id                Int       @id @default(autoincrement())
+  user_id           Int?      @unique
+  dark_mode         Boolean?  @default(false)
+  language          String?   @default("en") @db.VarChar(10)
+  default_framework String?   @default("angular") @db.VarChar(50)
+  auto_save         Boolean?  @default(true)
+  typescript        Boolean?  @default(true)
+  notifications     Boolean?  @default(true)
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @default(now()) @db.Timestamp(6)
+  users             users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model users {
+  id                    Int                    @id @default(autoincrement())
+  email                 String                 @unique @db.VarChar(255)
+  password_hash         String                 @db.VarChar(255)
+  first_name            String?                @db.VarChar(100)
+  last_name             String?                @db.VarChar(100)
+  role                  String?                @default("user") @db.VarChar(50)
+  created_at            DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at            DateTime?              @default(now()) @db.Timestamp(6)
+  last_login_at         DateTime?              @db.Timestamp(6)
+  ai_usage              ai_usage[]
+  api_keys              api_keys[]
+  chat_history          chat_history[]
+  copilot_sessions      copilot_sessions[]
+  notification_settings notification_settings?
+  user_preferences      user_preferences?
 }
