@@ -2,14 +2,6 @@
   "version": 2,
   "routes": [
     {
-      "src": "/health",
-      "dest": "/api/health.js"
-    },
-    {
-      "src": "/api/auth/login",
-      "dest": "/api/auth/login.js"
-    },
-    {
       "src": "/(.*)",
       "dest": "/api/index.js"
     }

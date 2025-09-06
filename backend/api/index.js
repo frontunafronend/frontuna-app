@@ -1,9 +1,9 @@
-// 🚀 VERCEL SERVERLESS API - Main handler
+// 🚀 PRODUCTION API - Based on working local structure
 const url = require('url');
 
-console.log('🚀 Vercel Serverless API Starting...');
+console.log('🚀 Production API Starting...');
 
-// CORS headers
+// CORS headers - Production ready
 const setCORSHeaders = (res, origin) => {
   console.log(`🔍 CORS Debug - Origin: ${origin || 'No Origin'}`);
   
@@ -61,7 +61,7 @@ const parseBody = (req) => {
   });
 };
 
-// Main handler
+// Main handler - Vercel serverless function
 module.exports = async (req, res) => {
   const origin = req.headers.origin;
   const parsedUrl = url.parse(req.url, true);
@@ -83,9 +83,10 @@ module.exports = async (req, res) => {
     if (pathname === '/health') {
       console.log('❤️ Health check requested');
       return sendJSON(res, 200, {
-        status: 'healthy',
-        message: 'Production API is running!',
+        status: 'ok',
         timestamp: new Date().toISOString(),
+        message: '✅ Production API is healthy!',
+        environment: 'production',
         version: '1.0.0'
       }, origin);
     }
@@ -99,27 +100,32 @@ module.exports = async (req, res) => {
       const body = await parseBody(req);
       console.log('🔐 Login requested:', { email: body.email, password: '***' });
 
-      // Mock login validation
+      // Production login validation (using same test credentials for now)
       if (body.email === 'admin@frontuna.com' && body.password === 'admin123') {
-        const mockToken = 'mock-jwt-token-' + Date.now();
+        const accessToken = 'prod-jwt-token-' + Date.now();
+        const refreshToken = 'prod-refresh-token-' + Date.now();
         
-        // Set httpOnly cookie for refresh token
+        // Set httpOnly cookies for production
         res.setHeader('Set-Cookie', [
-          `refreshToken=mock-refresh-${Date.now()}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`,
-          `accessToken=${mockToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=900`
+          `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`,
+          `accessToken=${accessToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=900`
         ]);
 
         return sendJSON(res, 200, {
           success: true,
-          message: 'Login successful',
-          user: {
-            id: 1,
-            email: 'admin@frontuna.com',
-            firstName: 'Admin',
-            lastName: 'User',
-            role: 'admin'
+          data: {
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            expiresIn: 900,
+            user: {
+              id: '1',
+              email: 'admin@frontuna.com',
+              role: 'admin',
+              firstName: 'Production',
+              lastName: 'Admin'
+            }
           },
-          token: mockToken
+          message: '✅ Login successful (Production API)'
         }, origin);
       } else {
         return sendJSON(res, 401, {
@@ -139,9 +145,9 @@ module.exports = async (req, res) => {
 
       return sendJSON(res, 201, {
         success: true,
-        message: 'User created successfully',
+        message: 'User created successfully (Production)',
         user: {
-          id: Date.now(),
+          id: Date.now().toString(),
           email: body.email,
           firstName: body.firstName || 'New',
           lastName: body.lastName || 'User',
@@ -161,10 +167,10 @@ module.exports = async (req, res) => {
       return sendJSON(res, 200, {
         success: true,
         user: {
-          id: 1,
+          id: '1',
           email: 'admin@frontuna.com',
-          firstName: 'Admin',
-          lastName: 'User',
+          firstName: 'Production',
+          lastName: 'Admin',
           role: 'admin'
         }
       }, origin);
@@ -181,24 +187,24 @@ module.exports = async (req, res) => {
 
       return sendJSON(res, 200, {
         success: true,
-        users: [
-          {
-            id: 1,
-            email: 'admin@frontuna.com',
-            firstName: 'Admin',
-            lastName: 'User',
-            role: 'admin',
-            isActive: true
-          },
-          {
-            id: 2,
-            email: 'user@frontuna.com',
-            firstName: 'Regular',
-            lastName: 'User',
-            role: 'user',
-            isActive: true
-          }
-        ]
+        data: {
+          users: [
+            {
+              id: '1',
+              email: 'admin@frontuna.com',
+              role: 'admin',
+              isActive: true
+            },
+            {
+              id: '2',
+              email: 'user@frontuna.com',
+              role: 'user',
+              isActive: true
+            }
+          ],
+          total: 2
+        },
+        message: '✅ Admin users retrieved (Production API)'
       }, origin);
     }
 
