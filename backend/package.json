@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
-    "build": "echo 'Using serverless functions - no build needed'",
+    "build": "prisma generate",
     "dev": "ts-node --transpile-only src/server.ts",
     "dev:watch": "nodemon --exec ts-node --transpile-only src/server.ts",
     "test": "jest",
