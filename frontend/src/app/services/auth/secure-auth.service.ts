@@ -171,23 +171,28 @@ export class SecureAuthService {
 
     const refreshToken = localStorage.getItem(this.STORAGE_KEYS.REFRESH_TOKEN);
     
-    return this.http.post(`${this.environmentService.apiUrl}/auth/logout`, 
+    // Always clear local state first for immediate logout
+    this.clearAuthState();
+    
+    // Try to notify backend, but don't block logout if it fails
+    const logoutRequest = this.http.post(`${this.environmentService.apiUrl}/auth/logout`, 
       { refreshToken }, 
       { withCredentials: true }
     ).pipe(
       tap(() => {
-        console.log('✅ Logout successful');
+        console.log('✅ Backend logout successful');
       }),
       catchError(error => {
-        console.warn('⚠️ Logout request failed, but clearing local state:', error);
+        console.warn('⚠️ Backend logout failed, but local logout completed:', error);
         return of(null); // Don't fail logout on network error
       }),
       finalize(() => {
-        this.clearAuthState();
         this._isLoading.set(false);
         this.router.navigate(['/auth/login']);
       })
     );
+
+    return logoutRequest;
   }
 
   /**

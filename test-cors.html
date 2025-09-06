@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test for Frontuna API</title>
+</head>
+<body>
+    <h1>🔐 Frontuna API CORS Test</h1>
+    <button onclick="testCORS()">Test CORS</button>
+    <div id="result"></div>
+
+    <script>
+        async function testCORS() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>⏳ Testing CORS...</p>';
+            
+            try {
+                const response = await fetch('https://frontuna-api.vercel.app/health', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <p>✅ <strong>CORS Working!</strong></p>
+                        <p>Status: ${response.status}</p>
+                        <p>Response: ${JSON.stringify(data, null, 2)}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p>❌ API Error: ${response.status}</p>
+                        <p>${response.statusText}</p>
+                    `;
+                }
+            } catch (error) {
+                if (error.message.includes('CORS')) {
+                    resultDiv.innerHTML = `
+                        <p>❌ <strong>CORS Error!</strong></p>
+                        <p>${error.message}</p>
+                        <p>The API is not allowing requests from this domain.</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p>❌ Network Error: ${error.message}</p>
+                    `;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
