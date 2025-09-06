@@ -188,7 +188,7 @@ export class SecureAuthService {
       }),
       finalize(() => {
         this._isLoading.set(false);
-        this.router.navigate(['/auth/login']);
+        this.router.navigate(['/']); // Redirect to home page after logout
       })
     );
 

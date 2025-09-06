@@ -412,8 +412,8 @@ export class AIAuthGuardService {
       this.sessionContext.set(null);
       this.currentUserSubject.next(null);
       
-      // Redirect to login
-      this.router.navigate(['/auth/login']);
+      // Redirect to home page
+      this.router.navigate(['/']);
       
       // Show notification based on reason
       if (reason === 'session_timeout') {
