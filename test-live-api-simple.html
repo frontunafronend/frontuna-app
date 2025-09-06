@@ -19,10 +19,10 @@
 <body>
     <div class="container">
         <h1>🔐 Frontuna Live API Test</h1>
-        <div class="info">
-            <strong>Testing API:</strong> https://frontuna-api.vercel.app<br>
-            <strong>Note:</strong> This page must be served from a web server (not file://) to avoid CORS issues.
-        </div>
+            <div class="info">
+                <strong>Testing API:</strong> https://frontuna-api.vercel.app<br>
+                <strong>Note:</strong> Testing production API with Neon database.
+            </div>
         
         <div class="test-section">
             <h3>🏥 Health Check</h3>
@@ -34,6 +34,7 @@
         <div class="test-section">
             <h3>🔐 Authentication Test</h3>
             <button onclick="testLogin()">Test Login</button>
+            <button onclick="testSignup()">Test Signup</button>
             <button onclick="testProtectedRoute()">Test Protected Route</button>
             <div id="auth-result"></div>
         </div>
@@ -42,6 +43,14 @@
             <h3>👑 Admin Test</h3>
             <button onclick="testAdminRoute()">Test Admin Route</button>
             <div id="admin-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🤖 AI Guard & API Tests</h3>
+            <button onclick="testAITests()">Test AI Tests</button>
+            <button onclick="testAIGuardStatus()">Test AI Guard Status</button>
+            <button onclick="runAPITests()">Run API Tests</button>
+            <div id="ai-result"></div>
         </div>
 
         <div class="test-section">
@@ -310,6 +319,222 @@
                 resultDiv.innerHTML = `
                     <div class="error">
                         <div class="status">❌ Admin Route ERROR</div>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testSignup() {
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.innerHTML = '<div class="loading">⏳ Testing signup...</div>';
+            
+            const testUser = {
+                email: `test${Date.now()}@frontuna.com`,
+                password: 'testpass123',
+                firstName: 'Test',
+                lastName: 'User'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testUser)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.data && data.data.accessToken) {
+                        currentToken = data.data.accessToken;
+                    }
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <div class="status">✅ Signup SUCCESSFUL</div>
+                            <p>Status: ${response.status}</p>
+                            <p>New user created and token saved!</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <div class="status">❌ Signup Failed</div>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <div class="status">❌ Signup ERROR</div>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAITests() {
+            const resultDiv = document.getElementById('ai-result');
+            
+            if (!currentToken) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <div class="status">❌ No Token</div>
+                        <p>Please login first to access AI tests</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="loading">⏳ Loading AI tests...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/ai-tests`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <div class="status">✅ AI Tests Retrieved</div>
+                            <p>Status: ${response.status}</p>
+                            <p>Found ${data.data.apiTests.length} API tests</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <div class="status">❌ AI Tests Failed</div>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <div class="status">❌ AI Tests ERROR</div>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAIGuardStatus() {
+            const resultDiv = document.getElementById('ai-result');
+            
+            if (!currentToken) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <div class="status">❌ No Token</div>
+                        <p>Please login first to access AI Guard status</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="loading">⏳ Checking AI Guard status...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/ai-guard/status`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <div class="status">✅ AI Guard Status Retrieved</div>
+                            <p>Status: ${response.status}</p>
+                            <p>Guard Status: ${data.data.guardStatus}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <div class="status">❌ AI Guard Status Failed</div>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <div class="status">❌ AI Guard Status ERROR</div>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function runAPITests() {
+            const resultDiv = document.getElementById('ai-result');
+            
+            if (!currentToken) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <div class="status">❌ No Token</div>
+                        <p>Please login first to run API tests</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="loading">⏳ Running API tests...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/run-tests`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <div class="status">✅ API Tests Completed</div>
+                            <p>Status: ${response.status}</p>
+                            <p>Tests: ${data.data.testRun.passedTests}/${data.data.testRun.totalTests} passed</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <div class="status">❌ API Tests Failed</div>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <div class="status">❌ API Tests ERROR</div>
                         <p>${error.message}</p>
                     </div>
                 `;
