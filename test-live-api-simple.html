@@ -217,6 +217,7 @@
                     <button onclick="testAITests()">🧪 AI Tests</button>
                     <button onclick="testAIGuardStatus()">🛡️ AI Guard Status</button>
                     <button onclick="testAICopilot()">🤖 AI Copilot</button>
+                    <button onclick="testAICopilotChat()">💬 AI Chat</button>
                 </div>
                 <div id="ai-result" class="test-result"></div>
             </div>
@@ -888,6 +889,71 @@
                 }
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testAICopilotChat() {
+            const resultDiv = document.getElementById('ai-result');
+            resultDiv.innerHTML = '<div class="loading">🤖 Testing AI Chat...</div>';
+            
+            if (!currentToken) {
+                resultDiv.innerHTML = `<div class="error">❌ Please login first to test AI Chat</div>`;
+                return;
+            }
+
+            try {
+                // Test with a sample message
+                const testMessage = "Create a simple Angular component with a button";
+                
+                const response = await fetch(`${API_BASE}/api/ai/copilot/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        sessionId: 'test-session-' + Date.now(),
+                        message: testMessage,
+                        context: 'Testing AI Copilot Chat functionality'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <div class="status">🤖 AI Chat Working!</div>
+                            <p><strong>Model:</strong> ${data.data.model}</p>
+                            <p><strong>Tokens:</strong> ${data.data.tokensUsed}</p>
+                            <p><strong>Response Time:</strong> ${data.data.responseTime}ms</p>
+                            <p><strong>Has Code:</strong> ${data.data.hasCode ? '✅ Yes' : '❌ No'}</p>
+                            <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                                <strong>AI Response:</strong>
+                                <p style="margin: 5px 0;">${data.data.message}</p>
+                                ${data.data.code ? `
+                                    <div style="margin-top: 10px;">
+                                        <strong>Generated Code (${data.data.code.language}):</strong>
+                                        <pre style="background: #2d3748; color: #e2e8f0; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;">${data.data.code.code}</pre>
+                                    </div>
+                                ` : ''}
+                                ${data.data.suggestions && data.data.suggestions.length > 0 ? `
+                                    <div style="margin-top: 10px;">
+                                        <strong>Suggestions:</strong>
+                                        <ul style="margin: 5px 0; padding-left: 20px;">
+                                            ${data.data.suggestions.map(s => `<li>${s}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ AI Chat Failed: ${data.error?.message || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ AI Chat ERROR: ${error.message}</div>`;
             }
         }
 
