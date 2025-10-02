@@ -4,7 +4,6 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-console.log('🚀 Frontuna Production API Starting...');
 
 // Initialize Prisma Client
 let prisma;
@@ -13,7 +12,6 @@ let databaseReady = false;
 async function initializePrisma() {
   if (!prisma) {
     try {
-      console.log('🔄 Initializing Prisma client...');
       prisma = new PrismaClient({
         log: ['error', 'warn'],
         datasources: {
@@ -27,11 +25,9 @@ async function initializePrisma() {
       await prisma.$connect();
       await prisma.$queryRaw`SELECT 1 as connection_test`;
       databaseReady = true;
-      console.log('✅ Database connected successfully!');
       
       return prisma;
   } catch (error) {
-      console.error('❌ Database connection failed:', error.message);
       databaseReady = false;
       return null;
     }
@@ -181,8 +177,6 @@ module.exports = async (req, res) => {
   const { pathname } = new URL(req.url, `http://${req.headers.host}`);
   const method = req.method;
 
-  console.log(`📨 ${method} ${pathname} from ${origin || 'no-origin'}`);
-
   // Handle CORS Preflight
   if (method === 'OPTIONS') {
     setCORSHeaders(res, origin);
@@ -195,7 +189,6 @@ module.exports = async (req, res) => {
     
     // Health Check Endpoint
     if (pathname === '/health' || pathname === '/api/health') {
-      console.log('❤️ Health check requested');
       
       let dbStatus = 'disconnected';
       let message = '❌ Database not ready';
@@ -206,7 +199,6 @@ module.exports = async (req, res) => {
           dbStatus = 'connected';
           message = '✅ Production API with Live Neon Database is healthy!';
         } catch (error) {
-          console.error('Database health check failed:', error.message);
           dbStatus = 'error';
           message = '❌ Database connection error';
         }
@@ -225,7 +217,6 @@ module.exports = async (req, res) => {
 
     // Login Endpoint
     if (pathname === '/api/auth/login' && method === 'POST') {
-      console.log('🔐 Login request');
       
       if (!databaseReady) {
         return sendResponse(res, 503, {
@@ -256,7 +247,6 @@ module.exports = async (req, res) => {
         });
 
         if (!user) {
-          console.log('❌ User not found:', body.email);
           return sendResponse(res, 401, {
             success: false,
             error: 'Invalid credentials'
@@ -266,7 +256,6 @@ module.exports = async (req, res) => {
         const passwordValid = await bcrypt.compare(body.password, user.passwordHash);
         
         if (!passwordValid) {
-          console.log('❌ Invalid password for:', body.email);
           return sendResponse(res, 401, {
             success: false,
             error: 'Invalid credentials'
@@ -281,7 +270,6 @@ module.exports = async (req, res) => {
           `refreshToken=${tokens.refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`
         ]);
 
-        console.log('✅ Login successful:', user.email);
         
         return sendResponse(res, 200, {
           success: true,
@@ -297,7 +285,6 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ Login error:', error.message);
         return sendResponse(res, 500, {
           success: false,
           error: 'Login failed'
@@ -307,7 +294,6 @@ module.exports = async (req, res) => {
 
     // Signup Endpoint
     if (pathname === '/api/auth/signup' && method === 'POST') {
-      console.log('📝 Signup request');
       
       if (!databaseReady) {
         return sendResponse(res, 503, {
@@ -377,7 +363,6 @@ module.exports = async (req, res) => {
           `refreshToken=${tokens.refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`
         ]);
 
-        console.log('✅ Signup successful:', newUser.email);
         
         return sendResponse(res, 201, {
           success: true,
@@ -387,7 +372,6 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ Signup error:', error.message);
         return sendResponse(res, 500, {
           success: false,
           error: 'User creation failed'
@@ -397,7 +381,6 @@ module.exports = async (req, res) => {
 
     // Profile Endpoint
     if (pathname === '/api/auth/profile' && method === 'GET') {
-      console.log('👤 Profile request');
       
       if (!databaseReady) {
         return sendResponse(res, 503, {
@@ -434,7 +417,6 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ Profile error:', error.message);
         return sendResponse(res, 401, {
           success: false,
           error: error.message
@@ -444,7 +426,6 @@ module.exports = async (req, res) => {
     
     // Admin Users Endpoint
     if (pathname === '/api/admin/users' && method === 'GET') {
-      console.log('👑 Admin users request');
       
       if (!databaseReady) {
         return sendResponse(res, 503, {
@@ -479,7 +460,6 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ Admin users error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -490,7 +470,6 @@ module.exports = async (req, res) => {
     
     // User Profile Endpoint (different from auth/profile)
     if (pathname === '/api/users/profile' && method === 'GET') {
-      console.log('👤 User profile request');
       
       if (!databaseReady) {
         return sendResponse(res, 503, {
@@ -551,7 +530,6 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ User profile error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -562,7 +540,6 @@ module.exports = async (req, res) => {
     
     // User Components Endpoint
     if (pathname === '/api/api/components' && method === 'GET') {
-      console.log('🧩 User components request');
       
       if (!databaseReady) {
         return sendResponse(res, 503, {
@@ -597,7 +574,6 @@ module.exports = async (req, res) => {
         }, origin);
         
       } catch (error) {
-        console.error('❌ Components error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -608,7 +584,6 @@ module.exports = async (req, res) => {
     
     // User Analytics Endpoint
     if (pathname === '/api/users/analytics' && method === 'GET') {
-      console.log('📊 User analytics request');
       
       if (!databaseReady) {
         return sendResponse(res, 503, {
@@ -679,7 +654,6 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ Analytics error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -690,7 +664,7 @@ module.exports = async (req, res) => {
     
     // Admin Stats Endpoint
     if (pathname === '/api/admin/stats' && method === 'GET') {
-      console.log('📈 Admin stats request');
+      //console.log('📈 Admin stats request');
       
       if (!databaseReady) {
         return sendResponse(res, 503, {
@@ -814,7 +788,7 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ Admin stats error:', error.message);
+        //console.error('❌ Admin stats error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -914,7 +888,7 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ Analytics charts error:', error);
+        //console.error('❌ Analytics charts error:', error);
         return sendResponse(res, 500, {
           success: false,
           error: 'Failed to retrieve analytics charts data',
@@ -968,7 +942,7 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ System metrics error:', error);
+        //console.error('❌ System metrics error:', error);
         return sendResponse(res, 500, {
           success: false,
           error: 'Failed to retrieve system metrics',
@@ -1009,7 +983,7 @@ module.exports = async (req, res) => {
           }, origin);
 
         } catch (error) {
-          console.error('❌ Update user error:', error);
+          //console.error('❌ Update user error:', error);
           return sendResponse(res, 500, {
             success: false,
             error: 'Failed to update user',
@@ -1034,7 +1008,7 @@ module.exports = async (req, res) => {
           }, origin);
 
         } catch (error) {
-          console.error('❌ Delete user error:', error);
+          //console.error('❌ Delete user error:', error);
           return sendResponse(res, 500, {
             success: false,
             error: 'Failed to delete user',
@@ -1046,7 +1020,7 @@ module.exports = async (req, res) => {
     
     // Suggestions Endpoint (AI suggestions for components)
     if (pathname === '/api/suggestions' && method === 'GET') {
-      console.log('💡 Suggestions request');
+      //console.log('💡 Suggestions request');
       
       try {
         const user = await requireAuth(req);
@@ -1091,7 +1065,7 @@ module.exports = async (req, res) => {
         }, origin);
         
       } catch (error) {
-        console.error('❌ Suggestions error:', error.message);
+        //console.error('❌ Suggestions error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1102,7 +1076,7 @@ module.exports = async (req, res) => {
     
     // Health endpoint (alternative path)
     if (pathname === '/api/health' && method === 'GET') {
-      console.log('❤️ API Health check requested');
+      //console.log('❤️ API Health check requested');
       
       let dbStatus = 'disconnected';
       let message = '❌ Database not ready';
@@ -1113,7 +1087,7 @@ module.exports = async (req, res) => {
           dbStatus = 'connected';
           message = '✅ API and Database are healthy!';
         } catch (error) {
-          console.error('Database health check failed:', error.message);
+          //console.error('Database health check failed:', error.message);
           dbStatus = 'error';
           message = '❌ Database connection error';
         }
@@ -1132,7 +1106,7 @@ module.exports = async (req, res) => {
     
     // AI Copilot Suggestions Endpoint
     if (pathname === '/api/ai/copilot/suggestions' && method === 'GET') {
-      console.log('🤖 AI Copilot suggestions request');
+      //console.log('🤖 AI Copilot suggestions request');
       
       try {
         const user = await requireAuth(req);
@@ -1163,7 +1137,7 @@ module.exports = async (req, res) => {
         }, origin);
         
       } catch (error) {
-        console.error('❌ AI suggestions error:', error.message);
+        //console.error('❌ AI suggestions error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1174,7 +1148,7 @@ module.exports = async (req, res) => {
     
     // AI Prompt Health Endpoint
     if (pathname === '/api/ai/prompt/health' && method === 'GET') {
-      console.log('🧠 AI Prompt health check');
+      //console.log('🧠 AI Prompt health check');
       
       try {
         const user = await requireAuth(req);
@@ -1190,7 +1164,7 @@ module.exports = async (req, res) => {
         }, origin);
         
       } catch (error) {
-        console.error('❌ AI health error:', error.message);
+        //console.error('❌ AI health error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1201,7 +1175,7 @@ module.exports = async (req, res) => {
     
     // AI Copilot Session Start Endpoint
     if (pathname === '/api/ai/copilot/session/start' && method === 'POST') {
-      console.log('🚀 AI Copilot session start');
+      //console.log('🚀 AI Copilot session start');
       
       try {
         const user = await requireAuth(req);
@@ -1221,7 +1195,7 @@ module.exports = async (req, res) => {
         }, origin);
         
       } catch (error) {
-        console.error('❌ AI session start error:', error.message);
+        //console.error('❌ AI session start error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1232,7 +1206,7 @@ module.exports = async (req, res) => {
     
     // Analytics Batch Endpoint
     if (pathname === '/api/analytics/batch' && method === 'POST') {
-      console.log('📊 Analytics batch request');
+      //console.log('📊 Analytics batch request');
       
       try {
         const user = await requireAuth(req);
@@ -1263,7 +1237,7 @@ module.exports = async (req, res) => {
         }, origin);
         
       } catch (error) {
-        console.error('❌ Analytics batch error:', error.message);
+        //console.error('❌ Analytics batch error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1274,7 +1248,7 @@ module.exports = async (req, res) => {
     
     // Start/Generate Component Endpoint
     if (pathname === '/api/start' && method === 'POST') {
-      console.log('🚀 Start component generation request');
+      //console.log('🚀 Start component generation request');
       
       try {
         const user = await requireAuth(req);
@@ -1312,7 +1286,7 @@ module.exports = async (req, res) => {
         }, origin);
         
       } catch (error) {
-        console.error('❌ Start generation error:', error.message);
+        //console.error('❌ Start generation error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1323,7 +1297,7 @@ module.exports = async (req, res) => {
     
     // 🔄 Auth Refresh Token Endpoint
     if (pathname === '/api/auth/refresh' && method === 'POST') {
-      console.log('🔄 Token refresh request');
+      //console.log('🔄 Token refresh request');
       
       try {
         const { refreshToken } = req.body;
@@ -1370,7 +1344,7 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ Token refresh error:', error.message);
+        //console.error('❌ Token refresh error:', error.message);
         return sendResponse(res, 401, {
           success: false,
           error: 'Invalid or expired refresh token'
@@ -1380,7 +1354,7 @@ module.exports = async (req, res) => {
 
     // 🤖 AI Copilot Session Start Endpoint
     if (pathname === '/api/ai/copilot/session/start' && method === 'POST') {
-      console.log('🤖 AI Copilot session start request');
+      //console.log('🤖 AI Copilot session start request');
       
       try {
         const user = await requireAuth(req);
@@ -1401,7 +1375,7 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ AI Copilot session error:', error.message);
+        //console.error('❌ AI Copilot session error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1412,7 +1386,7 @@ module.exports = async (req, res) => {
 
     // 🤖 AI Copilot Suggestions Endpoint
     if (pathname === '/api/ai/copilot/suggestions' && method === 'GET') {
-      console.log('🤖 AI Copilot suggestions request');
+      //console.log('🤖 AI Copilot suggestions request');
       
       try {
         const user = await requireAuth(req);
@@ -1454,7 +1428,7 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ AI Copilot suggestions error:', error.message);
+        //console.error('❌ AI Copilot suggestions error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1465,7 +1439,7 @@ module.exports = async (req, res) => {
 
     // 🤖 AI Prompt Health Endpoint
     if (pathname === '/api/ai/prompt/health' && method === 'GET') {
-      console.log('🤖 AI Prompt health check request');
+      //console.log('🤖 AI Prompt health check request');
       
       try {
         const user = await requireAuth(req);
@@ -1490,7 +1464,7 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ AI Prompt health error:', error.message);
+        //console.error('❌ AI Prompt health error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1501,7 +1475,7 @@ module.exports = async (req, res) => {
 
     // 👤 Admin User Management - Update User
     if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
-      console.log('👤 Admin update user request');
+      //console.log('👤 Admin update user request');
       
       try {
         const user = await requireAuth(req);
@@ -1529,7 +1503,7 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ Admin update user error:', error.message);
+        //console.error('❌ Admin update user error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1540,7 +1514,7 @@ module.exports = async (req, res) => {
 
     // 👤 Admin User Management - Delete User
     if (pathname.startsWith('/api/admin/users/') && method === 'DELETE') {
-      console.log('👤 Admin delete user request');
+      //console.log('👤 Admin delete user request');
       
       try {
         const user = await requireAuth(req);
@@ -1561,7 +1535,7 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ Admin delete user error:', error.message);
+        //console.error('❌ Admin delete user error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1572,7 +1546,7 @@ module.exports = async (req, res) => {
 
     // 📊 Admin System Metrics Endpoint
     if (pathname === '/api/admin/system/metrics' && method === 'GET') {
-      console.log('📊 Admin system metrics request');
+      //console.log('📊 Admin system metrics request');
       
       try {
         const user = await requireAuth(req);
@@ -1621,7 +1595,7 @@ module.exports = async (req, res) => {
         }, origin);
 
       } catch (error) {
-        console.error('❌ Admin system metrics error:', error.message);
+        //console.error('❌ Admin system metrics error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -1632,7 +1606,7 @@ module.exports = async (req, res) => {
 
     // Logout Endpoint
     if (pathname === '/api/auth/logout' && method === 'POST') {
-      console.log('🚪 Logout request');
+      //console.log('🚪 Logout request');
       
       res.setHeader('Set-Cookie', [
         'accessToken=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0',
@@ -1695,7 +1669,7 @@ module.exports = async (req, res) => {
     }, origin);
 
   } catch (error) {
-    console.error('❌ Server error:', error.message);
+    //console.error('❌ Server error:', error.message);
     return sendResponse(res, 500, {
       success: false,
       error: 'Internal server error',
