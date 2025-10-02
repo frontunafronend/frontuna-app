@@ -487,28 +487,6 @@ export class SecureAuthService {
     );
   }
 
-  private attemptTokenRefresh(refreshToken: string): void {
-    this.http.post<any>(`${this.environmentService.apiUrl}/auth/refresh`, 
-      { refreshToken }, 
-      { withCredentials: true }
-    ).subscribe({
-      next: (response) => {
-        if (response.success) {
-          console.log('✅ Token refresh successful');
-          this.updateStoredTokens(
-            response.data.accessToken, 
-            response.data.refreshToken, 
-            response.data.expiresIn
-          );
-        }
-      },
-      error: (error) => {
-        console.error('❌ Token refresh failed:', error);
-        this.clearAuthState();
-      }
-    });
-  }
-
   private clearAuthState(): void {
     // Clear signals
     this._isAuthenticated.set(false);
