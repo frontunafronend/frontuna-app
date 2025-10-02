@@ -49,18 +49,26 @@ const setCORSHeaders = (res, origin) => {
     'http://localhost:4200',
     'http://localhost:8080',
     'http://localhost:3000',
-    'http://127.0.0.1:8080'
+    'http://127.0.0.1:8080',
+    'null' // Allow file:// protocol for local testing
   ];
   
+  // For credentials requests, we must specify exact origin (not wildcard)
   if (origin && (allowedOrigins.includes(origin) || origin.includes('localhost') || origin.includes('127.0.0.1'))) {
     res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else if (!origin || origin === 'null') {
+    // For file:// protocol (null origin), allow but without credentials
+    res.setHeader('Access-Control-Allow-Origin', 'null');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
   } else {
+    // For unknown origins, allow but without credentials
     res.setHeader('Access-Control-Allow-Origin', '*');
+    // Don't set credentials header for wildcard
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
 };
 

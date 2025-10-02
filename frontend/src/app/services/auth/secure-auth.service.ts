@@ -264,7 +264,14 @@ export class SecureAuthService {
       }),
       catchError(error => {
         console.error('❌ Token refresh failed:', error);
-        this.clearAuthState();
+        // Only clear auth state if it's a definitive auth failure (401/403)
+        // Don't clear on network errors or server errors (5xx)
+        if (error.status === 401 || error.status === 403) {
+          console.warn('🔐 Refresh token invalid, clearing auth state');
+          this.clearAuthState();
+        } else {
+          console.warn('🔄 Refresh failed due to network/server error, keeping session');
+        }
         return throwError(() => error);
       })
     );

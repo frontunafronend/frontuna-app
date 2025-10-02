@@ -1514,17 +1514,23 @@ export class AdminDashboardComponent implements OnInit {
     console.log('🌟 Loading LIVE data from Neon database...');
     
     try {
-      // Load all live data in parallel for maximum performance
-      await Promise.all([
-        this.loadLiveUsers(),
-        this.loadLiveMetrics(),
-        this.loadAIAgentStats(),
-        this.checkAISystemStatus(),
-        this.loadAnalyticsData(),
-        this.loadUserComponents()
-      ]);
+      // Check authentication first
+      if (!this.authService.isAuthenticated()) {
+        console.warn('⚠️ User not authenticated, skipping data load');
+        return;
+      }
       
-      console.log('✅ All LIVE data loaded successfully from API!');
+      // Load critical data first, then secondary data with delays to prevent overwhelming the server
+      await this.loadLiveUsers();
+      await this.loadLiveMetrics();
+      
+      // Add small delays between non-critical calls to prevent token refresh conflicts
+      setTimeout(() => this.loadAIAgentStats(), 500);
+      setTimeout(() => this.checkAISystemStatus(), 1000);
+      setTimeout(() => this.loadAnalyticsData(), 1500);
+      setTimeout(() => this.loadUserComponents(), 2000);
+      
+      console.log('✅ Admin dashboard data loading initiated!');
       
     } catch (error) {
       console.error('❌ Failed to load LIVE data:', error);
@@ -1535,6 +1541,12 @@ export class AdminDashboardComponent implements OnInit {
    * 👥 Load REAL users from Neon database (prioritize real data)
    */
   private async loadLiveUsers() {
+    // Prevent multiple simultaneous calls
+    if (this.isLoadingUsers()) {
+      console.log('🔄 Users already loading, skipping duplicate request');
+      return;
+    }
+    
     this.isLoadingUsers.set(true);
     this.userError.set(null);
     
@@ -1544,10 +1556,15 @@ export class AdminDashboardComponent implements OnInit {
       console.log('🔑 Is authenticated:', this.authService.isAuthenticated());
       console.log('🌐 API URL:', this.API_BASE_URL);
       
+      // Check if we're still authenticated before making the call
+      if (!this.authService.isAuthenticated()) {
+        throw new Error('User not authenticated');
+      }
+      
       // Try to fetch from backend with timeout
       const response = await Promise.race([
         this.http.get<any>(`${this.API_BASE_URL}/admin/users`).toPromise(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000))
       ]) as any;
       
       if (response?.success && response?.data && response?.data.users) {
