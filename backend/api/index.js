@@ -281,7 +281,9 @@ module.exports = async (req, res) => {
             lastName: user.lastName || 'User',
             role: user.role
           },
-          token: tokens.accessToken
+          token: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresIn: 86400 // 24 hours in seconds
         }, origin);
 
       } catch (error) {
@@ -368,7 +370,9 @@ module.exports = async (req, res) => {
           success: true,
           message: 'User created successfully',
           user: newUser,
-          token: tokens.accessToken
+          token: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresIn: 86400 // 24 hours in seconds
         }, origin);
 
       } catch (error) {

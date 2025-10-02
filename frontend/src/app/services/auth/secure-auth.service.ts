@@ -77,6 +77,34 @@ export class SecureAuthService {
         this._currentUser.set(storedAuthData.user);
         this._isAuthenticated.set(true);
 
+        // Schedule token refresh if we have expiration time
+        if (storedAuthData.expiresAt) {
+          this.scheduleTokenRefresh(storedAuthData.expiresAt);
+        }
+
+        // Verify token is still valid with backend
+        this.verifyTokenWithBackend(storedAuthData.accessToken).subscribe({
+          next: (isValid) => {
+            if (!isValid) {
+              console.warn('⚠️ Stored token is invalid, attempting refresh...');
+              if (storedAuthData.refreshToken) {
+                this.attemptTokenRefresh(storedAuthData.refreshToken);
+              } else {
+                this.clearAuthState();
+              }
+            }
+          },
+          error: () => {
+            // Token verification failed, try refresh or clear state
+            if (storedAuthData.refreshToken) {
+              this.attemptTokenRefresh(storedAuthData.refreshToken);
+            } else {
+              this.clearAuthState();
+            }
+          }
+        });
+
+        console.log('✅ Auth state restored from storage');
       } else {
         this.clearAuthState();
       }
@@ -102,7 +130,8 @@ export class SecureAuthService {
           return {
             user: response.user,
             accessToken: response.token,
-            refreshToken: response.refreshToken || null
+            refreshToken: response.refreshToken || null,
+            expiresIn: response.expiresIn || 86400 // Default to 24 hours
           } as AuthResponse;
         }
         throw new Error(response.error?.message || 'Login failed');
@@ -136,7 +165,8 @@ export class SecureAuthService {
           return {
             user: response.user,
             accessToken: response.token,
-            refreshToken: response.refreshToken || null
+            refreshToken: response.refreshToken || null,
+            expiresIn: response.expiresIn || 86400 // Default to 24 hours
           } as AuthResponse;
         }
         throw new Error(response.error?.message || 'Signup failed');
@@ -270,16 +300,22 @@ export class SecureAuthService {
     this._currentUser.set(authResponse.user);
     this._isAuthenticated.set(true);
 
-    // Store auth data securely
+    // Calculate expiration time from API response
+    const expiresAt = Date.now() + (authResponse.expiresIn * 1000); // Convert seconds to milliseconds
+
+    // Store auth data securely with proper expiration
     this.storeAuthData({
       user: authResponse.user,
       accessToken: authResponse.accessToken,
-      refreshToken: authResponse.refreshToken,
-      expiresAt: authResponse.expiresIn * 1000, // Convert to milliseconds
+      refreshToken: authResponse.refreshToken || this.generateRefreshToken(),
+      expiresAt: expiresAt,
       storedAt: Date.now()
     });
 
-    // Auth success handled, user stored
+    // Set up automatic token refresh before expiration
+    this.scheduleTokenRefresh(expiresAt);
+
+    console.log('✅ Auth success: User authenticated and session stored');
   }
 
   private handleAuthError(error: HttpErrorResponse): void {
@@ -344,6 +380,9 @@ export class SecureAuthService {
     const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
     const age = authData.storedAt ? Date.now() - authData.storedAt : 0;
     
+    // Check if token is expired
+    const isTokenExpired = authData.expiresAt ? Date.now() > authData.expiresAt : false;
+    
     // For local development, be more lenient with validation
     const hasRequiredData = !!(
       authData.user &&
@@ -354,9 +393,71 @@ export class SecureAuthService {
     
     const isNotExpired = age < maxAge;
     
-    // Validation checks completed
+    // If token is expired but we have a refresh token, try to refresh
+    if (isTokenExpired && authData.refreshToken && hasRequiredData) {
+      this.attemptTokenRefresh(authData.refreshToken);
+      return true; // Allow the session to continue while refresh is attempted
+    }
     
-    return hasRequiredData && isNotExpired;
+    return hasRequiredData && isNotExpired && !isTokenExpired;
+  }
+
+  /**
+   * Generate a refresh token for session management
+   */
+  private generateRefreshToken(): string {
+    return `refresh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Schedule automatic token refresh before expiration
+   */
+  private scheduleTokenRefresh(expiresAt: number): void {
+    const refreshTime = expiresAt - (5 * 60 * 1000); // Refresh 5 minutes before expiry
+    const timeUntilRefresh = refreshTime - Date.now();
+
+    if (timeUntilRefresh > 0) {
+      setTimeout(() => {
+        const storedData = this.getStoredAuthData();
+        if (storedData && storedData.refreshToken) {
+          this.attemptTokenRefresh(storedData.refreshToken);
+        }
+      }, timeUntilRefresh);
+    }
+  }
+
+  /**
+   * Enhanced token refresh with better error handling
+   */
+  private attemptTokenRefresh(refreshToken: string): void {
+    this.http.post<any>(`${this.environmentService.apiUrl}/auth/refresh`, 
+      { refreshToken }, 
+      { withCredentials: true }
+    ).subscribe({
+      next: (response) => {
+        if (response.success && response.data.accessToken) {
+          // Update stored auth data with new token
+          const storedData = this.getStoredAuthData();
+          if (storedData) {
+            const newExpiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+            this.storeAuthData({
+              ...storedData,
+              accessToken: response.data.accessToken,
+              expiresAt: newExpiresAt,
+              storedAt: Date.now()
+            });
+            
+            // Schedule next refresh
+            this.scheduleTokenRefresh(newExpiresAt);
+            console.log('✅ Token refreshed successfully');
+          }
+        }
+      },
+      error: (error) => {
+        console.warn('⚠️ Token refresh failed, user may need to re-login:', error);
+        // Don't immediately log out - let the user continue until they make a request
+      }
+    });
   }
 
   private updateStoredTokens(accessToken: string, refreshToken: string, expiresIn: number): void {
