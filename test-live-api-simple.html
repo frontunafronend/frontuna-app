@@ -3,63 +3,291 @@
 <head>
     <title>Simple Live API Test</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
-        .test-section { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
-        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
-        .loading { background: #fff3cd; border-color: #ffeaa7; color: #856404; }
-        button { padding: 8px 16px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
-        button:hover { background: #0056b3; }
-        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; border-radius: 4px; font-size: 12px; }
-        .status { font-weight: bold; margin: 10px 0; }
-        .info { background: #d1ecf1; border-color: #bee5eb; color: #0c5460; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 10px;
+            color: white;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .info {
+            background: rgba(13, 202, 240, 0.1);
+            border: 1px solid rgba(13, 202, 240, 0.3);
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .test-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .test-card {
+            flex: 1 1 calc(20% - 20px);
+            min-width: 280px;
+            max-width: 350px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            border-color: #4facfe;
+        }
+        .test-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+        }
+        .test-card h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .test-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .test-buttons button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 14px;
+        }
+        .test-buttons button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .test-result {
+            min-height: 60px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .success { 
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); 
+            border: 1px solid #c3e6cb; 
+            color: #155724; 
+        }
+        .error { 
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); 
+            border: 1px solid #f5c6cb; 
+            color: #721c24; 
+        }
+        .loading { 
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); 
+            border: 1px solid #ffeaa7; 
+            color: #856404; 
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 8px;
+            overflow-x: auto;
+            border-radius: 4px;
+            font-size: 11px;
+            margin: 5px 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .debug-card {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .debug-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .debug-item {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        @media (max-width: 1200px) {
+            .test-card { flex: 1 1 calc(33.333% - 20px); }
+        }
+        @media (max-width: 900px) {
+            .test-card { flex: 1 1 calc(50% - 20px); }
+        }
+        @media (max-width: 600px) {
+            .test-card { flex: 1 1 100%; }
+            .container { padding: 15px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔐 Frontuna Live API Test</h1>
+        <div class="header">
+            <h1>🚀 Frontuna Live API Test Dashboard</h1>
             <div class="info">
-                <strong>Testing API:</strong> <span id="api-endpoint"></span><br>
-                <strong>Note:</strong> Testing production API with live Neon database.
+                <strong>🌐 Testing API:</strong> <span id="api-endpoint"></span><br>
+                <strong>📊 Status:</strong> Production API with live Neon database
             </div>
+        </div>
         
-        <div class="test-section">
-            <h3>🏥 Health Check</h3>
-            <button onclick="testHealth()">Test Health</button>
-            <button onclick="testHealthSimple()">Test Health (Simple)</button>
-            <div id="health-result"></div>
+        <div class="test-grid">
+            <!-- Health Check Card -->
+            <div class="test-card">
+                <h3>🏥 Health Check</h3>
+                <div class="test-buttons">
+                    <button onclick="testHealth()">🔍 Test Health</button>
+                    <button onclick="testHealthSimple()">⚡ Test Health (Simple)</button>
+                </div>
+                <div id="health-result" class="test-result"></div>
+            </div>
+
+            <!-- Authentication Card -->
+            <div class="test-card">
+                <h3>🔐 Authentication</h3>
+                <div class="test-buttons">
+                    <button onclick="testLogin()">🔑 Test Login</button>
+                    <button onclick="testSignup()">📝 Test Signup</button>
+                    <button onclick="testProtectedRoute()">🛡️ Protected Route</button>
+                </div>
+                <div id="auth-result" class="test-result"></div>
+            </div>
+
+            <!-- Admin Test Card -->
+            <div class="test-card">
+                <h3>👑 Admin Access</h3>
+                <div class="test-buttons">
+                    <button onclick="testAdminRoute()">🎯 Test Admin Route</button>
+                    <button onclick="testAdminUsers()">👥 Get Admin Users</button>
+                    <button onclick="testAdminStats()">📊 Get Admin Stats</button>
+                </div>
+                <div id="admin-result" class="test-result"></div>
+            </div>
+
+            <!-- AI Systems Card -->
+            <div class="test-card">
+                <h3>🤖 AI Systems</h3>
+                <div class="test-buttons">
+                    <button onclick="testAITests()">🧪 AI Tests</button>
+                    <button onclick="testAIGuardStatus()">🛡️ AI Guard Status</button>
+                    <button onclick="testAICopilot()">🤖 AI Copilot</button>
+                </div>
+                <div id="ai-result" class="test-result"></div>
+            </div>
+
+            <!-- API Endpoints Card -->
+            <div class="test-card">
+                <h3>🔗 API Endpoints</h3>
+                <div class="test-buttons">
+                    <button onclick="runAPITests()">🚀 Run All Tests</button>
+                    <button onclick="testUserProfile()">👤 User Profile</button>
+                    <button onclick="testComponents()">🧩 Components</button>
+                </div>
+                <div id="api-result" class="test-result"></div>
+            </div>
+
+            <!-- Analytics Card -->
+            <div class="test-card">
+                <h3>📈 Analytics</h3>
+                <div class="test-buttons">
+                    <button onclick="testAnalytics()">📊 User Analytics</button>
+                    <button onclick="testBatchAnalytics()">📦 Batch Analytics</button>
+                    <button onclick="testSuggestions()">💡 Suggestions</button>
+                </div>
+                <div id="analytics-result" class="test-result"></div>
+            </div>
+
+            <!-- Token Management Card -->
+            <div class="test-card">
+                <h3>🔑 Token Management</h3>
+                <div class="test-buttons">
+                    <button onclick="showCurrentToken()">👁️ Show Token</button>
+                    <button onclick="clearToken()">🗑️ Clear Token</button>
+                    <button onclick="testTokenValidation()">✅ Validate Token</button>
+                </div>
+                <div id="token-result" class="test-result">
+                    <strong>Current Token:</strong> <span id="token-status">No token</span>
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="test-card">
+                <h3>⚡ Quick Actions</h3>
+                <div class="test-buttons">
+                    <button onclick="runFullTest()">🎯 Full System Test</button>
+                    <button onclick="clearAllResults()">🧹 Clear All Results</button>
+                    <button onclick="exportResults()">📤 Export Results</button>
+                </div>
+                <div id="quick-result" class="test-result"></div>
+            </div>
         </div>
 
-        <div class="test-section">
-            <h3>🔐 Authentication Test</h3>
-            <button onclick="testLogin()">Test Login</button>
-            <button onclick="testSignup()">Test Signup</button>
-            <button onclick="testProtectedRoute()">Test Protected Route</button>
-            <div id="auth-result"></div>
-        </div>
-
-        <div class="test-section">
-            <h3>👑 Admin Test</h3>
-            <button onclick="testAdminRoute()">Test Admin Route</button>
-            <div id="admin-result"></div>
-        </div>
-
-        <div class="test-section">
-            <h3>🤖 AI Guard & API Tests</h3>
-            <button onclick="testAITests()">Test AI Tests</button>
-            <button onclick="testAIGuardStatus()">Test AI Guard Status</button>
-            <button onclick="runAPITests()">Run API Tests</button>
-            <div id="ai-result"></div>
-        </div>
-
-        <div class="test-section">
-            <h3>📊 Debug Info</h3>
-            <div id="debug-info">
-                <p><strong>Current Origin:</strong> <span id="current-origin"></span></p>
-                <p><strong>User Agent:</strong> <span id="user-agent"></span></p>
-                <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
-                <p><strong>Current Token:</strong> <span id="token-status">No token</span></p>
+        <!-- Debug Info Card -->
+        <div class="debug-card">
+            <h3>📊 Debug Information</h3>
+            <div class="debug-grid">
+                <div class="debug-item">
+                    <strong>🌐 Origin:</strong><br>
+                    <span id="current-origin"></span>
+                </div>
+                <div class="debug-item">
+                    <strong>🕐 Timestamp:</strong><br>
+                    <span id="timestamp"></span>
+                </div>
+                <div class="debug-item">
+                    <strong>🔧 User Agent:</strong><br>
+                    <span id="user-agent"></span>
+                </div>
+                <div class="debug-item">
+                    <strong>🎯 API Status:</strong><br>
+                    <span id="api-status">Checking...</span>
+                </div>
             </div>
         </div>
     </div>
@@ -88,13 +316,17 @@
 
         // Initialize page
         function initializePage() {
+            document.getElementById('api-endpoint').textContent = API_BASE;
             document.getElementById('current-origin').textContent = window.location.origin;
-            document.getElementById('user-agent').textContent = navigator.userAgent;
+            document.getElementById('user-agent').textContent = navigator.userAgent.substring(0, 50) + '...';
             document.getElementById('timestamp').textContent = new Date().toISOString();
             updateTokenStatus();
             
             // Auto-run health check
-            setTimeout(testHealth, 500);
+            setTimeout(() => {
+                testHealth();
+                document.getElementById('api-status').textContent = 'Connected ✅';
+            }, 500);
         }
         
         // Initialize when page loads
@@ -579,10 +811,283 @@
             }
         }
 
+        // New functions for additional test cards
+        async function testAdminUsers() {
+            const resultDiv = document.getElementById('admin-result');
+            resultDiv.innerHTML = '<div class="loading">Loading admin users...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <div class="status">✅ Admin Users Loaded</div>
+                            <p>Total Users: ${data.data.total}</p>
+                            <p>Admins: ${data.data.users.filter(u => u.role === 'admin').length}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ ${data.error || 'Failed to load users'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testAdminStats() {
+            const resultDiv = document.getElementById('admin-result');
+            resultDiv.innerHTML = '<div class="loading">Loading admin stats...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/stats`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const stats = data.data.stats;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <div class="status">✅ Admin Stats Loaded</div>
+                            <p>Users: ${stats.overview.totalUsers}</p>
+                            <p>Components: ${stats.overview.totalComponents}</p>
+                            <p>Tokens: ${stats.overview.totalTokensUsed}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ ${data.error || 'Failed to load stats'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testAICopilot() {
+            const resultDiv = document.getElementById('ai-result');
+            resultDiv.innerHTML = '<div class="loading">Testing AI Copilot...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/ai/copilot/session/start`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}` 
+                    },
+                    body: JSON.stringify({ message: 'Test from dashboard', context: 'health check' })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success">✅ AI Copilot Working</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ AI Copilot: ${data.error || 'Failed'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testUserProfile() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<div class="loading">Loading user profile...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/users/profile`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `<div class="success">✅ Profile Loaded: ${data.data.user.email}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ ${data.error || 'Failed to load profile'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testComponents() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<div class="loading">Loading components...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/components`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success">✅ Components API Working</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Components: ${data.error || 'Failed'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testAnalytics() {
+            const resultDiv = document.getElementById('analytics-result');
+            resultDiv.innerHTML = '<div class="loading">Loading analytics...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/users/analytics`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success">✅ Analytics API Working</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Analytics: ${data.error || 'Failed'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testBatchAnalytics() {
+            const resultDiv = document.getElementById('analytics-result');
+            resultDiv.innerHTML = '<div class="loading">Testing batch analytics...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/analytics/batch`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}` 
+                    },
+                    body: JSON.stringify({ events: [{ type: 'test', data: 'dashboard' }] })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success">✅ Batch Analytics Working</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Batch Analytics: ${data.error || 'Failed'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testSuggestions() {
+            const resultDiv = document.getElementById('analytics-result');
+            resultDiv.innerHTML = '<div class="loading">Loading suggestions...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/suggestions`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success">✅ Suggestions API Working</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Suggestions: ${data.error || 'Failed'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function showCurrentToken() {
+            const resultDiv = document.getElementById('token-result');
+            if (currentToken) {
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <div class="status">✅ Token Present</div>
+                        <pre>${currentToken.substring(0, 50)}...</pre>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `<div class="error">❌ No token available. Please login first.</div>`;
+            }
+        }
+
+        function clearToken() {
+            currentToken = null;
+            updateTokenStatus();
+            document.getElementById('token-result').innerHTML = `<div class="success">✅ Token cleared</div>`;
+        }
+
+        async function testTokenValidation() {
+            const resultDiv = document.getElementById('token-result');
+            if (!currentToken) {
+                resultDiv.innerHTML = `<div class="error">❌ No token to validate</div>`;
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="loading">Validating token...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/profile`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success">✅ Token is valid</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Token is invalid or expired</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Validation error: ${error.message}</div>`;
+            }
+        }
+
+        async function runFullTest() {
+            const resultDiv = document.getElementById('quick-result');
+            resultDiv.innerHTML = '<div class="loading">Running full system test...</div>';
+            
+            try {
+                await testHealth();
+                if (currentToken) {
+                    await testAdminRoute();
+                    await testAITests();
+                }
+                resultDiv.innerHTML = `<div class="success">✅ Full system test completed! Check individual cards for results.</div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Full test error: ${error.message}</div>`;
+            }
+        }
+
+        function clearAllResults() {
+            const resultDivs = document.querySelectorAll('.test-result');
+            resultDivs.forEach(div => {
+                div.innerHTML = '';
+            });
+            document.getElementById('quick-result').innerHTML = `<div class="success">✅ All results cleared</div>`;
+        }
+
+        function exportResults() {
+            const results = {};
+            const cards = document.querySelectorAll('.test-card');
+            cards.forEach(card => {
+                const title = card.querySelector('h3').textContent;
+                const result = card.querySelector('.test-result').textContent;
+                results[title] = result;
+            });
+            
+            const dataStr = JSON.stringify(results, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `api-test-results-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            document.getElementById('quick-result').innerHTML = `<div class="success">✅ Results exported to JSON file</div>`;
+        }
+
         // Auto-run health check on page load
         window.onload = function() {
             console.log('🔍 Starting automatic API tests...');
-            testHealth();
+            initializePage();
         };
     </script>
 </body>
