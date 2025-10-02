@@ -1554,14 +1554,14 @@ export class AdminDashboardComponent implements OnInit {
         // Use the users array from server response (matches admin-dashboard.html format)
         const users = response.data.users.map((user: any) => ({
           id: user.id,
-          name: user.name || user.email.split('@')[0],
+          name: user.firstName || user.email.split('@')[0],
           email: user.email,
           avatar: user.avatar,
-          plan: user.plan,
-          generationsUsed: user.generationsUsed,
-          generationsLimit: user.generationsLimit,
-          status: user.status,
-          joinedAt: new Date(user.joinedAt || user.createdAt),
+          plan: user.plan || 'basic',
+          generationsUsed: user.generationsUsed || 0,
+          generationsLimit: user.generationsLimit || 100,
+          status: user.status || 'active',
+          joinedAt: new Date(user.createdAt),
           role: user.role
         }));
         

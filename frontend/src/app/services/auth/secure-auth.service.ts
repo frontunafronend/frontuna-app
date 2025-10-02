@@ -69,31 +69,15 @@ export class SecureAuthService {
    */
   private async initializeAuth(): Promise<void> {
     try {
-      console.log('🔐 SecureAuthService: Starting initialization...');
-
       // Check for stored auth data
       const storedAuthData = this.getStoredAuthData();
       
       if (storedAuthData && this.isAuthDataValid(storedAuthData)) {
-        console.log('✅ Valid auth data found, restoring user session');
-        
         // Restore the EXACT user data (no fake users!)
         this._currentUser.set(storedAuthData.user);
         this._isAuthenticated.set(true);
-        
-        console.log('✅ User restored:', {
-          id: storedAuthData.user.id,
-          email: storedAuthData.user.email,
-          role: storedAuthData.user.role,
-          firstName: storedAuthData.user.firstName
-        });
-
-        // Skip backend verification for now - keep user logged in
-        // This prevents logout on refresh when backend is not ready
-        console.log('✅ User session restored successfully - skipping backend verification for local testing');
 
       } else {
-        console.log('❌ No valid auth data found');
         this.clearAuthState();
       }
 
@@ -123,10 +107,9 @@ export class SecureAuthService {
         }
         throw new Error(response.error?.message || 'Login failed');
       }),
-      tap(authResponse => {
-        console.log('✅ Login successful, storing auth data');
-        this.handleAuthSuccess(authResponse);
-      }),
+        tap(authResponse => {
+          this.handleAuthSuccess(authResponse);
+        }),
       catchError(error => {
         console.error('❌ Login failed:', error);
         this.handleAuthError(error);
@@ -158,10 +141,9 @@ export class SecureAuthService {
         }
         throw new Error(response.error?.message || 'Signup failed');
       }),
-      tap(authResponse => {
-        console.log('✅ Signup successful, storing auth data');
-        this.handleAuthSuccess(authResponse);
-      }),
+        tap(authResponse => {
+          this.handleAuthSuccess(authResponse);
+        }),
       catchError(error => {
         console.error('❌ Signup failed:', error);
         this.handleAuthError(error);
@@ -190,7 +172,7 @@ export class SecureAuthService {
       { withCredentials: true }
     ).pipe(
       tap(() => {
-        console.log('✅ Backend logout successful');
+        // Backend logout successful
       }),
       catchError(error => {
         console.warn('⚠️ Backend logout failed, but local logout completed:', error);
@@ -216,11 +198,10 @@ export class SecureAuthService {
         }
         throw new Error(response.error?.message || 'Failed to get profile');
       }),
-      tap(user => {
-        console.log('✅ Profile loaded from backend');
-        this._currentUser.set(user);
-        this.updateStoredUser(user);
-      }),
+        tap(user => {
+          this._currentUser.set(user);
+          this.updateStoredUser(user);
+        }),
       catchError(error => {
         console.error('❌ Failed to load profile:', error);
         return throwError(() => error);
@@ -249,7 +230,6 @@ export class SecureAuthService {
         throw new Error(response.error?.message || 'Token refresh failed');
       }),
       tap(tokenData => {
-        console.log('✅ Token refreshed successfully');
         this.updateStoredTokens(tokenData.accessToken, tokenData.refreshToken, tokenData.expiresIn);
       }),
       catchError(error => {
@@ -299,11 +279,7 @@ export class SecureAuthService {
       storedAt: Date.now()
     });
 
-    console.log('✅ Auth success handled, user stored:', {
-      id: authResponse.user.id,
-      email: authResponse.user.email,
-      role: authResponse.user.role
-    });
+    // Auth success handled, user stored
   }
 
   private handleAuthError(error: HttpErrorResponse): void {
@@ -328,7 +304,7 @@ export class SecureAuthService {
       localStorage.setItem(this.STORAGE_KEYS.ACCESS_TOKEN, authData.accessToken);
       localStorage.setItem(this.STORAGE_KEYS.REFRESH_TOKEN, authData.refreshToken);
       
-      console.log('✅ Auth data stored securely');
+      // Auth data stored securely
     } catch (error) {
       console.error('❌ Failed to store auth data:', error);
     }
@@ -366,14 +342,21 @@ export class SecureAuthService {
   private isAuthDataValid(authData: StoredAuthData): boolean {
     // Check if data exists and is not too old (max 7 days)
     const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
-    const age = Date.now() - authData.storedAt;
+    const age = authData.storedAt ? Date.now() - authData.storedAt : 0;
     
-    return !!(
+    // For local development, be more lenient with validation
+    const hasRequiredData = !!(
       authData.user &&
+      authData.user.email &&
       authData.accessToken &&
-      authData.refreshToken &&
-      age < maxAge
+      authData.refreshToken
     );
+    
+    const isNotExpired = age < maxAge;
+    
+    // Validation checks completed
+    
+    return hasRequiredData && isNotExpired;
   }
 
   private updateStoredTokens(accessToken: string, refreshToken: string, expiresIn: number): void {
@@ -426,8 +409,6 @@ export class SecureAuthService {
   }
 
   private clearAuthState(): void {
-    console.log('🧹 Clearing auth state');
-    
     // Clear signals
     this._isAuthenticated.set(false);
     this._currentUser.set(null);
