@@ -16,6 +16,7 @@ import { HttpClient } from '@angular/common/http';
 import { SeoService } from '@app/services/seo/seo.service';
 import { GoogleAnalyticsService } from '@app/services/analytics/google-analytics.service';
 import { SecureAuthService } from '@app/services/auth/secure-auth.service';
+import { EnvironmentService } from '@app/services/core/environment.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -1320,9 +1321,10 @@ export class AdminDashboardComponent implements OnInit {
   private readonly analyticsService = inject(GoogleAnalyticsService);
   private readonly http = inject(HttpClient);
   private readonly authService = inject(SecureAuthService);
+  private readonly environmentService = inject(EnvironmentService);
   
   // 🌐 API Configuration
-  private readonly API_BASE_URL = 'http://localhost:3000/api';
+  private readonly API_BASE_URL = this.environmentService.apiUrl;
 
   // 🌟 LIVE DATA FROM NEON DATABASE - NO MORE MOCK DATA!
   public readonly metrics = signal({

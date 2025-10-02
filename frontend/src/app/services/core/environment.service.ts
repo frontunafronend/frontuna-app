@@ -87,16 +87,8 @@ export class EnvironmentService {
     const hostname = window.location.hostname;
     
     // Development environments
-    if (this._runtimeEnvironment === 'development') {
-      // Check if we're running on a different port and adjust accordingly
-      if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://localhost:3000/api';
-      }
-      // For local network development (e.g., mobile testing)
-      if (hostname.includes('192.168.') || hostname.includes('10.0.')) {
-        return `http://${hostname}:3000/api`;
-      }
-    }
+    // Always use environment.apiUrl - no hardcoded localhost overrides
+    // This ensures we use the live API even in development
     
     // Staging environment
     if (this._runtimeEnvironment === 'staging') {
@@ -173,15 +165,8 @@ export class EnvironmentService {
    * Get the socket URL for the current environment
    */
   get socketUrl(): string {
-    if (this._runtimeEnvironment === 'development') {
-      const hostname = window.location.hostname;
-      if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://localhost:3000';
-      }
-      if (hostname.includes('192.168.') || hostname.includes('10.0.')) {
-        return `http://${hostname}:3000`;
-      }
-    }
+    // Always use environment.socketUrl - no hardcoded localhost overrides
+    // This ensures we use the live API even in development
     
     if (this._runtimeEnvironment === 'staging') {
       return 'https://api-staging.frontuna.com';

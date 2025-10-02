@@ -77,11 +77,11 @@ export class EnvironmentConfigService {
     }
     
     if (this.isLocal) {
-      return 'http://localhost:3000';
+      return environment.socketUrl;
     }
     
     // Staging or other environments
-    return environment.apiUrl || 'http://localhost:3000';
+    return environment.apiUrl;
   }
   
   /**
@@ -98,7 +98,7 @@ export class EnvironmentConfigService {
     
     return [
       'http://localhost:4200',
-      'http://localhost:3000',
+      environment.socketUrl,
       'http://127.0.0.1:4200',
       'http://127.0.0.1:3000'
     ];

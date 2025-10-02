@@ -1,19 +1,11 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "builds": [
+  "buildCommand": "npm run vercel-build",
+  "outputDirectory": ".",
+  "rewrites": [
     {
-      "src": "fast-api.js",
-      "use": "@vercel/node"
+      "source": "/(.*)",
+      "destination": "/api/index.js"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/fast-api.js"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }

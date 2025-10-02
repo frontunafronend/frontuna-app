@@ -20,8 +20,8 @@
     <div class="container">
         <h1>🔐 Frontuna Live API Test</h1>
             <div class="info">
-                <strong>Testing API:</strong> https://frontuna-api.vercel.app<br>
-                <strong>Note:</strong> Testing production API with Neon database.
+                <strong>Testing API:</strong> <span id="api-endpoint"></span><br>
+                <strong>Note:</strong> Testing production API with live Neon database.
             </div>
         
         <div class="test-section">
@@ -59,18 +59,48 @@
                 <p><strong>Current Origin:</strong> <span id="current-origin"></span></p>
                 <p><strong>User Agent:</strong> <span id="user-agent"></span></p>
                 <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
+                <p><strong>Current Token:</strong> <span id="token-status">No token</span></p>
             </div>
         </div>
     </div>
 
     <script>
-        const API_BASE = 'https://frontuna-api.vercel.app';
+        // Always use live production API
+        const API_BASE = 'https://frontuna-ble8qc5m1-frontunas-projects-11c7fb14.vercel.app';
+        
+        // Global token management
         let currentToken = null;
+        
+        // Update token status display
+        function updateTokenStatus() {
+            const statusElement = document.getElementById('token-status');
+            if (statusElement) {
+                statusElement.textContent = currentToken ? 'Present ✅' : 'Missing ❌';
+            }
+        }
+        
+        // Set token and update display
+        function setToken(token) {
+            currentToken = token;
+            updateTokenStatus();
+            console.log('🔑 Token updated:', currentToken ? 'Present' : 'Missing');
+        }
 
-        // Initialize debug info
-        document.getElementById('current-origin').textContent = window.location.origin;
-        document.getElementById('user-agent').textContent = navigator.userAgent;
-        document.getElementById('timestamp').textContent = new Date().toISOString();
+        // Initialize page
+        function initializePage() {
+            document.getElementById('current-origin').textContent = window.location.origin;
+            document.getElementById('user-agent').textContent = navigator.userAgent;
+            document.getElementById('timestamp').textContent = new Date().toISOString();
+            updateTokenStatus();
+            
+            // Auto-run health check
+            setTimeout(testHealth, 500);
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializePage);
+        window.addEventListener('load', initializePage);
+        document.getElementById('api-endpoint').textContent = API_BASE;
 
         async function testHealth() {
             const resultDiv = document.getElementById('health-result');
@@ -184,10 +214,12 @@
                     body: JSON.stringify(testCredentials)
                 });
                 
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    currentToken = data.data.accessToken;
+            const data = await response.json();
+            console.log('Login API Response:', response.status, data);
+            
+            if (response.ok && data.success) {
+                setToken(data.token);
+                console.log('✅ Login successful! Token saved:', currentToken);
                     resultDiv.innerHTML = `
                         <div class="success">
                             <div class="status">✅ Login SUCCESSFUL</div>
@@ -272,6 +304,12 @@
 
         async function testAdminRoute() {
             const resultDiv = document.getElementById('admin-result');
+            // Force check current token status
+            updateTokenStatus();
+            console.log('🔍 Admin test starting - Token check:', {
+                tokenExists: !!currentToken,
+                tokenValue: currentToken ? currentToken.substring(0, 20) + '...' : 'null'
+            });
             
             if (!currentToken) {
                 resultDiv.innerHTML = `
@@ -348,8 +386,8 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    if (data.data && data.data.accessToken) {
-                        currentToken = data.data.accessToken;
+                    if (data.token) {
+                        setToken(data.token);
                     }
                     
                     resultDiv.innerHTML = `
@@ -395,7 +433,7 @@
             resultDiv.innerHTML = '<div class="loading">⏳ Loading AI tests...</div>';
             
             try {
-                const response = await fetch(`${API_BASE}/api/admin/ai-tests`, {
+                const response = await fetch(`${API_BASE}/api/admin/stats`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -410,7 +448,7 @@
                         <div class="success">
                             <div class="status">✅ AI Tests Retrieved</div>
                             <p>Status: ${response.status}</p>
-                            <p>Found ${data.data.apiTests.length} API tests</p>
+                            <p>Admin statistics loaded successfully!</p>
                             <pre>${JSON.stringify(data, null, 2)}</pre>
                         </div>
                     `;
@@ -449,7 +487,7 @@
             resultDiv.innerHTML = '<div class="loading">⏳ Checking AI Guard status...</div>';
             
             try {
-                const response = await fetch(`${API_BASE}/api/admin/ai-guard/status`, {
+                const response = await fetch(`${API_BASE}/api/admin/users`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

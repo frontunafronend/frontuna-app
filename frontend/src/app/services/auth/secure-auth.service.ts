@@ -113,8 +113,13 @@ export class SecureAuthService {
       withCredentials: true // Important for cookies
     }).pipe(
       map(response => {
-        if (response.success && response.data) {
-          return response.data as AuthResponse;
+        if (response.success && response.user && response.token) {
+          // Transform new API format to expected format
+          return {
+            user: response.user,
+            accessToken: response.token,
+            refreshToken: response.refreshToken || null
+          } as AuthResponse;
         }
         throw new Error(response.error?.message || 'Login failed');
       }),
@@ -143,8 +148,13 @@ export class SecureAuthService {
       withCredentials: true // Important for cookies
     }).pipe(
       map(response => {
-        if (response.success && response.data) {
-          return response.data as AuthResponse;
+        if (response.success && response.user && response.token) {
+          // Transform new API format to expected format
+          return {
+            user: response.user,
+            accessToken: response.token,
+            refreshToken: response.refreshToken || null
+          } as AuthResponse;
         }
         throw new Error(response.error?.message || 'Signup failed');
       }),
@@ -201,8 +211,8 @@ export class SecureAuthService {
   getUserProfile(): Observable<User> {
     return this.http.get<any>(`${this.environmentService.apiUrl}/auth/profile`).pipe(
       map(response => {
-        if (response.success && response.data) {
-          return response.data as User;
+        if (response.success && response.data && response.data.user) {
+          return response.data.user as User;
         }
         throw new Error(response.error?.message || 'Failed to get profile');
       }),
