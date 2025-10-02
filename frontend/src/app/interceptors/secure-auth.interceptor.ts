@@ -35,7 +35,6 @@ export const secureAuthInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       // Handle 401 Unauthorized - token expired or invalid
       if (error.status === 401 && token) {
-        console.log('🔄 401 error, attempting token refresh...');
         
         // Don't refresh on auth endpoints to avoid loops
         if (req.url.includes('/auth/')) {
@@ -51,7 +50,6 @@ export const secureAuthInterceptor: HttpInterceptorFn = (req, next) => {
               headers: req.headers.set('Authorization', `Bearer ${newToken}`)
             });
             
-            console.log('✅ Token refreshed, retrying request');
             return next(retryReq);
           }),
           catchError((refreshError) => {
@@ -73,14 +71,12 @@ export const secureAuthInterceptor: HttpInterceptorFn = (req, next) => {
 
       // Handle 403 Forbidden
       if (error.status === 403) {
-        console.log('❌ 403 Forbidden access');
         notificationService.showError('Access denied. Insufficient permissions.');
         return throwError(() => error);
       }
 
       // Handle 429 Too Many Requests
       if (error.status === 429) {
-        console.log('⚠️ Rate limit exceeded');
         notificationService.showWarning('Too many requests. Please wait a moment and try again.');
         return throwError(() => error);
       }

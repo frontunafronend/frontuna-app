@@ -60,7 +60,6 @@ export class SecureAuthService {
   });
 
   constructor() {
-    console.log('🔐 SecureAuthService: Initializing...');
     this.initializeAuth();
   }
 
@@ -104,7 +103,6 @@ export class SecureAuthService {
           }
         });
 
-        console.log('✅ Auth state restored from storage');
       } else {
         this.clearAuthState();
       }
@@ -322,7 +320,6 @@ export class SecureAuthService {
     // Set up automatic token refresh before expiration
     this.scheduleTokenRefresh(expiresAt);
 
-    console.log('✅ Auth success: User authenticated and session stored');
   }
 
   private handleAuthError(error: HttpErrorResponse): void {
@@ -456,7 +453,6 @@ export class SecureAuthService {
             
             // Schedule next refresh
             this.scheduleTokenRefresh(newExpiresAt);
-            console.log('✅ Token refreshed successfully');
           }
         }
       },

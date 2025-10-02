@@ -1355,6 +1355,13 @@ export class AdminDashboardComponent implements OnInit {
     lastCheck: new Date()
   });
 
+  // 🔄 Loading states to prevent duplicate requests
+  private readonly isLoadingAIStatus = signal(false);
+  private readonly isLoadingAIStats = signal(false);
+  private readonly lastAIStatusCheck = signal<number>(0);
+  private readonly lastAIStatsCheck = signal<number>(0);
+  private readonly AI_CACHE_DURATION = 30000; // 30 seconds cache
+
   public readonly aiAgentStats = signal({
     copilotUltimate: {
       sessions: 0,
@@ -1511,7 +1518,6 @@ export class AdminDashboardComponent implements OnInit {
    * 🌟 Load LIVE data from Neon database
    */
   private async loadLiveData() {
-    console.log('🌟 Loading LIVE data from Neon database...');
     
     try {
       // Check authentication first
@@ -1530,7 +1536,6 @@ export class AdminDashboardComponent implements OnInit {
       setTimeout(() => this.loadAnalyticsData(), 1500);
       setTimeout(() => this.loadUserComponents(), 2000);
       
-      console.log('✅ Admin dashboard data loading initiated!');
       
     } catch (error) {
       console.error('❌ Failed to load LIVE data:', error);
@@ -1543,7 +1548,6 @@ export class AdminDashboardComponent implements OnInit {
   private async loadLiveUsers() {
     // Prevent multiple simultaneous calls
     if (this.isLoadingUsers()) {
-      console.log('🔄 Users already loading, skipping duplicate request');
       return;
     }
     
@@ -1551,10 +1555,6 @@ export class AdminDashboardComponent implements OnInit {
     this.userError.set(null);
     
     try {
-      console.log('🌟 Fetching REAL users from Neon database...');
-      console.log('🔐 Current user:', this.authService.currentUser());
-      console.log('🔑 Is authenticated:', this.authService.isAuthenticated());
-      console.log('🌐 API URL:', this.API_BASE_URL);
       
       // Check if we're still authenticated before making the call
       if (!this.authService.isAuthenticated()) {
@@ -1584,7 +1584,6 @@ export class AdminDashboardComponent implements OnInit {
         
         this.liveUsers.set(users);
         this.isUsingRealData.set(true);
-        console.log(`🌟 SUCCESS: Loaded ${users.length} REAL users from Neon database!`, users);
         this.userError.set(null); // Clear any previous errors
         
       } else {
@@ -1599,7 +1598,6 @@ export class AdminDashboardComponent implements OnInit {
         url: error?.url,
         name: error?.name
       });
-      console.log('🔄 Using fallback user data...');
       
       // Fallback to mock data if backend is not available
       const fallbackUsers = [
@@ -1855,18 +1853,33 @@ export class AdminDashboardComponent implements OnInit {
    * 🎯 Set active tab
    */
   setActiveTab(tab: string) {
-    console.log('🎯 Switching to tab:', tab);
     this.activeTab.set(tab);
     
-    // Load data when switching to users tab
+    // Load data when switching to users tab (only if empty)
     if (tab === 'users' && this.liveUsers().length === 0) {
       this.loadLiveUsers();
     }
     
-    // Load AI system data when switching to AI tab
+    // Load AI system data when switching to AI tab (with caching and debouncing)
     if (tab === 'ai') {
+      this.loadAITabData();
+    }
+  }
+
+  /**
+   * 🤖 Load AI tab data with proper caching and debouncing
+   */
+  private loadAITabData() {
+    const now = Date.now();
+    
+    // Check AI status (with cache)
+    if (now - this.lastAIStatusCheck() > this.AI_CACHE_DURATION) {
       this.checkAISystemStatus();
-      this.loadAIAgentStats();
+    }
+    
+    // Check AI stats (with cache and delay to prevent simultaneous calls)
+    if (now - this.lastAIStatsCheck() > this.AI_CACHE_DURATION) {
+      setTimeout(() => this.loadAIAgentStats(), 300);
     }
   }
 
@@ -1911,22 +1924,33 @@ export class AdminDashboardComponent implements OnInit {
    * 🔍 Check AI System Status
    */
   async checkAISystemStatus() {
+    // Prevent duplicate calls
+    if (this.isLoadingAIStatus()) {
+      return;
+    }
+
+    // Check if we're authenticated
+    if (!this.authService.isAuthenticated()) {
+      return;
+    }
+
+    this.isLoadingAIStatus.set(true);
+    
     try {
-      console.log('🔍 Checking AI system status from live API...');
-      
-      // Check main health endpoint
+      // Check main health endpoint only (reduce API calls)
       const healthResponse = await this.http.get<any>(`${this.API_BASE_URL}/health`).toPromise();
       
-      // Check AI-specific endpoints
-      const aiHealthResponse = await this.http.get<any>(`${this.API_BASE_URL}/ai/prompt/health`).toPromise();
-      
-      if (healthResponse && aiHealthResponse) {
-        console.log('✅ AI systems are operational');
+      if (healthResponse?.status === 'ok') {
         this.updateAISystemStatus(true, 'All AI systems operational - Live API connected');
+      } else {
+        this.updateAISystemStatus(false, 'AI system status unknown');
       }
+      
+      this.lastAIStatusCheck.set(Date.now());
     } catch (error) {
-      console.error('❌ AI system check failed:', error);
       this.updateAISystemStatus(false, 'AI system offline - backend not responding');
+    } finally {
+      this.isLoadingAIStatus.set(false);
     }
   }
 
@@ -1934,9 +1958,19 @@ export class AdminDashboardComponent implements OnInit {
    * 📊 Load AI Agent Statistics
    */
   async loadAIAgentStats() {
+    // Prevent duplicate calls
+    if (this.isLoadingAIStats()) {
+      return;
+    }
+
+    // Check if we're authenticated
+    if (!this.authService.isAuthenticated()) {
+      return;
+    }
+
+    this.isLoadingAIStats.set(true);
+    
     try {
-      console.log('📊 Loading AI agent stats from live API...');
-      
       // Get stats from the admin stats endpoint
       const response = await this.http.get<any>(`${this.API_BASE_URL}/admin/stats`).toPromise();
       
@@ -1976,13 +2010,12 @@ export class AdminDashboardComponent implements OnInit {
           }
         });
         
-        console.log('✅ AI agent stats loaded from live API');
       } else {
         throw new Error('Invalid stats response format');
       }
+      this.lastAIStatsCheck.set(Date.now());
     } catch (error) {
-      console.error('❌ Failed to load AI agent stats:', error);
-      // Fallback to basic stats
+      // Fallback to basic stats on error
       this.aiAgentStats.set({
         copilotUltimate: { sessions: 0, messages: 0, status: 'offline' },
         copilotService: { requests: 0, uptime: '0m', status: 'offline' },
@@ -1991,6 +2024,8 @@ export class AdminDashboardComponent implements OnInit {
         authAgent: { sessions: 0, success: 0, status: 'offline' },
         guardsSystem: { guards: 0, blocked: 0, status: 'offline' }
       });
+    } finally {
+      this.isLoadingAIStats.set(false);
     }
   }
 
