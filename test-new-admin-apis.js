@@ -1,7 +1,7 @@
 // 🧪 Test New Admin API Endpoints
 const https = require('https');
 
-const API_BASE = 'frontuna-a4dsq9ujs-frontunas-projects-11c7fb14.vercel.app';
+const API_BASE = 'frontuna-4hx0s8vps-frontunas-projects-11c7fb14.vercel.app';
 
 async function makeRequest(path, method = 'GET', body = null, token = null) {
   return new Promise((resolve, reject) => {
