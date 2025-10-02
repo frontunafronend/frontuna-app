@@ -1074,6 +1074,24 @@ module.exports = async (req, res) => {
       }, origin);
     }
 
+    // Root endpoint - API info
+    if (pathname === '/') {
+      return sendResponse(res, 200, {
+        success: true,
+        message: 'Frontuna.ai API Server',
+        version: '3.0.0-production',
+        status: 'operational',
+        endpoints: {
+          health: '/health',
+          auth: '/api/auth/*',
+          admin: '/api/admin/*',
+          users: '/api/users/*',
+          ai: '/api/ai/*'
+        },
+        documentation: 'https://docs.frontuna.com/api'
+      }, origin);
+    }
+
     // 404 for unknown routes
     return sendResponse(res, 404, {
       success: false,
@@ -1110,7 +1128,7 @@ module.exports = async (req, res) => {
   } finally {
     // Clean up Prisma connection (only in serverless environment)
     if (prisma && process.env.NODE_ENV === 'production') {
-    await prisma.$disconnect();
+      await prisma.$disconnect();
     }
   }
 };
