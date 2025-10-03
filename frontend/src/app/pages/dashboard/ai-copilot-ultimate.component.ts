@@ -309,9 +309,6 @@ interface AICopilotGuards {
                           (keydown.enter)="onEnterPress($any($event))"
                           placeholder="Ask me anything about coding... (Shift+Enter for new line)"
                           rows="1"
-                          cdkTextareaAutosize
-                          cdkAutosizeMinRows="1"
-                          cdkAutosizeMaxRows="5">
                 </textarea>
                 <mat-hint>Press Enter to send, Shift+Enter for new line</mat-hint>
               </mat-form-field>
