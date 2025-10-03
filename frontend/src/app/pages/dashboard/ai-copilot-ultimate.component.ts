@@ -34,7 +34,8 @@ import { MonacoCodeEditorComponent } from '../../components/shared/monaco-code-e
 import { EnhancedAIPreviewComponent } from '../../components/ai/enhanced-ai-preview/enhanced-ai-preview.component';
 
 // Services
-import { OptimizedAIChatService, ChatMessage as OptimizedChatMessage, AIResponse } from '../../services/ai/optimized-ai-chat.service';
+import { OptimizedAIChatService, ChatMessage as OptimizedChatMessage } from '../../services/ai/optimized-ai-chat.service';
+import { AIResponse } from '../../models/ai.model';
 import { EditorStateService } from '../../services/editor-state.service';
 import { NotificationService } from '../../services/notification/notification.service';
 import { AnalyticsService } from '../../services/analytics/analytics.service';
@@ -661,18 +662,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       code: combinedCode,
       confidence: 1.0,
       processingTime: 0,
-      timestamp: new Date(),
-      success: true,
-      data: {
-        message: 'Preview generated',
-        tokensUsed: 0,
-        model: 'preview',
-        responseTime: 0,
-        sessionId: 'preview',
-        timestamp: new Date().toISOString(),
-        confidence: 1.0,
-        hasCode: true
-      }
+      timestamp: new Date()
     };
   }
 
