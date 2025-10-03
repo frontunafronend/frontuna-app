@@ -734,8 +734,8 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     this.initializeServices();
     this.setupEventListeners();
     
-    // 🎯 ADD SAMPLE CONTENT TO DEMONSTRATE PREVIEW
-    this.addSampleContentToEditor();
+    // 🎯 INITIALIZE CLEAN EDITORS FOR AI GENERATION
+    this.initializeCleanEditors();
     
       console.log('✅ AI COPILOT ULTIMATE - Ready for action!');
   }
@@ -1410,134 +1410,109 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     };
   }
 
-  // 🎯 ADD SAMPLE CONTENT TO DEMONSTRATE PREVIEW
-  private addSampleContentToEditor() {
-    console.log('🎨 Adding sample content to demonstrate preview...');
-    
-    // Sample HTML
-    const sampleHTML = `<div class="sample-component">
-  <div class="card">
-    <div class="card-header">
-      <h3>🚀 AI Copilot Preview</h3>
-      <p>This preview updates automatically as you type in Monaco editor!</p>
-    </div>
-    <div class="card-content">
-      <button class="btn-primary">Click me!</button>
-      <button class="btn-secondary">Or me!</button>
+  // 🎯 INITIALIZE CLEAN EDITORS FOR REAL AI GENERATION
+  private initializeCleanEditors() {
+    // Start with clean, professional templates ready for AI generation
+    const cleanHTML = `<!-- 🤖 AI Copilot Ultimate - Ready for Code Generation -->
+<div class="ai-ready-component">
+  <div class="welcome-card">
+    <h2>🚀 AI Copilot Ultimate</h2>
+    <p>Ask me to create any component and I'll generate professional code for you!</p>
+    <div class="features">
+      <span class="feature">✨ Smart Code Generation</span>
+      <span class="feature">🎨 Beautiful UI Components</span>
+      <span class="feature">⚡ Real-time Preview</span>
     </div>
   </div>
 </div>`;
 
-    // Sample SCSS
-    const sampleSCSS = `.sample-component {
+    const cleanSCSS = `/* 🤖 AI Copilot Ultimate - Professional Styles */
+.ai-ready-component {
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
-  .card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    padding: 2rem;
-    max-width: 400px;
+  .welcome-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 2.5rem;
     text-align: center;
-    transform: translateY(0);
-    transition: all 0.3s ease;
-
-    &:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    max-width: 500px;
+    
+    h2 {
+      color: #333;
+      margin: 0 0 1rem 0;
+      font-size: 2rem;
+      font-weight: 600;
     }
-
-    .card-header {
-      margin-bottom: 1.5rem;
-      
-      h3 {
-        color: #333;
-        margin: 0 0 0.5rem 0;
-        font-size: 1.5rem;
-      }
-      
-      p {
-        color: #666;
-        margin: 0;
-      }
+    
+    p {
+      color: #666;
+      margin: 0 0 1.5rem 0;
+      font-size: 1.1rem;
+      line-height: 1.6;
     }
-
-    .card-content {
+    
+    .features {
       display: flex;
-      gap: 1rem;
-      justify-content: center;
+      flex-direction: column;
+      gap: 0.5rem;
       
-      button {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        
-        &.btn-primary {
-          background: #667eea;
-          color: white;
-          
-          &:hover {
-            background: #5a6fd8;
-            transform: scale(1.05);
-          }
-        }
-        
-        &.btn-secondary {
-          background: #f1f5f9;
-          color: #334155;
-          
-          &:hover {
-            background: #e2e8f0;
-            transform: scale(1.05);
-          }
-        }
+      .feature {
+        color: #555;
+        font-size: 0.9rem;
+        padding: 0.5rem;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 8px;
       }
     }
   }
 }`;
 
-    // Sample TypeScript
-    const sampleTypeScript = `// 🚀 AI Copilot Sample Component
-import { Component } from '@angular/core';
+    // Clean TypeScript template
+    const cleanTypeScript = `// 🤖 AI Copilot Ultimate - Ready for Generation
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-sample',
+  selector: 'app-ai-generated',
+  standalone: true,
+  imports: [CommonModule],
   template: \`
-    <!-- HTML content will be injected here -->
+    <!-- AI-generated HTML will replace this -->
   \`,
   styles: [\`
-    /* SCSS content will be injected here */
+    /* AI-generated SCSS will replace this */
   \`]
 })
-export class SampleComponent {
-  title = '🚀 AI Copilot Preview';
+export class AIGeneratedComponent implements OnInit {
+  // 🤖 AI will generate component properties and methods here
   
   constructor() {
-    console.log('Sample component initialized!');
+    console.log('🚀 AI Generated Component initialized');
   }
   
-  onButtonClick(type: string) {
-    console.log(\`Button clicked: \${type}\`);
-    // Add your logic here
+  ngOnInit(): void {
+    // AI will generate initialization logic here
   }
+  
+  // AI will generate component methods here
 }`;
 
-    // Apply sample content to editors
+    // Apply clean templates to editors with a professional loading experience
     setTimeout(() => {
-      this.editorState.updateBuffer('html', sampleHTML);
-      this.editorState.updateBuffer('scss', sampleSCSS);
-      this.editorState.updateBuffer('typescript', sampleTypeScript);
+      this.editorState.updateBuffer('html', cleanHTML);
+      this.editorState.updateBuffer('scss', cleanSCSS);
+      this.editorState.updateBuffer('typescript', cleanTypeScript);
       
-      console.log('✅ Sample content added to Monaco editors');
-      this.notificationService.showSuccess('Sample content loaded! Preview is now active.');
-    }, 1000); // Small delay to ensure editors are ready
+      this.notificationService.showSuccess('🤖 AI Copilot Ultimate ready! Start chatting to generate professional code.');
+    }, 500);
   }
 }
