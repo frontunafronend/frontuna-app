@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://frontuna-6pjpyr75l-frontunas-projects-11c7fb14.vercel.app/api',
-  socketUrl: 'https://frontuna-6pjpyr75l-frontunas-projects-11c7fb14.vercel.app',
+  apiUrl: 'https://frontuna-gdb91r2lz-frontunas-projects-11c7fb14.vercel.app/api',
+  socketUrl: 'https://frontuna-gdb91r2lz-frontunas-projects-11c7fb14.vercel.app',
   
   // API Configuration
   api: {
