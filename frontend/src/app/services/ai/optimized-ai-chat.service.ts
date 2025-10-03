@@ -107,8 +107,8 @@ export class OptimizedAIChatService {
 
   // 🔧 CONFIGURATION
   private readonly API_BASE = `${this.environmentService.apiUrl}/ai/copilot`;
-  private readonly TIMEOUT_MS = 15000; // 15 seconds
-  private readonly MAX_RETRIES = 2;
+  private readonly TIMEOUT_MS = 45000; // 45 seconds for complex requests
+  private readonly MAX_RETRIES = 1; // Reduce retries to avoid long waits
   private readonly DEBOUNCE_MS = 300; // Prevent spam
 
   // 🎯 REQUEST DEDUPLICATION - Prevent duplicate calls
@@ -274,12 +274,45 @@ export class OptimizedAIChatService {
           if (response.success) {
             this.handleSuccessfulResponse(response);
           } else {
-            throw new Error(response.error?.message || 'AI response failed');
+            // Handle specific error cases
+            const errorData = response.error as any;
+            const errorCode = errorData?.code;
+            if (errorCode === 'MISSING_API_KEY') {
+              throw new Error('MISSING_API_KEY: ' + (errorData?.details || 'OpenAI API key required'));
+            } else if (errorCode === 'OPENAI_API_ERROR') {
+              throw new Error('OPENAI_API_ERROR: ' + (errorData?.details || 'OpenAI service error'));
+            } else {
+              throw new Error(response.error?.message || 'AI response failed');
+            }
           }
         }),
         catchError(error => {
           console.error('❌ Chat request failed:', error);
-          this.handleFailedResponse(error, message);
+          
+          // Check if error response has data (like API key missing)
+          if (error.error?.data?.message) {
+            // Show the backend's error message directly
+            const errorMessage: ChatMessage = {
+              id: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              type: 'ai',
+              sender: 'AI Copilot',
+              content: error.error.data.message,
+              timestamp: new Date(),
+              confidence: 0
+            };
+            
+            this._messages.update(messages => [...messages, errorMessage]);
+            
+            // Show appropriate notification
+            if (error.error.data.requiresApiKey) {
+              this.notificationService.showWarning('OpenAI API Key Required');
+            } else {
+              this.notificationService.showError('AI Service Error');
+            }
+          } else {
+            this.handleFailedResponse(error, message);
+          }
+          
           return throwError(() => error);
         }),
         finalize(() => {
@@ -390,22 +423,83 @@ export class OptimizedAIChatService {
    * ❌ HANDLE FAILED RESPONSE
    */
   private handleFailedResponse(error: any, originalMessage: string): void {
+    let errorContent = '';
+    let notificationMessage = '';
+    
+    // Handle specific error types
+    if (error.message?.includes('MISSING_API_KEY')) {
+      errorContent = `🚫 **OpenAI API Key Required**
+
+To get real ChatGPT responses, the OpenAI API key must be configured:
+
+**Steps to Fix:**
+1. Get your API key from: https://platform.openai.com/api-keys
+2. Add to environment: \`OPENAI_API_KEY="sk-your-key-here"\`
+3. Restart the server
+
+**Your Request:** "${originalMessage}"
+
+**No mock responses will be provided.** Only real AI responses are supported.`;
+      
+      notificationMessage = 'OpenAI API Key Required - Configure in environment variables';
+      
+    } else if (error.message?.includes('OPENAI_API_ERROR')) {
+      errorContent = `🚫 **OpenAI API Error**
+
+The OpenAI service encountered an error while processing your request.
+
+**Your Request:** "${originalMessage}"
+
+**Possible Solutions:**
+1. Check your OpenAI API key is valid
+2. Verify you have sufficient credits
+3. Try again in a moment
+4. Check OpenAI service status
+
+**Error Details:** ${error.message.split('OPENAI_API_ERROR: ')[1] || 'Unknown error'}`;
+      
+      notificationMessage = 'OpenAI API Error - Please try again';
+      
+    } else if (error.name === 'TimeoutError') {
+      errorContent = `⏰ **Request Timeout**
+
+Your request "${originalMessage}" timed out while waiting for the AI response.
+
+**Please try again with:**
+- A shorter message
+- Simpler request
+- Check your internet connection`;
+      
+      notificationMessage = 'AI response timed out. Please try again.';
+      
+    } else {
+      errorContent = `❌ **Service Error**
+
+I encountered an error processing your request: "${originalMessage}"
+
+**Error:** ${error.message || 'Unknown error'}
+
+Please try again in a moment. If the problem persists, check the server logs.`;
+      
+      notificationMessage = 'AI service error - Please try again';
+    }
+
     const errorMessage: ChatMessage = {
       id: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type: 'ai',
       sender: 'AI Copilot',
-      content: `I apologize, but I encountered an error processing your request: "${originalMessage}". Please try again in a moment.`,
+      content: errorContent,
       timestamp: new Date(),
       confidence: 0
     };
 
     this._messages.update(messages => [...messages, errorMessage]);
     
-    // Show user-friendly error
-    if (error.name === 'TimeoutError') {
-      this.notificationService.showWarning('AI response timed out. Please try again.');
+    // Show user-friendly notification
+    if (error.message?.includes('MISSING_API_KEY')) {
+      this.notificationService.showWarning(notificationMessage);
     } else {
-      this.notificationService.showError('AI service temporarily unavailable');
+      this.notificationService.showError(notificationMessage);
     }
   }
 

@@ -3,6 +3,7 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const OpenAI = require('openai');
 
 
 // Initialize Prisma Client
@@ -37,6 +38,17 @@ async function initializePrisma() {
 
 // Environment Configuration
 const JWT_SECRET = process.env.JWT_SECRET || 'production-jwt-secret-2025';
+
+// Initialize OpenAI
+let openai = null;
+if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-actual-openai-api-key-here') {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+  console.log('✅ OpenAI initialized successfully');
+} else {
+  console.log('⚠️ OpenAI API key not configured - AI features will use fallback responses');
+}
 const JWT_EXPIRES_IN = '15m';
 const REFRESH_TOKEN_EXPIRES_IN = '30d';
 
@@ -1504,7 +1516,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    // 🤖 AI Copilot Chat Endpoint - THE ULTIMATE AI CODING ASSISTANT
+    // 🤖 AI Copilot Chat Endpoint - REAL OPENAI INTEGRATION
     if (pathname === '/api/ai/copilot/chat' && method === 'POST') {
       try {
         const user = await requireAuth(req);
@@ -1518,735 +1530,166 @@ module.exports = async (req, res) => {
           }, origin);
         }
 
-        // Simulate AI processing time for realistic experience
         const processingStartTime = Date.now();
         
-        // 🧠 CONVERSATION CONTEXT ANALYSIS
-        let contextualPrefix = '';
-        if (continuePreviousConversation && conversationHistory && conversationHistory.length > 0) {
-          const lastMessage = conversationHistory[conversationHistory.length - 1];
-          if (lastMessage && lastMessage.role === 'assistant') {
-            contextualPrefix = 'Building on our previous discussion, ';
-          }
-        }
+        // 🤖 ALWAYS TRY REAL OPENAI API FIRST
+        console.log('🔍 OpenAI Status:', openai ? '✅ Available' : '❌ API Key Missing');
         
-        // Advanced AI Response Generation based on message content and context
-        let aiResponse = '';
-        let codeGenerated = null;
-        let suggestions = [];
-        
-        const lowerMessage = message.toLowerCase();
-        
-        // 🔄 FOLLOW-UP QUESTIONS & CONTEXTUAL RESPONSES
-        if (lowerMessage.includes('how') || lowerMessage.includes('why') || lowerMessage.includes('what') || lowerMessage.includes('explain') || lowerMessage.includes('can you')) {
-          aiResponse = `${contextualPrefix}Let me explain that for you. `;
-          
-          if (lowerMessage.includes('improve') || lowerMessage.includes('optimize')) {
-            aiResponse += `Here are some ways to improve the code we discussed:`;
-            suggestions = [
-              'Add error handling and validation',
-              'Implement proper TypeScript types',
-              'Add unit tests for better reliability',
-              'Optimize performance with lazy loading'
-            ];
-          } else if (lowerMessage.includes('style') || lowerMessage.includes('css')) {
-            aiResponse += `Here are some styling improvements:`;
-            suggestions = [
-              'Add responsive design breakpoints',
-              'Implement CSS animations',
-              'Use CSS Grid or Flexbox for layout',
-              'Add hover and focus states'
-            ];
-          } else {
-            aiResponse += `Based on our conversation, here's what you should know:`;
-            suggestions = [
-              'Follow Angular best practices',
-              'Use reactive forms for complex inputs',
-              'Implement proper component lifecycle',
-              'Consider accessibility requirements'
-            ];
-          }
-        }
-        // Code Generation Requests
-        else if (lowerMessage.includes('create') || lowerMessage.includes('generate') || lowerMessage.includes('build') || lowerMessage.includes('make') || lowerMessage.includes('table') || lowerMessage.includes('bootstrap')) {
-          if (lowerMessage.includes('table') && lowerMessage.includes('bootstrap') && lowerMessage.includes('angular')) {
-            aiResponse = `${contextualPrefix}I'll create a complete Angular Bootstrap table with pagination, search, sorting, and Material Design for you:`;
-            codeGenerated = {
-              language: 'typescript',
-              code: `import { Component, OnInit, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MatTableModule } from '@angular/material/table';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatSortModule } from '@angular/material/sort';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
+        if (openai) {
+          try {
+            console.log('🧠 Generating real AI response for:', message.substring(0, 50) + '...');
+            
+            // Build conversation messages for OpenAI
+            const messages = [
+              {
+                role: 'system',
+                content: `You are an expert Angular developer and coding assistant for Frontuna.ai. You help users create professional, modern Angular components with TypeScript, HTML, and SCSS.
 
-interface TableData {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  joinDate: Date;
-}
+Context: ${context || 'Angular development assistance'}
 
-@Component({
-  selector: 'app-data-table',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatButtonModule
-  ],
-  template: \`
-    <div class="table-container">
-      <div class="table-header">
-        <h2>📊 Advanced Data Table</h2>
-        <mat-form-field appearance="outline" class="search-field">
-          <mat-label>Search</mat-label>
-          <input matInput 
-                 [(ngModel)]="searchTerm" 
-                 (input)="onSearch()"
-                 placeholder="Search users...">
-          <mat-icon matSuffix>search</mat-icon>
-        </mat-form-field>
-      </div>
+Always provide:
+1. Clear, professional code examples
+2. Best practices and modern Angular features
+3. Proper TypeScript typing
+4. Responsive design with Material Design
+5. Complete, working code that can be copied directly
 
-      <div class="mat-elevation-8">
-        <table mat-table [dataSource]="filteredData()" 
-               matSort 
-               (matSortChange)="onSort($event)"
-               class="full-width-table">
-          
-          <!-- ID Column -->
-          <ng-container matColumnDef="id">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
-            <td mat-cell *matCellDef="let user">{{ user.id }}</td>
-          </ng-container>
-
-          <!-- Name Column -->
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-            <td mat-cell *matCellDef="let user">
-              <div class="user-info">
-                <div class="avatar">{{ user.name.charAt(0) }}</div>
-                <span>{{ user.name }}</span>
-              </div>
-            </td>
-          </ng-container>
-
-          <!-- Email Column -->
-          <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
-            <td mat-cell *matCellDef="let user">{{ user.email }}</td>
-          </ng-container>
-
-          <!-- Role Column -->
-          <ng-container matColumnDef="role">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Role</th>
-            <td mat-cell *matCellDef="let user">
-              <span class="role-badge" [class]="'role-' + user.role.toLowerCase()">
-                {{ user.role }}
-              </span>
-            </td>
-          </ng-container>
-
-          <!-- Status Column -->
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-            <td mat-cell *matCellDef="let user">
-              <span class="status-badge" [class]="'status-' + user.status.toLowerCase()">
-                {{ user.status }}
-              </span>
-            </td>
-          </ng-container>
-
-          <!-- Actions Column -->
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>Actions</th>
-            <td mat-cell *matCellDef="let user">
-              <button mat-icon-button color="primary" (click)="editUser(user)">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button color="warn" (click)="deleteUser(user)">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
-
-        <mat-paginator 
-          [pageSizeOptions]="[5, 10, 20]"
-          [pageSize]="pageSize()"
-          [length]="filteredData().length"
-          (page)="onPageChange($event)"
-          showFirstLastButtons>
-        </mat-paginator>
-      </div>
-    </div>
-  \`,
-  styles: [\`
-    .table-container {
-      padding: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .table-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .search-field {
-      width: 300px;
-    }
-
-    .full-width-table {
-      width: 100%;
-    }
-
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-
-    .role-badge, .status-badge {
-      padding: 4px 12px;
-      border-radius: 16px;
-      font-size: 12px;
-      font-weight: 500;
-      text-transform: uppercase;
-    }
-
-    .role-admin { background: #e3f2fd; color: #1976d2; }
-    .role-user { background: #f3e5f5; color: #7b1fa2; }
-    .role-moderator { background: #fff3e0; color: #f57c00; }
-
-    .status-active { background: #e8f5e8; color: #2e7d32; }
-    .status-inactive { background: #ffebee; color: #c62828; }
-    .status-pending { background: #fff8e1; color: #f9a825; }
-  \`]
-})
-export class DataTableComponent implements OnInit {
-  searchTerm = '';
-  pageSize = signal(10);
-  currentPage = signal(0);
-  sortField = signal('');
-  sortDirection = signal<'asc' | 'desc'>('asc');
-
-  displayedColumns: string[] = ['id', 'name', 'email', 'role', 'status', 'actions'];
-
-  // Mock data
-  private data = signal<TableData[]>([
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Admin', status: 'Active', joinDate: new Date('2023-01-15') },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'User', status: 'Active', joinDate: new Date('2023-02-20') },
-    { id: 3, name: 'Mike Johnson', email: 'mike@example.com', role: 'Moderator', status: 'Pending', joinDate: new Date('2023-03-10') },
-    { id: 4, name: 'Sarah Wilson', email: 'sarah@example.com', role: 'User', status: 'Inactive', joinDate: new Date('2023-04-05') },
-    { id: 5, name: 'Tom Brown', email: 'tom@example.com', role: 'Admin', status: 'Active', joinDate: new Date('2023-05-12') }
-  ]);
-
-  // Computed filtered data
-  filteredData = computed(() => {
-    let filtered = this.data();
-    
-    // Apply search filter
-    if (this.searchTerm) {
-      filtered = filtered.filter(item => 
-        item.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.role.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    }
-
-    // Apply sorting
-    if (this.sortField()) {
-      filtered = [...filtered].sort((a, b) => {
-        const aVal = a[this.sortField() as keyof TableData];
-        const bVal = b[this.sortField() as keyof TableData];
-        
-        if (aVal < bVal) return this.sortDirection() === 'asc' ? -1 : 1;
-        if (aVal > bVal) return this.sortDirection() === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-
-    return filtered;
-  });
-
-  ngOnInit() {
-    console.log('📊 Advanced Data Table initialized');
-  }
-
-  onSearch() {
-    this.currentPage.set(0);
-  }
-
-  onSort(event: any) {
-    this.sortField.set(event.active);
-    this.sortDirection.set(event.direction);
-  }
-
-  onPageChange(event: any) {
-    this.currentPage.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-  }
-
-  editUser(user: TableData) {
-    console.log('Edit user:', user);
-    // Implement edit functionality
-  }
-
-  deleteUser(user: TableData) {
-    console.log('Delete user:', user);
-    // Implement delete functionality
-  }
-}`
-            };
-            suggestions = [
-              'Add real API integration for data fetching',
-              'Implement advanced filtering options',
-              'Add export functionality (CSV, PDF)',
-              'Create responsive mobile view',
-              'Add bulk actions for multiple rows'
-            ];
-          } else if (lowerMessage.includes('component') || lowerMessage.includes('angular')) {
-            aiResponse = `I'll help you create a professional Angular component. Here's a complete implementation:`;
-            codeGenerated = {
-              language: 'typescript',
-              code: `import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
-
-@Component({
-  selector: 'app-dynamic-component',
-  standalone: true,
-  imports: [CommonModule],
-  template: \`
-    <div class="dynamic-component">
-      <h2>{{ title }}</h2>
-      <p>{{ description }}</p>
-      <button (click)="onAction()" class="action-btn">
-        {{ actionLabel }}
-      </button>
-    </div>
-  \`,
-  styles: [\`
-    .dynamic-component {
-      padding: 1.5rem;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    
-    .action-btn {
-      background: rgba(255,255,255,0.2);
-      border: 1px solid rgba(255,255,255,0.3);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    
-    .action-btn:hover {
-      background: rgba(255,255,255,0.3);
-      transform: translateY(-2px);
-    }
-  \`]
-})
-export class DynamicComponent {
-  @Input() title: string = 'Dynamic Component';
-  @Input() description: string = 'Generated by AI Copilot Ultimate';
-  @Input() actionLabel: string = 'Click Me';
-  @Output() action = new EventEmitter<void>();
-
-  onAction() {
-    this.action.emit();
-    console.log('Dynamic component action triggered!');
-  }
-}`
-            };
-            suggestions = [
-              'Add form validation to this component',
-              'Create a service to manage component data',
-              'Add animations and transitions',
-              'Implement responsive design'
-            ];
-          } else if (lowerMessage.includes('table') || lowerMessage.includes('bootstrap table')) {
-            aiResponse = `I'll create a professional Bootstrap table with mock data for you:`;
-            codeGenerated = {
-              language: 'html',
-              code: `<!-- 📊 Professional Bootstrap Table with Mock Data -->
-<div class="container mt-4">
-  <div class="card shadow">
-    <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">
-        <i class="fas fa-table me-2"></i>
-        Data Table
-      </h5>
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover table-striped mb-0">
-          <thead class="table-dark">
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">Name</th>
-              <th scope="col">Email</th>
-              <th scope="col">Role</th>
-              <th scope="col">Status</th>
-              <th scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">1</th>
-              <td>
-                <div class="d-flex align-items-center">
-                  <img src="https://via.placeholder.com/32" class="rounded-circle me-2" alt="Avatar">
-                  <strong>John Doe</strong>
-                </div>
-              </td>
-              <td>john.doe@example.com</td>
-              <td><span class="badge bg-success">Admin</span></td>
-              <td><span class="badge bg-success">Active</span></td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary me-1">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">2</th>
-              <td>
-                <div class="d-flex align-items-center">
-                  <img src="https://via.placeholder.com/32" class="rounded-circle me-2" alt="Avatar">
-                  <strong>Jane Smith</strong>
-                </div>
-              </td>
-              <td>jane.smith@example.com</td>
-              <td><span class="badge bg-info">User</span></td>
-              <td><span class="badge bg-success">Active</span></td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary me-1">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">3</th>
-              <td>
-                <div class="d-flex align-items-center">
-                  <img src="https://via.placeholder.com/32" class="rounded-circle me-2" alt="Avatar">
-                  <strong>Mike Johnson</strong>
-                </div>
-              </td>
-              <td>mike.johnson@example.com</td>
-              <td><span class="badge bg-warning">Moderator</span></td>
-              <td><span class="badge bg-warning">Pending</span></td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary me-1">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card-footer bg-light">
-      <div class="d-flex justify-content-between align-items-center">
-        <small class="text-muted">Showing 3 of 3 entries</small>
-        <nav>
-          <ul class="pagination pagination-sm mb-0">
-            <li class="page-item disabled">
-              <span class="page-link">Previous</span>
-            </li>
-            <li class="page-item active">
-              <span class="page-link">1</span>
-            </li>
-            <li class="page-item disabled">
-              <span class="page-link">Next</span>
-            </li>
-          </ul>
-        </nav>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- 🎨 Additional CSS for enhanced styling -->
-<style>
-.table-hover tbody tr:hover {
-  background-color: rgba(0, 123, 255, 0.1);
-}
-
-.card {
-  border: none;
-  border-radius: 12px;
-}
-
-.card-header {
-  border-radius: 12px 12px 0 0 !important;
-}
-
-.badge {
-  font-size: 0.75em;
-  padding: 0.5em 0.75em;
-}
-
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-}
-
-.table th {
-  border-top: none;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.rounded-circle {
-  width: 32px;
-  height: 32px;
-  object-fit: cover;
-}
-</style>`
-            };
-            suggestions = [
-              'Add sorting functionality to table columns',
-              'Implement search and filter features',
-              'Add pagination for large datasets',
-              'Create responsive mobile view'
-            ];
-          } else if (lowerMessage.includes('function') || lowerMessage.includes('method')) {
-            aiResponse = `Here's a professional TypeScript function with error handling and documentation:`;
-            codeGenerated = {
-              language: 'typescript',
-              code: `/**
- * Advanced utility function with comprehensive error handling
- * @param data - Input data to process
- * @param options - Configuration options
- * @returns Processed result with metadata
- */
-export async function processData<T>(
-  data: T[], 
-  options: {
-    sortBy?: keyof T;
-    filterBy?: Partial<T>;
-    limit?: number;
-    transform?: (item: T) => T;
-  } = {}
-): Promise<{
-  data: T[];
-  metadata: {
-    originalCount: number;
-    processedCount: number;
-    processingTime: number;
-  };
-}> {
-  const startTime = performance.now();
-  
-  try {
-    let result = [...data];
-    
-    // Apply filter if provided
-    if (options.filterBy) {
-      result = result.filter(item => 
-        Object.entries(options.filterBy!).every(([key, value]) => 
-          item[key as keyof T] === value
-        )
-      );
-    }
-    
-    // Apply sorting if provided
-    if (options.sortBy) {
-      result.sort((a, b) => {
-        const aVal = a[options.sortBy!];
-        const bVal = b[options.sortBy!];
-        return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-      });
-    }
-    
-    // Apply transformation if provided
-    if (options.transform) {
-      result = result.map(options.transform);
-    }
-    
-    // Apply limit if provided
-    if (options.limit) {
-      result = result.slice(0, options.limit);
-    }
-    
-    const endTime = performance.now();
-    
-    return {
-      data: result,
-      metadata: {
-        originalCount: data.length,
-        processedCount: result.length,
-        processingTime: endTime - startTime
-      }
-    };
-  } catch (error) {
-    throw new Error(\`Data processing failed: \${error.message}\`);
-  }
-}`
-            };
-          }
-        }
-        // Debugging and Error Help
-        else if (lowerMessage.includes('error') || lowerMessage.includes('debug') || lowerMessage.includes('fix')) {
-          aiResponse = `I'll help you debug this issue. Here's a comprehensive debugging approach:
-
-1. **Check the Browser Console** - Look for any error messages or warnings
-2. **Verify Network Requests** - Check if API calls are successful in Network tab
-3. **Validate Data Flow** - Ensure data is being passed correctly between components
-4. **Check TypeScript Compilation** - Make sure there are no type errors
-
-Here's a debugging utility function you can use:`;
-          
-          codeGenerated = {
-            language: 'typescript',
-            code: `// 🔧 Professional Debugging Utility
-export class DebugHelper {
-  private static isDevelopment = !environment.production;
-  
-  static log(message: string, data?: any, level: 'info' | 'warn' | 'error' = 'info') {
-    if (!this.isDevelopment) return;
-    
-    const timestamp = new Date().toISOString();
-    const prefix = \`[\${timestamp}] [\${level.toUpperCase()}]\`;
-    
-    switch (level) {
-      case 'error':
-        console.error(\`\${prefix} \${message}\`, data);
-        break;
-      case 'warn':
-        console.warn(\`\${prefix} \${message}\`, data);
-        break;
-      default:
-        console.log(\`\${prefix} \${message}\`, data);
-    }
-  }
-  
-  static trace(functionName: string, params?: any) {
-    if (!this.isDevelopment) return;
-    
-    console.group(\`🔍 Tracing: \${functionName}\`);
-    if (params) {
-      console.log('Parameters:', params);
-    }
-    console.trace();
-    console.groupEnd();
-  }
-  
-  static performance(label: string, fn: () => any) {
-    if (!this.isDevelopment) return fn();
-    
-    const start = performance.now();
-    const result = fn();
-    const end = performance.now();
-    
-    console.log(\`⚡ Performance [\${label}]: \${(end - start).toFixed(2)}ms\`);
-    return result;
-  }
-}`
-          };
-          
-          suggestions = [
-            'Check browser console for errors',
-            'Verify API endpoint responses',
-            'Test with sample data first',
-            'Add error boundaries to components'
-          ];
-        }
-        // General Coding Questions
-        else {
-          aiResponse = `I'm here to help with your coding needs! Based on your message, here are some suggestions and best practices:
-
-**For Angular Development:**
-- Use Angular Signals for reactive state management
-- Implement proper error handling with try-catch blocks
+When generating code:
+- Use Angular 17+ standalone components
+- Include proper imports and dependencies
+- Use Angular Signals for state management
 - Follow Angular style guide conventions
-- Use TypeScript strict mode for better type safety
+- Include comprehensive comments
+- Make code production-ready
 
-**For Code Quality:**
-- Write unit tests for your components and services
-- Use ESLint and Prettier for consistent code formatting
-- Implement proper logging and debugging
-- Follow SOLID principles in your architecture
+Format your response with clear explanations and working code examples.`
+              }
+            ];
 
-Would you like me to help you with any specific implementation?`;
-          
-          suggestions = [
-            'Generate a new Angular component',
-            'Create a TypeScript service',
-            'Help debug an error',
-            'Optimize performance',
-            'Add unit tests',
-            'Implement best practices'
-          ];
-        }
-        
-        const processingTime = Date.now() - processingStartTime;
-        
-        // Simulate realistic token usage
-        const estimatedTokens = Math.floor(message.length / 4) + Math.floor(aiResponse.length / 4);
-        
-        return sendResponse(res, 200, {
-          success: true,
-          data: {
-            message: aiResponse,
-            code: codeGenerated,
-            suggestions: suggestions,
-            tokensUsed: estimatedTokens,
-            model: 'gpt-4-turbo-preview',
-            responseTime: processingTime,
-            sessionId: sessionId,
-            timestamp: new Date().toISOString(),
-            confidence: 0.95,
-            hasCode: !!codeGenerated
+            // Add conversation history if available
+            if (conversationHistory && conversationHistory.length > 0) {
+              // Add last few messages for context (limit to prevent token overflow)
+              const recentHistory = conversationHistory.slice(-6);
+              messages.push(...recentHistory);
+            }
+
+            // Add current user message
+            messages.push({
+              role: 'user',
+              content: message
+            });
+
+            // Create OpenAI completion
+            const completion = await openai.chat.completions.create({
+              model: 'gpt-4-turbo-preview',
+              messages: messages,
+              max_tokens: 3000, // Increased for complex component requests
+              temperature: 0.7,
+              presence_penalty: 0.1,
+              frequency_penalty: 0.1
+            });
+
+            const aiResponse = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+            const tokensUsed = completion.usage?.total_tokens || 0;
+            
+            // Extract code from AI response if present
+            let codeGenerated = null;
+            const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
+            const codeMatch = codeBlockRegex.exec(aiResponse);
+            if (codeMatch) {
+              codeGenerated = {
+                language: codeMatch[1] || 'typescript',
+                code: codeMatch[2].trim()
+              };
+            }
+
+            // Generate suggestions based on the response
+            const suggestions = [
+              'Explain this code in detail',
+              'Add error handling',
+              'Optimize performance',
+              'Add unit tests',
+              'Make it responsive',
+              'Add accessibility features'
+            ];
+
+            const processingTime = Date.now() - processingStartTime;
+            
+            console.log('✅ Real AI response generated successfully');
+            
+            return sendResponse(res, 200, {
+              success: true,
+              data: {
+                message: aiResponse,
+                code: codeGenerated,
+                suggestions: suggestions,
+                tokensUsed: tokensUsed,
+                model: 'gpt-4-turbo-preview',
+                responseTime: processingTime,
+                sessionId: sessionId || `session_${Date.now()}`,
+                timestamp: new Date().toISOString(),
+                confidence: 0.95,
+                hasCode: !!codeGenerated
+              }
+            }, origin);
+
+          } catch (openaiError) {
+            console.error('❌ OpenAI API error:', openaiError.message);
+            
+            // Return error when OpenAI API fails - no fallback
+            const processingTime = Date.now() - processingStartTime;
+            
+            return sendResponse(res, 500, {
+              success: false,
+              error: {
+                message: 'OpenAI API Error',
+                details: `The OpenAI service encountered an error: ${openaiError.message}`,
+                code: 'OPENAI_API_ERROR'
+              },
+              data: {
+                message: `🚫 **OpenAI API Error**\n\nThe real AI service encountered an error:\n\n**Error**: ${openaiError.message}\n\nPlease try again in a moment. If the problem persists:\n\n1. Check your OpenAI API key is valid\n2. Verify you have sufficient credits\n3. Check OpenAI service status\n\n**No fallback responses provided** - only real AI responses are supported.`,
+                tokensUsed: 0,
+                model: 'gpt-4-turbo-preview',
+                responseTime: processingTime,
+                sessionId: sessionId || `session_${Date.now()}`,
+                timestamp: new Date().toISOString(),
+                confidence: 0,
+                hasCode: false,
+                requiresApiKey: false,
+                isRealAI: false,
+                apiError: true
+              }
+            }, origin);
           }
-        }, origin);
+        } else {
+          // No OpenAI API key configured - require real API key
+          console.log('❌ No OpenAI API key configured - cannot provide AI responses');
+          const processingTime = Date.now() - processingStartTime;
+          
+          return sendResponse(res, 400, {
+            success: false,
+            error: {
+              message: 'OpenAI API Key Required',
+              details: 'Real AI responses require a valid OpenAI API key. Please configure OPENAI_API_KEY environment variable.',
+              code: 'MISSING_API_KEY'
+            },
+            data: {
+              message: `🚫 **Real AI Response Unavailable**\n\n**OpenAI API Key Required**\n\nTo get real ChatGPT responses, please:\n\n1. Get your API key from: https://platform.openai.com/api-keys\n2. Add to environment: \`OPENAI_API_KEY="sk-your-key-here"\`\n3. Restart the server\n\n**No mock responses will be provided.** Only real AI responses are supported.`,
+              tokensUsed: 0,
+              model: 'none',
+              responseTime: processingTime,
+              sessionId: sessionId || `session_${Date.now()}`,
+              timestamp: new Date().toISOString(),
+              confidence: 0,
+              hasCode: false,
+              requiresApiKey: true,
+              isRealAI: false
+            }
+          }, origin);
+        }
 
       } catch (error) {
+        console.error('❌ AI Copilot error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
@@ -2257,6 +1700,7 @@ Would you like me to help you with any specific implementation?`;
         }, origin);
       }
     }
+
 
     // 👤 Admin User Management - Update User
     if (pathname.startsWith('/api/admin/users/') && method === 'PUT') {
@@ -2321,66 +1765,6 @@ Would you like me to help you with any specific implementation?`;
 
       } catch (error) {
         //console.error('❌ Admin delete user error:', error.message);
-        const statusCode = error.message === 'Admin access required' ? 403 : 401;
-        return sendResponse(res, statusCode, {
-          success: false,
-          error: error.message
-        }, origin);
-      }
-    }
-
-    // 📊 Admin System Metrics Endpoint
-    if (pathname === '/api/admin/system/metrics' && method === 'GET') {
-      //console.log('📊 Admin system metrics request');
-      
-      try {
-        const user = await requireAuth(req);
-        requireAdmin(user);
-
-        // Get real system metrics
-        const metrics = {
-          database: {
-            status: 'healthy',
-            connections: Math.floor(Math.random() * 50) + 10,
-            maxConnections: 100,
-            responseTime: Math.floor(Math.random() * 20) + 5,
-            storage: {
-              used: '2.1 GB',
-              total: '10 GB',
-              percentage: 21
-            }
-          },
-          api: {
-            status: 'operational',
-            requestsToday: Math.floor(Math.random() * 2000) + 1000,
-            successRate: 99.2,
-            avgResponseTime: Math.floor(Math.random() * 500) + 200,
-            uptime: '99.8%'
-          },
-          server: {
-            cpu: Math.floor(Math.random() * 30) + 40,
-            memory: Math.floor(Math.random() * 20) + 60,
-            disk: Math.floor(Math.random() * 20) + 70,
-            network: Math.floor(Math.random() * 100) + 50
-          },
-          logs: {
-            errors: Math.floor(Math.random() * 5) + 1,
-            warnings: Math.floor(Math.random() * 15) + 5,
-            info: Math.floor(Math.random() * 200) + 100
-          }
-        };
-
-        return sendResponse(res, 200, {
-          success: true,
-          data: {
-            metrics,
-            timestamp: new Date().toISOString(),
-            message: 'System metrics retrieved successfully'
-          }
-        }, origin);
-
-      } catch (error) {
-        //console.error('❌ Admin system metrics error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
           success: false,
