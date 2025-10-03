@@ -488,7 +488,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   currentModel = computed(() => this.selectedModel);
   editorHeight = computed(() => '400px');
   
-  // Monaco Editor Options
+  // Monaco Editor Options - Fixed CORS worker issue
   monacoOptions = {
     theme: 'vs-dark',
     language: 'typescript',
@@ -498,9 +498,21 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     wordWrap: 'on' as const,
     lineNumbers: 'on' as const,
     glyphMargin: false,
-    folding: true,
+    folding: false, // Disable folding to avoid worker issues
     lineDecorationsWidth: 10,
-    lineNumbersMinChars: 3
+    lineNumbersMinChars: 3,
+    // Disable features that require workers
+    links: false,
+    colorDecorators: false,
+    codeLens: false,
+    contextmenu: false,
+    quickSuggestions: false,
+    suggestOnTriggerCharacters: false,
+    acceptSuggestionOnEnter: 'off' as const,
+    tabCompletion: 'off' as const,
+    wordBasedSuggestions: 'off' as const,
+    parameterHints: { enabled: false },
+    hover: { enabled: false }
   };
 
   // 🔧 CLEANUP
@@ -511,8 +523,8 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   ngOnInit() {
     console.log('🚀 AI COPILOT ULTIMATE v3.0 - OPTIMIZED VERSION - Initializing...');
     
-    // 🎯 SIMPLE INITIALIZATION
-    this.isInitializing.set(true);
+    // 🎯 START WITHOUT LOADER - Fix stuck loader issue
+    this.isInitializing.set(false);
     
     // Initialize clean editors
     this.initializeCleanEditors();
@@ -524,11 +536,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       }
     });
     
-    // Initialization complete
-    setTimeout(() => {
-      this.isInitializing.set(false);
-      console.log('✅ AI COPILOT ULTIMATE v3.0 - OPTIMIZED & READY!');
-    }, 500);
+    console.log('✅ AI COPILOT ULTIMATE v3.0 - READY IMMEDIATELY!');
   }
 
   ngOnDestroy() {
@@ -800,13 +808,11 @@ export class AIGeneratedComponent implements OnInit {
   // AI will generate component methods here
 }`;
 
-    // Apply clean templates to editors
-    setTimeout(() => {
-      this.editorState.updateBuffer('html', cleanHTML);
-      this.editorState.updateBuffer('scss', cleanSCSS);
-      this.editorState.updateBuffer('typescript', cleanTypeScript);
-      
-      this.notificationService.showSuccess('🤖 AI Copilot Ultimate v3.0 ready! Optimized for peak performance.');
-    }, 500);
+    // Apply clean templates to editors immediately
+    this.editorState.updateBuffer('html', cleanHTML);
+    this.editorState.updateBuffer('scss', cleanSCSS);
+    this.editorState.updateBuffer('typescript', cleanTypeScript);
+    
+    console.log('🤖 AI Copilot Ultimate v3.0 editors initialized!');
   }
 }
