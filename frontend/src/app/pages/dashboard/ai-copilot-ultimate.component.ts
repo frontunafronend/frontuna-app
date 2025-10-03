@@ -141,8 +141,8 @@ interface AICopilotGuards {
                 <div class="stat-value">{{ currentModel() }}</div>
                 <div class="stat-label">AI Model</div>
               </div>
+              </div>
             </div>
-          </div>
             
           <!-- Quick Actions -->
           <div class="header-actions">
@@ -252,8 +252,8 @@ interface AICopilotGuards {
                     <mat-icon>code</mat-icon>
                     <span>Generated Code</span>
                     <mat-chip class="language-chip">{{ message.codeLanguage || 'typescript' }}</mat-chip>
-                  </div>
-                  <pre class="code-block"><code [innerHTML]="message.code"></code></pre>
+                    </div>
+                    <pre class="code-block"><code [innerHTML]="message.code"></code></pre>
                 </div>
                 
                 <!-- Message Actions -->
@@ -294,7 +294,7 @@ interface AICopilotGuards {
               <div class="message-content">
                 <app-professional-loader 
                   type="thinking" 
-                  message="AI is analyzing your request..."
+                    message="AI is analyzing your request..."
                   size="small">
                 </app-professional-loader>
               </div>
@@ -427,15 +427,15 @@ interface AICopilotGuards {
         <div class="preview-side-actions">
           <button mat-icon-button class="side-action-btn" (click)="refreshFullPreview()" title="Refresh Preview">
             <mat-icon>refresh</mat-icon>
-          </button>
-        </div>
-        
+              </button>
+            </div>
+            
         <!-- Direct preview content -->
         <div class="preview-content">
-          <app-enhanced-ai-preview
-            [aiResponse]="createPreviewResponse()">
-          </app-enhanced-ai-preview>
-        </div>
+            <app-enhanced-ai-preview
+              [aiResponse]="createPreviewResponse()">
+            </app-enhanced-ai-preview>
+          </div>
       </div>
     </div>
 
@@ -519,7 +519,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   
   @ViewChild('chatContainer') chatContainer!: ElementRef;
-
+  
   ngOnInit() {
     console.log('🚀 AI COPILOT ULTIMATE v3.0 - OPTIMIZED VERSION - Initializing...');
     
@@ -538,12 +538,12 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     
     console.log('✅ AI COPILOT ULTIMATE v3.0 - READY IMMEDIATELY!');
   }
-
+  
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
   }
-
+  
   // 💬 CHAT FUNCTIONALITY - OPTIMIZED & SIMPLIFIED
   async sendMessage() {
     if (!this.currentMessage.trim()) return;
@@ -558,7 +558,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       // 🚀 USE OPTIMIZED SERVICE - Simple context
       const context = {
         editorBuffers: this.editorState.buffers(),
-        model: this.selectedModel,
+          model: this.selectedModel,
         framework: 'angular',
         timestamp: new Date().toISOString()
       };
@@ -566,26 +566,32 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       this.optimizedAIChat.sendMessage(message, JSON.stringify(context))
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: (response) => {
+        next: (response) => {
             console.log('✅ AI Response received:', response);
+            
+            // 🔧 AUTO-POPULATE MONACO EDITORS WHEN AI RETURNS CODE
+            if (response.success && response.data && response.data.code) {
+              this.autoPopulateMonacoEditors(response.data.code, response.data.hasCode);
+            }
+            
             this.scrollToBottom();
-          },
-          error: (error) => {
+        },
+        error: (error) => {
             console.error('❌ AI Response failed:', error);
             this.notificationService.showError('AI service temporarily unavailable');
-          }
-        });
+        }
+      });
     } catch (error) {
       console.error('❌ Send message error:', error);
       this.notificationService.showError('Failed to send message');
     }
   }
-
+  
   sendSuggestion(suggestion: string) {
     this.currentMessage = suggestion;
     this.sendMessage();
   }
-
+  
   // 🎛️ UI ACTIONS
   onEnterPress(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -614,7 +620,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     a.click();
     URL.revokeObjectURL(url);
   }
-
+  
   applyCodeToEditor(message: UltimateChatMessage) {
     if (message.code) {
       const language = message.codeLanguage || 'typescript';
@@ -624,6 +630,44 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     }
   }
 
+  // 🔧 NEW: AUTO-POPULATE MONACO EDITORS FROM AI RESPONSE
+  autoPopulateMonacoEditors(codeData: any, hasCode: boolean) {
+    if (!hasCode || !codeData) return;
+
+    try {
+      // Parse the code based on language
+      const language = codeData.language?.toLowerCase() || 'typescript';
+      const code = codeData.code || '';
+
+      console.log('🤖 Auto-populating Monaco editor:', language, code.length, 'characters');
+
+      // Determine which editor to populate based on language
+      if (language === 'typescript' || language === 'ts') {
+        this.editorState.updateBuffer('typescript', code);
+        this.notificationService.showSuccess('✨ TypeScript code auto-populated!');
+      } else if (language === 'html') {
+        this.editorState.updateBuffer('html', code);
+        this.notificationService.showSuccess('✨ HTML code auto-populated!');
+      } else if (language === 'scss' || language === 'css') {
+        this.editorState.updateBuffer('scss', code);
+        this.notificationService.showSuccess('✨ SCSS code auto-populated!');
+      } else {
+        // Default to TypeScript for unknown languages
+        this.editorState.updateBuffer('typescript', code);
+        this.notificationService.showSuccess(`✨ Code auto-populated to TypeScript editor!`);
+      }
+
+      // 🔧 TRIGGER PREVIEW UPDATE
+      setTimeout(() => {
+        this.updatePreview();
+      }, 500);
+
+    } catch (error) {
+      console.error('❌ Error auto-populating editors:', error);
+      this.notificationService.showError('Failed to auto-populate code');
+    }
+  }
+  
   copyMessage(message: UltimateChatMessage) {
     navigator.clipboard.writeText(message.content);
     this.notificationService.showSuccess('Message copied to clipboard');
@@ -643,11 +687,27 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
 
   onCodeChange(language: string, value: string) {
     this.editorState.updateBuffer(language as any, value);
+    
+    // 🔧 AUTO-UPDATE PREVIEW WHEN MONACO EDITORS CHANGE
+    setTimeout(() => {
+      this.updatePreview();
+    }, 300); // Small debounce for performance
   }
 
   // 🎯 PREVIEW FUNCTIONALITY
   refreshFullPreview() {
     this.notificationService.showInfo('Preview refreshed');
+  }
+
+  // 🔧 NEW: UPDATE LIVE PREVIEW
+  updatePreview() {
+    // Force preview update by creating a new preview response
+    const previewResponse = this.createPreviewResponse();
+    if (previewResponse) {
+      console.log('🔄 Updating live preview with new code');
+      // The preview component will automatically update via the computed signal
+      this.showPreview.set(true); // Ensure preview is visible
+    }
   }
 
   createPreviewResponse(): AIResponse | null {
@@ -750,19 +810,19 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     max-width: 500px;
     
     h2 {
-      color: #333;
+        color: #333;
       margin: 0 0 1rem 0;
       font-size: 2rem;
       font-weight: 600;
-    }
-    
-    p {
-      color: #666;
+      }
+      
+      p {
+        color: #666;
       margin: 0 0 1.5rem 0;
       font-size: 1.1rem;
       line-height: 1.6;
     }
-    
+
     .features {
       display: flex;
       flex-direction: column;

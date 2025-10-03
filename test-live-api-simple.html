@@ -175,18 +175,18 @@
                 <strong>🌐 Testing API:</strong> <span id="api-endpoint"></span><br>
                 <strong>📊 Status:</strong> Production API with live Neon database
             </div>
-        </div>
+            </div>
         
         <div class="test-grid">
             <!-- Health Check Card -->
             <div class="test-card">
-                <h3>🏥 Health Check</h3>
+            <h3>🏥 Health Check</h3>
                 <div class="test-buttons">
                     <button onclick="testHealth()">🔍 Test Health</button>
                     <button onclick="testHealthSimple()">⚡ Test Health (Simple)</button>
                 </div>
                 <div id="health-result" class="test-result"></div>
-            </div>
+        </div>
 
             <!-- Authentication Card -->
             <div class="test-card">
@@ -197,7 +197,7 @@
                     <button onclick="testProtectedRoute()">🛡️ Protected Route</button>
                 </div>
                 <div id="auth-result" class="test-result"></div>
-            </div>
+        </div>
 
             <!-- Admin Test Card -->
             <div class="test-card">
@@ -208,7 +208,7 @@
                     <button onclick="testAdminStats()">📊 Get Admin Stats</button>
                 </div>
                 <div id="admin-result" class="test-result"></div>
-            </div>
+        </div>
 
             <!-- AI Systems Card -->
             <div class="test-card">
@@ -220,7 +220,7 @@
                     <button onclick="testAICopilotChat()">💬 AI Chat</button>
                 </div>
                 <div id="ai-result" class="test-result"></div>
-            </div>
+        </div>
 
             <!-- API Endpoints Card -->
             <div class="test-card">
@@ -229,7 +229,7 @@
                     <button onclick="runAPITests()">🚀 Run All Tests</button>
                     <button onclick="testUserProfile()">👤 User Profile</button>
                     <button onclick="testComponents()">🧩 Components</button>
-                </div>
+            </div>
                 <div id="api-result" class="test-result"></div>
             </div>
 
@@ -299,7 +299,7 @@
         
         // Global token management
         let currentToken = null;
-        
+
         // Update token status display
         function updateTokenStatus() {
             const statusElement = document.getElementById('token-status');
@@ -318,9 +318,9 @@
         // Initialize page
         function initializePage() {
             document.getElementById('api-endpoint').textContent = API_BASE;
-            document.getElementById('current-origin').textContent = window.location.origin;
+        document.getElementById('current-origin').textContent = window.location.origin;
             document.getElementById('user-agent').textContent = navigator.userAgent.substring(0, 50) + '...';
-            document.getElementById('timestamp').textContent = new Date().toISOString();
+        document.getElementById('timestamp').textContent = new Date().toISOString();
             updateTokenStatus();
             
             // Auto-run health check
@@ -447,10 +447,10 @@
                     body: JSON.stringify(testCredentials)
                 });
                 
-            const data = await response.json();
+                const data = await response.json();
             console.log('Login API Response:', response.status, data);
-            
-            if (response.ok && data.success) {
+                
+                if (response.ok && data.success) {
                 setToken(data.token);
                 console.log('✅ Login successful! Token saved:', currentToken);
                     resultDiv.innerHTML = `

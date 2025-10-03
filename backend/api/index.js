@@ -218,7 +218,7 @@ module.exports = async (req, res) => {
         message: message,
         environment: 'production',
         database: dbStatus,
-        version: '3.4.0-production',
+        version: '3.5.0-production',
         platform: 'vercel'
       }, origin);
     }
@@ -271,18 +271,18 @@ module.exports = async (req, res) => {
         }
 
         const tokens = generateTokens(user.id, user.email, user.role);
-        
-        // Set httpOnly cookies
-        res.setHeader('Set-Cookie', [
-          `accessToken=${tokens.accessToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=900`,
-          `refreshToken=${tokens.refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`
-        ]);
+            
+            // Set httpOnly cookies
+            res.setHeader('Set-Cookie', [
+              `accessToken=${tokens.accessToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=900`,
+              `refreshToken=${tokens.refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`
+            ]);
 
         
         return sendResponse(res, 200, {
-          success: true,
+              success: true,
           message: 'Login successful',
-          user: {
+              user: {
             id: user.id,
             email: user.email,
             firstName: user.firstName || 'Admin',
@@ -292,15 +292,15 @@ module.exports = async (req, res) => {
           token: tokens.accessToken,
           refreshToken: tokens.refreshToken,
           expiresIn: 86400 // 24 hours in seconds
-        }, origin);
+            }, origin);
 
       } catch (error) {
         return sendResponse(res, 500, {
-          success: false,
+              success: false,
           error: 'Login failed'
-        }, origin);
-      }
-    }
+            }, origin);
+          }
+        }
 
     // Signup Endpoint
     if (pathname === '/api/auth/signup' && method === 'POST') {
@@ -340,8 +340,8 @@ module.exports = async (req, res) => {
 
       try {
         const existingUser = await prisma.user.findUnique({
-          where: { email: body.email.toLowerCase() }
-        });
+            where: { email: body.email.toLowerCase() }
+          });
 
         if (existingUser) {
           return sendResponse(res, 409, {
@@ -385,9 +385,9 @@ module.exports = async (req, res) => {
 
       } catch (error) {
         return sendResponse(res, 500, {
-          success: false,
+            success: false,
           error: 'User creation failed'
-        }, origin);
+          }, origin);
       }
     }
 
@@ -420,7 +420,7 @@ module.exports = async (req, res) => {
             error: 'User not found'
           }, origin);
         }
-        
+
         return sendResponse(res, 200, {
           success: true,
           data: {
@@ -474,9 +474,9 @@ module.exports = async (req, res) => {
       } catch (error) {
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
-          success: false,
+            success: false,
           error: error.message
-        }, origin);
+          }, origin);
       }
     }
     
@@ -593,7 +593,7 @@ module.exports = async (req, res) => {
         }, origin);
       }
     }
-    
+
     // User Analytics Endpoint
     if (pathname === '/api/users/analytics' && method === 'GET') {
       
@@ -902,10 +902,10 @@ module.exports = async (req, res) => {
       } catch (error) {
         //console.error('❌ Analytics charts error:', error);
         return sendResponse(res, 500, {
-          success: false,
+            success: false,
           error: 'Failed to retrieve analytics charts data',
           message: error.message
-        }, origin);
+          }, origin);
       }
     }
 
@@ -978,7 +978,7 @@ module.exports = async (req, res) => {
 
           const updatedUser = await prisma.user.update({
             where: { id: userId },
-            data: {
+          data: {
               firstName,
               lastName,
               email,
@@ -1075,7 +1075,7 @@ module.exports = async (req, res) => {
             total: suggestions.length
           }
         }, origin);
-        
+
       } catch (error) {
         //console.error('❌ Suggestions error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
@@ -1085,7 +1085,7 @@ module.exports = async (req, res) => {
         }, origin);
       }
     }
-    
+
     // Health endpoint (alternative path)
     if (pathname === '/api/health' && method === 'GET') {
       //console.log('❤️ API Health check requested');
@@ -1174,7 +1174,7 @@ module.exports = async (req, res) => {
             responseTime: '45ms'
           }
         }, origin);
-        
+
       } catch (error) {
         //console.error('❌ AI health error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
@@ -1296,7 +1296,7 @@ module.exports = async (req, res) => {
             message: 'Component generation started'
           }
         }, origin);
-        
+
       } catch (error) {
         //console.error('❌ Start generation error:', error.message);
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
@@ -1568,8 +1568,275 @@ module.exports = async (req, res) => {
           }
         }
         // Code Generation Requests
-        else if (lowerMessage.includes('create') || lowerMessage.includes('generate') || lowerMessage.includes('build') || lowerMessage.includes('make')) {
-          if (lowerMessage.includes('component') || lowerMessage.includes('angular')) {
+        else if (lowerMessage.includes('create') || lowerMessage.includes('generate') || lowerMessage.includes('build') || lowerMessage.includes('make') || lowerMessage.includes('table') || lowerMessage.includes('bootstrap')) {
+          if (lowerMessage.includes('table') && lowerMessage.includes('bootstrap') && lowerMessage.includes('angular')) {
+            aiResponse = `${contextualPrefix}I'll create a complete Angular Bootstrap table with pagination, search, sorting, and Material Design for you:`;
+            codeGenerated = {
+              language: 'typescript',
+              code: `import { Component, OnInit, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+
+interface TableData {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  joinDate: Date;
+}
+
+@Component({
+  selector: 'app-data-table',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatButtonModule
+  ],
+  template: \`
+    <div class="table-container">
+      <div class="table-header">
+        <h2>📊 Advanced Data Table</h2>
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search</mat-label>
+          <input matInput 
+                 [(ngModel)]="searchTerm" 
+                 (input)="onSearch()"
+                 placeholder="Search users...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="mat-elevation-8">
+        <table mat-table [dataSource]="filteredData()" 
+               matSort 
+               (matSortChange)="onSort($event)"
+               class="full-width-table">
+          
+          <!-- ID Column -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+            <td mat-cell *matCellDef="let user">{{ user.id }}</td>
+          </ng-container>
+
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+            <td mat-cell *matCellDef="let user">
+              <div class="user-info">
+                <div class="avatar">{{ user.name.charAt(0) }}</div>
+                <span>{{ user.name }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Email Column -->
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+            <td mat-cell *matCellDef="let user">{{ user.email }}</td>
+          </ng-container>
+
+          <!-- Role Column -->
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Role</th>
+            <td mat-cell *matCellDef="let user">
+              <span class="role-badge" [class]="'role-' + user.role.toLowerCase()">
+                {{ user.role }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let user">
+              <span class="status-badge" [class]="'status-' + user.status.toLowerCase()">
+                {{ user.status }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let user">
+              <button mat-icon-button color="primary" (click)="editUser(user)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteUser(user)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <mat-paginator 
+          [pageSizeOptions]="[5, 10, 20]"
+          [pageSize]="pageSize()"
+          [length]="filteredData().length"
+          (page)="onPageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
+      </div>
+    </div>
+  \`,
+  styles: [\`
+    .table-container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .search-field {
+      width: 300px;
+    }
+
+    .full-width-table {
+      width: 100%;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .role-badge, .status-badge {
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .role-admin { background: #e3f2fd; color: #1976d2; }
+    .role-user { background: #f3e5f5; color: #7b1fa2; }
+    .role-moderator { background: #fff3e0; color: #f57c00; }
+
+    .status-active { background: #e8f5e8; color: #2e7d32; }
+    .status-inactive { background: #ffebee; color: #c62828; }
+    .status-pending { background: #fff8e1; color: #f9a825; }
+  \`]
+})
+export class DataTableComponent implements OnInit {
+  searchTerm = '';
+  pageSize = signal(10);
+  currentPage = signal(0);
+  sortField = signal('');
+  sortDirection = signal<'asc' | 'desc'>('asc');
+
+  displayedColumns: string[] = ['id', 'name', 'email', 'role', 'status', 'actions'];
+
+  // Mock data
+  private data = signal<TableData[]>([
+    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Admin', status: 'Active', joinDate: new Date('2023-01-15') },
+    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'User', status: 'Active', joinDate: new Date('2023-02-20') },
+    { id: 3, name: 'Mike Johnson', email: 'mike@example.com', role: 'Moderator', status: 'Pending', joinDate: new Date('2023-03-10') },
+    { id: 4, name: 'Sarah Wilson', email: 'sarah@example.com', role: 'User', status: 'Inactive', joinDate: new Date('2023-04-05') },
+    { id: 5, name: 'Tom Brown', email: 'tom@example.com', role: 'Admin', status: 'Active', joinDate: new Date('2023-05-12') }
+  ]);
+
+  // Computed filtered data
+  filteredData = computed(() => {
+    let filtered = this.data();
+    
+    // Apply search filter
+    if (this.searchTerm) {
+      filtered = filtered.filter(item => 
+        item.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.role.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply sorting
+    if (this.sortField()) {
+      filtered = [...filtered].sort((a, b) => {
+        const aVal = a[this.sortField() as keyof TableData];
+        const bVal = b[this.sortField() as keyof TableData];
+        
+        if (aVal < bVal) return this.sortDirection() === 'asc' ? -1 : 1;
+        if (aVal > bVal) return this.sortDirection() === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  });
+
+  ngOnInit() {
+    console.log('📊 Advanced Data Table initialized');
+  }
+
+  onSearch() {
+    this.currentPage.set(0);
+  }
+
+  onSort(event: any) {
+    this.sortField.set(event.active);
+    this.sortDirection.set(event.direction);
+  }
+
+  onPageChange(event: any) {
+    this.currentPage.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+  }
+
+  editUser(user: TableData) {
+    console.log('Edit user:', user);
+    // Implement edit functionality
+  }
+
+  deleteUser(user: TableData) {
+    console.log('Delete user:', user);
+    // Implement delete functionality
+  }
+}`
+            };
+            suggestions = [
+              'Add real API integration for data fetching',
+              'Implement advanced filtering options',
+              'Add export functionality (CSV, PDF)',
+              'Create responsive mobile view',
+              'Add bulk actions for multiple rows'
+            ];
+          } else if (lowerMessage.includes('component') || lowerMessage.includes('angular')) {
             aiResponse = `I'll help you create a professional Angular component. Here's a complete implementation:`;
             codeGenerated = {
               language: 'typescript',
@@ -1978,7 +2245,7 @@ Would you like me to help you with any specific implementation?`;
             hasCode: !!codeGenerated
           }
         }, origin);
-        
+
       } catch (error) {
         const statusCode = error.message === 'Admin access required' ? 403 : 401;
         return sendResponse(res, statusCode, {
@@ -2197,7 +2464,7 @@ Would you like me to help you with any specific implementation?`;
   } finally {
     // Clean up Prisma connection (only in serverless environment)
     if (prisma && process.env.NODE_ENV === 'production') {
-      await prisma.$disconnect();
+    await prisma.$disconnect();
     }
   }
 };
