@@ -218,7 +218,7 @@ module.exports = async (req, res) => {
         message: message,
         environment: 'production',
         database: dbStatus,
-        version: '3.0.0-production',
+        version: '3.1.0-production',
         platform: 'vercel'
       }, origin);
     }
@@ -2085,7 +2085,7 @@ Would you like me to help you with any specific implementation?`;
       return sendResponse(res, 200, {
         success: true,
         message: 'Frontuna.ai API Server',
-        version: '3.0.0-production',
+        version: '3.1.0-production',
         status: 'operational',
         endpoints: {
           health: '/health',
