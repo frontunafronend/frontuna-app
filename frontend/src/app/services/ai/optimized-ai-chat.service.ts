@@ -330,8 +330,12 @@ export class OptimizedAIChatService {
 
     // Method 1: Check if response has structured code object
     if (response.data?.code) {
-      extractedCode = response.data.code.code || response.data.code;
-      extractedLanguage = response.data.code.language || 'typescript';
+      if (typeof response.data.code === 'string') {
+        extractedCode = response.data.code;
+      } else if (response.data.code.code) {
+        extractedCode = response.data.code.code;
+        extractedLanguage = response.data.code.language || 'typescript';
+      }
     }
     // Method 2: Extract code from markdown code blocks in content
     else if (content) {
@@ -354,7 +358,7 @@ export class OptimizedAIChatService {
       sender: 'AI Copilot',
       content: content,
       timestamp: new Date(),
-      code: extractedCode,
+      code: extractedCode || undefined,
       codeLanguage: extractedLanguage,
       suggestions: response.data?.suggestions || [],
       confidence: response.data?.confidence || 0.95,
@@ -366,7 +370,8 @@ export class OptimizedAIChatService {
     
     // 🔧 LOG CODE EXTRACTION for debugging
     if (extractedCode) {
-      console.log('🤖 Code extracted from AI response:', extractedLanguage, extractedCode.length, 'characters');
+      const codeLength = typeof extractedCode === 'string' ? extractedCode.length : 'unknown';
+      console.log('🤖 Code extracted from AI response:', extractedLanguage, codeLength, 'characters');
     }
     
     // Update session activity
