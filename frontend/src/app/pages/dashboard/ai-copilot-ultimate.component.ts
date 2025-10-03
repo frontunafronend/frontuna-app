@@ -47,9 +47,7 @@ import { EnhancedAIPreviewComponent } from '@app/components/ai/enhanced-ai-previ
 // import { AICopilotPanelComponent } from '@app/components/ai/ai-copilot-panel/ai-copilot-panel.component';
 
 // Services
-import { AIPromptCoreService } from '@app/services/ai/ai-prompt-core.service';
-import { AIResponse } from '@app/models/ai.model';
-import { AICopilotService } from '@app/services/ai/ai-copilot.service';
+import { OptimizedAIChatService, ChatMessage as OptimizedChatMessage, AIResponse } from '@app/services/ai/optimized-ai-chat.service';
 import { EditorStateService, EditorBuffers } from '@app/services/editor-state.service';
 import { NotificationService } from '@app/services/notification/notification.service';
 import { AnalyticsService } from '@app/services/analytics/analytics.service';
@@ -582,27 +580,31 @@ interface DataSource {
   ]
 })
 export class AICopilotUltimateComponent implements OnInit, OnDestroy {
-  // 🔧 SERVICES & DEPENDENCIES
-  private readonly aiPromptCore = inject(AIPromptCoreService);
-  private readonly aiCopilotService = inject(AICopilotService);
+  // 🔧 SERVICES & DEPENDENCIES - OPTIMIZED
+  private readonly optimizedAIChat = inject(OptimizedAIChatService);
   readonly editorState = inject(EditorStateService);
   private readonly notificationService = inject(NotificationService);
   private readonly analytics = inject(AnalyticsService);
   private readonly authService = inject(SecureAuthService);
   private readonly sanitizer = inject(DomSanitizer);
   
-  // 🧠 SIGNALS & STATE
-  chatMessages = signal<UltimateChatMessage[]>([]);
-  isGenerating = signal(false);
+  // 🧠 SIGNALS & STATE - OPTIMIZED (using service signals)
+  chatMessages = computed(() => this.optimizedAIChat.messages().map(msg => ({
+    ...msg,
+    isCodeMessage: !!msg.code
+  } as UltimateChatMessage)));
+  isGenerating = this.optimizedAIChat.isLoading;
   isInitializing = signal(false);
   hasError = signal(false);
-  copilotGuards = signal<AICopilotGuards>({
-    isBackendAvailable: false,
-    hasValidSession: false,
+  
+  // 🎯 COMPUTED FROM OPTIMIZED SERVICE
+  copilotGuards = computed(() => ({
+    isBackendAvailable: this.optimizedAIChat.isHealthy(),
+    hasValidSession: this.optimizedAIChat.hasActiveSession(),
     isRateLimited: false,
     hasNetworkConnection: true,
-    isUserAuthenticated: false
-  });
+    isUserAuthenticated: true
+  }));
   
   // 🎛️ UI STATE
   currentMessage = '';
@@ -720,24 +722,31 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   }
   
   ngOnInit() {
-    console.log('🚀 AI COPILOT ULTIMATE - Initializing the most advanced AI coding assistant...');
+    console.log('🚀 AI COPILOT ULTIMATE - OPTIMIZED VERSION - Initializing...');
     
-    // 🔧 REMOVED AGGRESSIVE EMERGENCY STOP - AI responses are working fine now
-    
-    // Reset all states to ensure clean initialization
-    this.isGenerating.set(false);
+    // 🎯 SIMPLE INITIALIZATION - No complex subscriptions or loops
+    this.isInitializing.set(true);
     this.hasError.set(false);
     this.currentThinkingStep.set('');
-    this.isInitializing.set(false);
     
-    // Initialize services and state
-    this.initializeServices();
+    // Setup simple event listeners
     this.setupEventListeners();
     
-    // 🎯 INITIALIZE CLEAN EDITORS FOR AI GENERATION
+    // Initialize clean editors
     this.initializeCleanEditors();
     
-      console.log('✅ AI COPILOT ULTIMATE - Ready for action!');
+    // Simple effect for auto-scroll
+    effect(() => {
+      if (this.chatMessages().length > 0) {
+        this.scrollToBottom();
+      }
+    });
+    
+    // Initialization complete
+    setTimeout(() => {
+      this.isInitializing.set(false);
+      console.log('✅ AI COPILOT ULTIMATE - OPTIMIZED & READY!');
+    }, 500);
   }
   
   ngOnDestroy() {
@@ -1142,7 +1151,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   }
   
   clearChatHistory() {
-    this.chatMessages.set([]);
+    this.optimizedAIChat.clearChat();
     this.notificationService.showInfo('Chat history cleared');
   }
   
