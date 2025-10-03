@@ -218,7 +218,7 @@ module.exports = async (req, res) => {
         message: message,
         environment: 'production',
         database: dbStatus,
-        version: '3.2.0-production',
+        version: '3.3.0-production',
         platform: 'vercel'
       }, origin);
     }
@@ -1312,7 +1312,8 @@ module.exports = async (req, res) => {
       //console.log('🔄 Token refresh request');
       
       try {
-        const { refreshToken } = req.body;
+        const body = await parseBody(req);
+        const { refreshToken } = body;
         
         if (!refreshToken) {
           return sendResponse(res, 400, {
@@ -1323,6 +1324,15 @@ module.exports = async (req, res) => {
 
         // Verify refresh token
         const decoded = jwt.verify(refreshToken, JWT_SECRET);
+        
+        // Check if it's actually a refresh token
+        if (decoded.type !== 'refresh') {
+          return sendResponse(res, 401, {
+            success: false,
+            error: 'Invalid token type'
+          }, origin);
+        }
+        
         const user = await prisma.user.findUnique({
           where: { id: decoded.userId }
         });
@@ -1330,21 +1340,29 @@ module.exports = async (req, res) => {
         if (!user) {
           return sendResponse(res, 401, {
             success: false,
-            error: 'Invalid refresh token'
+            error: 'User not found'
           }, origin);
         }
 
-        // Generate new access token
+        // Generate new access token and refresh token
         const newAccessToken = jwt.sign(
-          { userId: user.id, email: user.email, role: user.role },
+          { userId: user.id, email: user.email, role: user.role, type: 'access' },
           JWT_SECRET,
-          { expiresIn: '24h' }
+          { expiresIn: JWT_EXPIRES_IN }
+        );
+
+        const newRefreshToken = jwt.sign(
+          { userId: user.id, email: user.email, type: 'refresh' },
+          JWT_SECRET,
+          { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
         );
 
         return sendResponse(res, 200, {
           success: true,
           data: {
             accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+            expiresIn: 900, // 15 minutes in seconds
             user: {
               id: user.id,
               email: user.email,

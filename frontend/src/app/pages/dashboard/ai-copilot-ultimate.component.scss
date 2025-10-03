@@ -273,15 +273,33 @@
       flex-direction: row-reverse;
       
       .message-content {
-        background: linear-gradient(135deg, var(--copilot-primary) 0%, #5b6ee8 100%) !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; // 🔧 BULLETPROOF: Solid gradient colors
         color: white !important;
-        border: 2px solid rgba(255, 255, 255, 0.2) !important; // 🔧 NEW: Add subtle border
+        border: 3px solid rgba(255, 255, 255, 0.4) !important; // 🔧 BULLETPROOF: Thicker, more visible border
         border-radius: 1rem 1rem 0.25rem 1rem;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important; // 🔧 ENHANCED: Stronger shadow
-        backdrop-filter: blur(10px) !important; // 🔧 NEW: Add backdrop blur
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6) !important; // 🔧 BULLETPROOF: Much stronger shadow
+        backdrop-filter: blur(15px) !important; // 🔧 BULLETPROOF: Stronger blur
+        position: relative; // 🔧 NEW: For pseudo-element
+        
+        // 🔧 BULLETPROOF: Add inner glow effect
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+          border-radius: inherit;
+          pointer-events: none;
+        }
         
         .message-text {
-          color: white;
+          color: white !important;
+          font-weight: 600 !important; // 🔧 BULLETPROOF: Bolder text
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important; // 🔧 BULLETPROOF: Text shadow for readability
+          position: relative; // 🔧 NEW: Above pseudo-element
+          z-index: 1;
         }
         
         .message-header .sender-name {
