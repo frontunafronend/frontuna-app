@@ -54,6 +54,13 @@ export interface ChatSession {
 }
 
 export interface AIResponse {
+  id?: string;
+  promptId?: string;
+  content?: string;
+  code?: string;
+  confidence?: number;
+  processingTime?: number;
+  timestamp?: Date;
   success: boolean;
   data: {
     message: string;
