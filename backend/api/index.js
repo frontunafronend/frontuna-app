@@ -1370,7 +1370,8 @@ module.exports = async (req, res) => {
       
       try {
         const user = await requireAuth(req);
-        const { message, context } = req.body;
+        const body = await parseBody(req);
+        const { message, context } = body;
 
         // Create a new AI session
         const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -1489,6 +1490,7 @@ module.exports = async (req, res) => {
     if (pathname === '/api/ai/copilot/chat' && method === 'POST') {
       try {
         const user = await requireAuth(req);
+        const body = await parseBody(req);
         const { sessionId, message, context } = body;
         
         if (!message || message.trim().length === 0) {
