@@ -273,10 +273,12 @@
       flex-direction: row-reverse;
       
       .message-content {
-        background: linear-gradient(135deg, var(--copilot-primary) 0%, #5b6ee8 100%);
-        color: white;
+        background: linear-gradient(135deg, var(--copilot-primary) 0%, #5b6ee8 100%) !important;
+        color: white !important;
+        border: 2px solid rgba(255, 255, 255, 0.2) !important; // 🔧 NEW: Add subtle border
         border-radius: 1rem 1rem 0.25rem 1rem;
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important; // 🔧 ENHANCED: Stronger shadow
+        backdrop-filter: blur(10px) !important; // 🔧 NEW: Add backdrop blur
         
         .message-text {
           color: white;
@@ -304,13 +306,15 @@
     
     &.ai-message {
       .message-content {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; // 🔧 FORCE: Ensure background shows
-        border: 1px solid #e2e8f0 !important; // 🔧 FORCE: Ensure border shows
+        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%) !important; // 🔧 ENHANCED: Stronger white background
+        border: 2px solid #cbd5e1 !important; // 🔧 ENHANCED: Thicker, more visible border
         border-radius: 1rem 1rem 1rem 0.25rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important; // 🔧 ENHANCED: Stronger shadow for visibility
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important; // 🔧 ENHANCED: Much stronger shadow
+        backdrop-filter: blur(10px) !important; // 🔧 NEW: Add backdrop blur for depth
         
         .message-text {
-          color: #1f2937 !important; // 🔧 FORCE: Dark text for readability
+          color: #111827 !important; // 🔧 ENHANCED: Even darker text for maximum contrast
+          font-weight: 500 !important; // 🔧 ENHANCED: Slightly bolder text
         }
       }
       

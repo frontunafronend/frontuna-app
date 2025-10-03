@@ -1511,7 +1511,7 @@ module.exports = async (req, res) => {
         const lowerMessage = message.toLowerCase();
         
         // Code Generation Requests
-        if (lowerMessage.includes('create') || lowerMessage.includes('generate') || lowerMessage.includes('build')) {
+        if (lowerMessage.includes('create') || lowerMessage.includes('generate') || lowerMessage.includes('build') || lowerMessage.includes('make')) {
           if (lowerMessage.includes('component') || lowerMessage.includes('angular')) {
             aiResponse = `I'll help you create a professional Angular component. Here's a complete implementation:`;
             codeGenerated = {
@@ -1574,6 +1574,162 @@ export class DynamicComponent {
               'Create a service to manage component data',
               'Add animations and transitions',
               'Implement responsive design'
+            ];
+          } else if (lowerMessage.includes('table') || lowerMessage.includes('bootstrap table')) {
+            aiResponse = `I'll create a professional Bootstrap table with mock data for you:`;
+            codeGenerated = {
+              language: 'html',
+              code: `<!-- 📊 Professional Bootstrap Table with Mock Data -->
+<div class="container mt-4">
+  <div class="card shadow">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">
+        <i class="fas fa-table me-2"></i>
+        Data Table
+      </h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Role</th>
+              <th scope="col">Status</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">1</th>
+              <td>
+                <div class="d-flex align-items-center">
+                  <img src="https://via.placeholder.com/32" class="rounded-circle me-2" alt="Avatar">
+                  <strong>John Doe</strong>
+                </div>
+              </td>
+              <td>john.doe@example.com</td>
+              <td><span class="badge bg-success">Admin</span></td>
+              <td><span class="badge bg-success">Active</span></td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary me-1">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">2</th>
+              <td>
+                <div class="d-flex align-items-center">
+                  <img src="https://via.placeholder.com/32" class="rounded-circle me-2" alt="Avatar">
+                  <strong>Jane Smith</strong>
+                </div>
+              </td>
+              <td>jane.smith@example.com</td>
+              <td><span class="badge bg-info">User</span></td>
+              <td><span class="badge bg-success">Active</span></td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary me-1">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">3</th>
+              <td>
+                <div class="d-flex align-items-center">
+                  <img src="https://via.placeholder.com/32" class="rounded-circle me-2" alt="Avatar">
+                  <strong>Mike Johnson</strong>
+                </div>
+              </td>
+              <td>mike.johnson@example.com</td>
+              <td><span class="badge bg-warning">Moderator</span></td>
+              <td><span class="badge bg-warning">Pending</span></td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary me-1">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer bg-light">
+      <div class="d-flex justify-content-between align-items-center">
+        <small class="text-muted">Showing 3 of 3 entries</small>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item disabled">
+              <span class="page-link">Previous</span>
+            </li>
+            <li class="page-item active">
+              <span class="page-link">1</span>
+            </li>
+            <li class="page-item disabled">
+              <span class="page-link">Next</span>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🎨 Additional CSS for enhanced styling -->
+<style>
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.card {
+  border: none;
+  border-radius: 12px;
+}
+
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.badge {
+  font-size: 0.75em;
+  padding: 0.5em 0.75em;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.rounded-circle {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+}
+</style>`
+            };
+            suggestions = [
+              'Add sorting functionality to table columns',
+              'Implement search and filter features',
+              'Add pagination for large datasets',
+              'Create responsive mobile view'
             ];
           } else if (lowerMessage.includes('function') || lowerMessage.includes('method')) {
             aiResponse = `Here's a professional TypeScript function with error handling and documentation:`;
