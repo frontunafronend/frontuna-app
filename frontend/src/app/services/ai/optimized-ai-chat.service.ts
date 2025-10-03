@@ -252,11 +252,18 @@ export class OptimizedAIChatService {
     this._messages.update(messages => [...messages, userMessage]);
     this._isLoading.set(true);
 
-    // 🎯 SEND REQUEST
+    // 🎯 SEND REQUEST WITH CONVERSATION CONTEXT
+    const conversationHistory = this._messages().slice(-5).map(msg => ({
+      role: msg.type === 'user' ? 'user' : 'assistant',
+      content: msg.content
+    }));
+    
     const requestPayload = {
       sessionId: session.id,
       message: message.trim(),
-      context: context || 'Angular development chat'
+      context: context || 'Angular development chat',
+      conversationHistory: conversationHistory, // 🔧 NEW: Include conversation context
+      continuePreviousConversation: conversationHistory.length > 0 // 🔧 NEW: Flag for continuity
     };
 
     return this.http.post<AIResponse>(`${this.API_BASE}/chat`, requestPayload)
@@ -368,11 +375,16 @@ export class OptimizedAIChatService {
   }
 
   /**
-   * 🧹 CLEAR CHAT - Simple and efficient
+   * 🧹 CLEAR CHAT - Complete conversation reset
    */
   clearChat(): void {
     this._messages.set([]);
-    console.log('🧹 Chat cleared');
+    this._currentSession.set(null); // 🔧 NEW: Reset session for fresh start
+    this.lastRequestTime = 0; // 🔧 NEW: Reset rate limiting
+    console.log('🧹 Chat cleared - Fresh conversation started');
+    
+    // 🔧 NEW: Create new session immediately for next conversation
+    this.createSession();
   }
 
   /**

@@ -218,7 +218,7 @@ module.exports = async (req, res) => {
         message: message,
         environment: 'production',
         database: dbStatus,
-        version: '3.3.0-production',
+        version: '3.4.0-production',
         platform: 'vercel'
       }, origin);
     }
@@ -1509,7 +1509,7 @@ module.exports = async (req, res) => {
       try {
         const user = await requireAuth(req);
         const body = await parseBody(req);
-        const { sessionId, message, context } = body;
+        const { sessionId, message, context, conversationHistory, continuePreviousConversation } = body;
         
         if (!message || message.trim().length === 0) {
           return sendResponse(res, 400, {
@@ -1521,15 +1521,54 @@ module.exports = async (req, res) => {
         // Simulate AI processing time for realistic experience
         const processingStartTime = Date.now();
         
-        // Advanced AI Response Generation based on message content
+        // 🧠 CONVERSATION CONTEXT ANALYSIS
+        let contextualPrefix = '';
+        if (continuePreviousConversation && conversationHistory && conversationHistory.length > 0) {
+          const lastMessage = conversationHistory[conversationHistory.length - 1];
+          if (lastMessage && lastMessage.role === 'assistant') {
+            contextualPrefix = 'Building on our previous discussion, ';
+          }
+        }
+        
+        // Advanced AI Response Generation based on message content and context
         let aiResponse = '';
         let codeGenerated = null;
         let suggestions = [];
         
         const lowerMessage = message.toLowerCase();
         
+        // 🔄 FOLLOW-UP QUESTIONS & CONTEXTUAL RESPONSES
+        if (lowerMessage.includes('how') || lowerMessage.includes('why') || lowerMessage.includes('what') || lowerMessage.includes('explain') || lowerMessage.includes('can you')) {
+          aiResponse = `${contextualPrefix}Let me explain that for you. `;
+          
+          if (lowerMessage.includes('improve') || lowerMessage.includes('optimize')) {
+            aiResponse += `Here are some ways to improve the code we discussed:`;
+            suggestions = [
+              'Add error handling and validation',
+              'Implement proper TypeScript types',
+              'Add unit tests for better reliability',
+              'Optimize performance with lazy loading'
+            ];
+          } else if (lowerMessage.includes('style') || lowerMessage.includes('css')) {
+            aiResponse += `Here are some styling improvements:`;
+            suggestions = [
+              'Add responsive design breakpoints',
+              'Implement CSS animations',
+              'Use CSS Grid or Flexbox for layout',
+              'Add hover and focus states'
+            ];
+          } else {
+            aiResponse += `Based on our conversation, here's what you should know:`;
+            suggestions = [
+              'Follow Angular best practices',
+              'Use reactive forms for complex inputs',
+              'Implement proper component lifecycle',
+              'Consider accessibility requirements'
+            ];
+          }
+        }
         // Code Generation Requests
-        if (lowerMessage.includes('create') || lowerMessage.includes('generate') || lowerMessage.includes('build') || lowerMessage.includes('make')) {
+        else if (lowerMessage.includes('create') || lowerMessage.includes('generate') || lowerMessage.includes('build') || lowerMessage.includes('make')) {
           if (lowerMessage.includes('component') || lowerMessage.includes('angular')) {
             aiResponse = `I'll help you create a professional Angular component. Here's a complete implementation:`;
             codeGenerated = {
