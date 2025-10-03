@@ -483,6 +483,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   selectedModel = 'gpt-4';
   activeEditorTab = 0;
   isDarkMode = false;
+  showPreview = signal(true); // 🔧 NEW: Preview visibility state
   
   // 🎯 COMPUTED VALUES
   currentModel = computed(() => this.selectedModel);
@@ -569,10 +570,8 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         next: (response) => {
             console.log('✅ AI Response received:', response);
             
-            // 🔧 AUTO-POPULATE MONACO EDITORS WHEN AI RETURNS CODE
-            if (response.success && response.data && response.data.code) {
-              this.autoPopulateMonacoEditors(response.data.code, response.data.hasCode);
-            }
+            // 🔧 AUTO-POPULATE MONACO EDITORS - GENERIC MECHANISM
+            this.handleAIResponseCode(response);
             
             this.scrollToBottom();
         },
@@ -630,14 +629,28 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     }
   }
 
-  // 🔧 NEW: AUTO-POPULATE MONACO EDITORS FROM AI RESPONSE
-  autoPopulateMonacoEditors(codeData: any, hasCode: boolean) {
-    if (!hasCode || !codeData) return;
+  // 🔧 NEW: GENERIC AI RESPONSE CODE HANDLER
+  handleAIResponseCode(response: any) {
+    try {
+      // Get the latest message from the chat (which has the extracted code)
+      const messages = this.chatMessages();
+      const latestMessage = messages[messages.length - 1];
+      
+      if (latestMessage && latestMessage.isCodeMessage && latestMessage.code) {
+        this.autoPopulateMonacoEditors(latestMessage);
+      }
+    } catch (error) {
+      console.error('❌ Error handling AI response code:', error);
+    }
+  }
+
+  // 🔧 ENHANCED: AUTO-POPULATE MONACO EDITORS FROM CHAT MESSAGE
+  autoPopulateMonacoEditors(message: UltimateChatMessage) {
+    if (!message.code) return;
 
     try {
-      // Parse the code based on language
-      const language = codeData.language?.toLowerCase() || 'typescript';
-      const code = codeData.code || '';
+      const language = message.codeLanguage?.toLowerCase() || 'typescript';
+      const code = message.code;
 
       console.log('🤖 Auto-populating Monaco editor:', language, code.length, 'characters');
 

@@ -320,24 +320,54 @@ export class OptimizedAIChatService {
   }
 
   /**
-   * ✅ HANDLE SUCCESSFUL RESPONSE
+   * ✅ HANDLE SUCCESSFUL RESPONSE - GENERIC CODE EXTRACTION
    */
   private handleSuccessfulResponse(response: AIResponse): void {
+    // 🔧 GENERIC CODE EXTRACTION - Works with any AI response format
+    let extractedCode = null;
+    let extractedLanguage = 'typescript';
+    let content = response.data?.message || 'Response received';
+
+    // Method 1: Check if response has structured code object
+    if (response.data?.code) {
+      extractedCode = response.data.code.code || response.data.code;
+      extractedLanguage = response.data.code.language || 'typescript';
+    }
+    // Method 2: Extract code from markdown code blocks in content
+    else if (content) {
+      const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
+      const match = codeBlockRegex.exec(content);
+      if (match) {
+        extractedLanguage = match[1] || 'typescript';
+        extractedCode = match[2].trim();
+      }
+      // Method 3: Look for any code-like content (imports, components, etc.)
+      else if (content.includes('import ') || content.includes('@Component') || content.includes('function ') || content.includes('const ')) {
+        extractedCode = content;
+        extractedLanguage = 'typescript';
+      }
+    }
+
     const aiMessage: ChatMessage = {
       id: `ai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type: 'ai',
       sender: 'AI Copilot',
-      content: response.data.message,
+      content: content,
       timestamp: new Date(),
-      code: response.data.code?.code,
-      codeLanguage: response.data.code?.language,
-      suggestions: response.data.suggestions,
-      confidence: response.data.confidence,
+      code: extractedCode,
+      codeLanguage: extractedLanguage,
+      suggestions: response.data?.suggestions || [],
+      confidence: response.data?.confidence || 0.95,
       hasAppliedCode: false,
-      isCodeMessage: !!response.data.code
+      isCodeMessage: !!extractedCode
     };
 
     this._messages.update(messages => [...messages, aiMessage]);
+    
+    // 🔧 LOG CODE EXTRACTION for debugging
+    if (extractedCode) {
+      console.log('🤖 Code extracted from AI response:', extractedLanguage, extractedCode.length, 'characters');
+    }
     
     // Update session activity
     const session = this._currentSession();
