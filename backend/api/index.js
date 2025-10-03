@@ -218,7 +218,7 @@ module.exports = async (req, res) => {
         message: message,
         environment: 'production',
         database: dbStatus,
-        version: '3.1.0-production',
+        version: '3.2.0-production',
         platform: 'vercel'
       }, origin);
     }
