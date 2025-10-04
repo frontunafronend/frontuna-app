@@ -845,6 +845,52 @@ export class EnhancedAIPreviewComponent {
       .replace(/@mixin\s+[\w-]+[^{]*{[^}]*}/g, '') // Remove mixins
       .replace(/@include\s+[\w-]+[^;]*;/g, ''); // Remove includes
   }
+  
+  // 🎯 INJECT CRYPTO MOCK DATA - Replace Angular template syntax with real data
+  private injectCryptoMockData(html: string): string {
+    console.log('🔧 Injecting crypto mock data into HTML');
+    
+    const cryptoMockData = [
+      { name: 'Bitcoin', symbol: 'BTC', price: '43,250', change: '+2.5', icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png' },
+      { name: 'Ethereum', symbol: 'ETH', price: '2,650', change: '+1.8', icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
+      { name: 'Cardano', symbol: 'ADA', price: '0.48', change: '-0.5', icon: 'https://cryptologos.cc/logos/cardano-ada-logo.png' },
+      { name: 'Solana', symbol: 'SOL', price: '98.50', change: '+3.2', icon: 'https://cryptologos.cc/logos/solana-sol-logo.png' }
+    ];
+    
+    // Replace *ngFor with actual repeated elements
+    if (html.includes('*ngFor="let crypto of cryptocurrencies"')) {
+      const cardTemplate = html.match(/<div[^>]*\*ngFor="let crypto of cryptocurrencies"[^>]*>([\s\S]*?)<\/div>/);
+      if (cardTemplate) {
+        let repeatedCards = '';
+        cryptoMockData.forEach(crypto => {
+          let cardHtml = cardTemplate[1]
+            .replace(/\{\{crypto\.name\}\}/g, crypto.name)
+            .replace(/\{\{crypto\.symbol\}\}/g, crypto.symbol)
+            .replace(/\{\{crypto\.price\}\}/g, crypto.price)
+            .replace(/\{\{crypto\.change\}\}/g, crypto.change)
+            .replace(/\[src\]="crypto\.icon"/g, `src="${crypto.icon}"`)
+            .replace(/\[alt\]="crypto\.name"/g, `alt="${crypto.name}"`);
+          
+          repeatedCards += `<div class="crypto-card">${cardHtml}</div>`;
+        });
+        
+        html = html.replace(/<div[^>]*\*ngFor="let crypto of cryptocurrencies"[^>]*>[\s\S]*?<\/div>/, repeatedCards);
+      }
+    }
+    
+    // Replace individual template bindings
+    html = html
+      .replace(/\{\{crypto\.name\}\}/g, 'Bitcoin')
+      .replace(/\{\{crypto\.symbol\}\}/g, 'BTC')
+      .replace(/\{\{crypto\.price\}\}/g, '$43,250')
+      .replace(/\{\{crypto\.change\}\}/g, '+2.5%')
+      .replace(/\[src\]="crypto\.icon"/g, 'src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"')
+      .replace(/\[alt\]="crypto\.name"/g, 'alt="Bitcoin"')
+      .replace(/\{\{crypto\.price \| number:'1\.0-2'\}\}/g, '$43,250.00');
+    
+    console.log('✅ Crypto mock data injected');
+    return html;
+  }
 
 
 
@@ -852,12 +898,86 @@ export class EnhancedAIPreviewComponent {
     // Extract HTML from TypeScript code or generate basic structure
     const htmlMatch = typescriptCode.match(/template\s*=\s*`([^`]*)`/);
     if (htmlMatch) {
-      return htmlMatch[1];
+      let html = htmlMatch[1];
+      // Inject mock data for crypto components
+      if (html.includes('crypto') || html.includes('{{crypto.')) {
+        html = this.injectCryptoMockData(html);
+      }
+      return html;
     }
     
     // Generate enhanced HTML structure based on component type
     if (typescriptCode.includes('@Component')) {
       // Check for specific component types
+      if (typescriptCode.toLowerCase().includes('crypto') || typescriptCode.toLowerCase().includes('currency')) {
+        return `
+          <div class="container mt-4">
+            <div class="row">
+              <div class="col-md-3 mb-4">
+                <div class="card crypto-card shadow-sm">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="Bitcoin" class="crypto-icon me-2" style="width: 32px; height: 32px;">
+                      <div>
+                        <h6 class="card-title mb-0">Bitcoin</h6>
+                        <small class="text-muted">BTC</small>
+                      </div>
+                    </div>
+                    <h4 class="text-primary">$43,250</h4>
+                    <span class="badge bg-success">+2.5%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 mb-4">
+                <div class="card crypto-card shadow-sm">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="Ethereum" class="crypto-icon me-2" style="width: 32px; height: 32px;">
+                      <div>
+                        <h6 class="card-title mb-0">Ethereum</h6>
+                        <small class="text-muted">ETH</small>
+                      </div>
+                    </div>
+                    <h4 class="text-primary">$2,650</h4>
+                    <span class="badge bg-success">+1.8%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 mb-4">
+                <div class="card crypto-card shadow-sm">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <img src="https://cryptologos.cc/logos/cardano-ada-logo.png" alt="Cardano" class="crypto-icon me-2" style="width: 32px; height: 32px;">
+                      <div>
+                        <h6 class="card-title mb-0">Cardano</h6>
+                        <small class="text-muted">ADA</small>
+                      </div>
+                    </div>
+                    <h4 class="text-primary">$0.48</h4>
+                    <span class="badge bg-danger">-0.5%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3 mb-4">
+                <div class="card crypto-card shadow-sm">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <img src="https://cryptologos.cc/logos/solana-sol-logo.png" alt="Solana" class="crypto-icon me-2" style="width: 32px; height: 32px;">
+                      <div>
+                        <h6 class="card-title mb-0">Solana</h6>
+                        <small class="text-muted">SOL</small>
+                      </div>
+                    </div>
+                    <h4 class="text-primary">$98.50</h4>
+                    <span class="badge bg-success">+3.2%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
       if (typescriptCode.toLowerCase().includes('card')) {
         return `
           <div class="container mt-4">

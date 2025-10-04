@@ -586,13 +586,16 @@ Please try again in a moment. If the problem persists, check the server logs.`;
   private formatTextContent(content: string): string {
     console.log('🔧 Original content:', content.substring(0, 200));
     
-    // 🧹 STEP 1: ULTRA AGGRESSIVE cleanup - remove ALL markdown artifacts
+    // 🧹 STEP 1: ULTRA AGGRESSIVE cleanup - remove ALL markdown artifacts and emojis
     let formatted = content
       .replace(/\*+/g, '') // Remove ALL asterisks
       .replace(/#+\s*/g, '') // Remove ALL hash headers
       .replace(/`+/g, '') // Remove ALL backticks
       .replace(/_{2,}/g, '') // Remove underscores
       .replace(/\[|\]/g, '') // Remove brackets
+      .replace(/📝\s*/g, '') // Remove document emoji
+      .replace(/🔧\s*/g, '') // Remove wrench emoji
+      .replace(/📋\s*/g, '') // Remove clipboard emoji
       .replace(/\s+/g, ' ') // Normalize all whitespace
       .trim();
     
@@ -620,9 +623,9 @@ Please try again in a moment. If the problem persists, check the server logs.`;
         });
       }
       
-      // 🔧 Handle Step indicators
+      // 🔧 Handle Step indicators - clean format
       if (sentence.match(/Step\s+\d+/i)) {
-        sentence = sentence.replace(/Step\s+(\d+):\s*/gi, '\n\n\n🔧 **Step $1:**\n\n');
+        sentence = sentence.replace(/Step\s+(\d+):\s*/gi, '\n\n\nStep $1:\n\n');
       }
       
       // 📋 Handle bullet points
@@ -647,15 +650,15 @@ Please try again in a moment. If the problem persists, check the server logs.`;
       formatted = formatted.replace(/(\d+)\s*\.\s*([A-Z][^.\n]{10,})/g, '\n\n\n<div class="numbered-item-wrapper"><strong data-starts-with-number="true">$1. $2</strong></div>\n\n');
     }
     
-    // 📝 STEP 4: Handle code mentions
+    // 📝 STEP 4: Handle code mentions - clean format
     formatted = formatted
-      .replace(/Code generated - see Monaco editor/gi, '\n\n📝 **Code generated - see Monaco editor**\n\n')
-      .replace(/see Monaco editor/gi, '\n\n📝 **Code generated - see Monaco editor**\n\n');
+      .replace(/Code generated - see Monaco editor/gi, '\n\nCode generated - see Monaco editor\n\n')
+      .replace(/see Monaco editor/gi, '\n\nCode generated - see Monaco editor\n\n');
     
-    // 📋 STEP 5: Handle file names and sections
+    // 📋 STEP 5: Handle file names and sections - clean format
     formatted = formatted
-      .replace(/(component\.(ts|html|scss))/gi, '\n\n📋 **$1**\n\n')
-      .replace(/(Setup|Create|Using|Example|Conclusion)/gi, '\n\n📋 **$1**\n\n');
+      .replace(/(component\.(ts|html|scss))/gi, '\n\n$1\n\n')
+      .replace(/(Setup|Create|Using|Example|Conclusion)/gi, '\n\n$1\n\n');
     
     // 🎨 STEP 6: Format technical terms
     formatted = formatted

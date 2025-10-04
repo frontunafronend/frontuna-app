@@ -745,17 +745,18 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         console.log('✅ TypeScript editor updated');
       }
       
-      // 🎯 BULLETPROOF: ALWAYS update HTML editor (generate if needed)
+      // 🎯 BULLETPROOF: ALWAYS update HTML editor (FORCE update every time)
       if (htmlCode) {
         this.updateEditorBuffer('html', htmlCode, isConversationContinuation);
         updatedEditors++;
         console.log('✅ HTML editor updated with extracted content');
-      } else if (typescriptCode) {
-        // Generate basic HTML structure if none found
-        const fallbackHTML = this.generateFallbackHTML();
-        this.updateEditorBuffer('html', fallbackHTML, isConversationContinuation);
+      } else {
+        // ALWAYS generate HTML - never leave empty
+        console.log('🔧 No HTML extracted, generating contextual HTML');
+        const contextualHTML = this.generateContextualHTML(typescriptCode || 'card component');
+        this.updateEditorBuffer('html', contextualHTML, isConversationContinuation);
         updatedEditors++;
-        console.log('✅ HTML editor updated with fallback content');
+        console.log('✅ HTML editor FORCE updated with contextual content');
       }
       
       // 🎯 BULLETPROOF: ALWAYS update SCSS editor (generate if needed)
