@@ -530,12 +530,14 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     // Initialize clean editors
     this.initializeCleanEditors();
     
-    // Simple effect for auto-scroll
+    // 🎯 ENHANCED AUTO-SCROLL EFFECT - Triggers on every message change
     effect(() => {
-      if (this.chatMessages().length > 0) {
+      const messages = this.chatMessages();
+      if (messages.length > 0) {
+        console.log('📜 Messages updated, triggering auto-scroll. Count:', messages.length);
         this.scrollToBottom();
       }
-    });
+    }, { allowSignalWrites: true });
     
     console.log('✅ AI COPILOT ULTIMATE v3.0 - READY IMMEDIATELY!');
   }
@@ -551,6 +553,10 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     
     const message = this.currentMessage.trim();
     this.currentMessage = '';
+    
+    // 🎯 IMMEDIATE SCROLL after sending message
+    console.log('📜 User sent message, scrolling to bottom');
+    this.scrollToBottom();
     
     // Track analytics
     this.analytics.trackAIInteraction('prompt_sent', 'chat');
@@ -573,7 +579,11 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
             // 🔧 AUTO-POPULATE MONACO EDITORS - GENERIC MECHANISM
             this.handleAIResponseCode(response);
             
-            this.scrollToBottom();
+            // 🎯 SCROLL after AI response with extra delay for content rendering
+            console.log('📜 AI response received, scrolling to bottom');
+            setTimeout(() => {
+              this.scrollToBottom();
+            }, 100);
         },
         error: (error) => {
             console.error('❌ AI Response failed:', error);
@@ -588,6 +598,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   
   sendSuggestion(suggestion: string) {
     this.currentMessage = suggestion;
+    console.log('📜 Suggestion clicked, will scroll after sending');
     this.sendMessage();
   }
   
@@ -829,12 +840,37 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   }
 
   private scrollToBottom(): void {
+    // 🎯 ENHANCED AUTO-SCROLL - Multiple attempts for reliability
     setTimeout(() => {
-      if (this.chatContainer) {
-        const element = this.chatContainer.nativeElement;
+      this.performScroll();
+    }, 50);
+    
+    setTimeout(() => {
+      this.performScroll();
+    }, 200);
+    
+    setTimeout(() => {
+      this.performScroll();
+    }, 500);
+  }
+  
+  private performScroll(): void {
+    if (this.chatContainer?.nativeElement) {
+      const element = this.chatContainer.nativeElement;
+      
+      // 🎯 SMOOTH SCROLL with fallback to instant
+      try {
+        element.scrollTo({
+          top: element.scrollHeight,
+          behavior: 'smooth'
+        });
+      } catch (error) {
+        // Fallback for browsers that don't support smooth scroll
         element.scrollTop = element.scrollHeight;
       }
-    }, 100);
+      
+      console.log('📜 Auto-scrolled to bottom:', element.scrollTop, '/', element.scrollHeight);
+    }
   }
 
   // 🎯 SETTINGS
