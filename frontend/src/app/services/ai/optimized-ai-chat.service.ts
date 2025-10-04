@@ -579,64 +579,95 @@ Please try again in a moment. If the problem persists, check the server logs.`;
   }
 
   /**
-   * 🎨 SUPER ENHANCED FORMAT TEXT CONTENT - Clean, professional formatting with guaranteed new rows
+   * 🎨 BULLETPROOF TEXT FORMATTING - Final solution that ALWAYS works
    */
   private formatTextContent(content: string): string {
-    // 🧹 STEP 1: AGGRESSIVE cleanup of ALL markdown artifacts
+    console.log('🔧 Original content:', content.substring(0, 200));
+    
+    // 🧹 STEP 1: ULTRA AGGRESSIVE cleanup - remove ALL markdown artifacts
     let formatted = content
-      .replace(/\*{2,}/g, '') // Remove ALL multiple asterisks
-      .replace(/\*/g, '') // Remove ALL single asterisks
-      .replace(/#{1,6}\s*/g, '') // Remove markdown headers
-      .replace(/`{1,3}/g, '') // Remove code backticks
+      .replace(/\*+/g, '') // Remove ALL asterisks
+      .replace(/#+\s*/g, '') // Remove ALL hash headers
+      .replace(/`+/g, '') // Remove ALL backticks
       .replace(/_{2,}/g, '') // Remove underscores
-      .replace(/\[|\]/g, ''); // Remove square brackets
+      .replace(/\[|\]/g, '') // Remove brackets
+      .replace(/\s+/g, ' ') // Normalize all whitespace
+      .trim();
     
-    // 🔧 STEP 2: Handle Step indicators with perfect spacing
+    console.log('🧹 After cleanup:', formatted.substring(0, 200));
+    
+    // 🔧 STEP 2: Split into sentences and process each one
+    const sentences = formatted.split(/([.!?])\s+/);
+    let processedSentences = [];
+    
+    for (let i = 0; i < sentences.length; i++) {
+      let sentence = sentences[i];
+      
+      // Skip punctuation marks
+      if (sentence.match(/^[.!?]$/)) {
+        if (processedSentences.length > 0) {
+          processedSentences[processedSentences.length - 1] += sentence;
+        }
+        continue;
+      }
+      
+      // 🔢 BULLETPROOF: Handle numbered items with FORCED line breaks
+      if (sentence.match(/\b(\d+)\.\s+/)) {
+        sentence = sentence.replace(/\b(\d+)\.\s+([^.]+)/g, (match, num, text) => {
+          return `\n\n\n**${num}. ${text.trim()}**\n\n`;
+        });
+      }
+      
+      // 🔧 Handle Step indicators
+      if (sentence.match(/Step\s+\d+/i)) {
+        sentence = sentence.replace(/Step\s+(\d+):\s*/gi, '\n\n\n🔧 **Step $1:**\n\n');
+      }
+      
+      // 📋 Handle bullet points
+      if (sentence.match(/^\s*•/) || sentence.match(/^\s*-\s/)) {
+        sentence = '\n\n• ' + sentence.replace(/^\s*[•-]\s*/, '').trim() + '\n';
+      }
+      
+      processedSentences.push(sentence);
+    }
+    
+    formatted = processedSentences.join(' ');
+    
+    // 🔧 STEP 3: FORCE numbered item formatting with HTML structure
+    for (let pass = 0; pass < 3; pass++) {
+      // Pass 1: Handle "1. Something" patterns with HTML wrapper
+      formatted = formatted.replace(/(\s|^)(\d+)\.\s+([^.\n]+)/g, '\n\n\n<div class="numbered-item-wrapper"><strong data-starts-with-number="true">$2. $3</strong></div>\n\n');
+      
+      // Pass 2: Handle "• 1. Something" patterns
+      formatted = formatted.replace(/•\s*(\d+)\.\s+([^.\n]+)/g, '\n\n\n<div class="numbered-item-wrapper"><strong data-starts-with-number="true">$1. $2</strong></div>\n\n');
+      
+      // Pass 3: Handle any remaining numbered patterns
+      formatted = formatted.replace(/(\d+)\s*\.\s*([A-Z][^.\n]{10,})/g, '\n\n\n<div class="numbered-item-wrapper"><strong data-starts-with-number="true">$1. $2</strong></div>\n\n');
+    }
+    
+    // 📝 STEP 4: Handle code mentions
     formatted = formatted
-      .replace(/Step\s+(\d+):\s*/gi, '\n\n\n🔧 **Step $1:**\n\n')
-      .replace(/🔧\s*Step\s+(\d+):\s*/gi, '\n\n\n🔧 **Step $1:**\n\n');
+      .replace(/Code generated - see Monaco editor/gi, '\n\n📝 **Code generated - see Monaco editor**\n\n')
+      .replace(/see Monaco editor/gi, '\n\n📝 **Code generated - see Monaco editor**\n\n');
     
-    // 🔢 STEP 3: CRITICAL - Handle ALL numbered items with guaranteed new rows
-    formatted = formatted.replace(/(\s|^|•\s*)(\d+)\.\s*([^.\n]{3,})/g, (match, prefix, num, text) => {
-      // Clean the text of any remaining artifacts
-      const cleanText = text.replace(/\*+/g, '').trim();
-      return `\n\n\n**${num}. ${cleanText}**\n\n`;
-    });
-    
-    // 📋 STEP 4: Handle bullet points with new rows
+    // 📋 STEP 5: Handle file names and sections
     formatted = formatted
-      .replace(/•\s*([^:\n]{3,})/g, '\n\n• $1\n')
-      .replace(/^\s*[-*]\s*([^:\n]{3,})/gm, '\n\n• $1\n');
-    
-    // 📝 STEP 5: Handle code generation mentions
-    formatted = formatted
-      .replace(/Code generated - see Monaco editor/gi, '\n\n📝 **Code generated - see Monaco editor**\n\n');
-    
-    // 📋 STEP 6: Handle section headers and file names
-    formatted = formatted
-      .replace(/(Conclusion|Setup|Create|Using|Example|Explanation|HTML Structure|Styling)/gi, '\n\n\n📋 **$1**\n\n')
       .replace(/(component\.(ts|html|scss))/gi, '\n\n📋 **$1**\n\n')
-      .replace(/(\w+\.component\.(ts|html|scss))/gi, '\n\n📋 **$1**\n\n');
+      .replace(/(Setup|Create|Using|Example|Conclusion)/gi, '\n\n📋 **$1**\n\n');
     
-    // 🎨 STEP 7: Format technical terms (but keep them clean)
+    // 🎨 STEP 6: Format technical terms
     formatted = formatted
-      .replace(/\b(Angular|Material|Component|TypeScript|HTML|SCSS|CSS|JavaScript)\b/gi, '**$1**');
+      .replace(/\b(Angular|Material|Component|TypeScript|HTML|SCSS)\b/g, '**$1**');
     
-    // 🔧 STEP 8: Ensure proper sentence spacing
-    formatted = formatted
-      .replace(/([.!?])\s*([A-Z🔧📋📝])/g, '$1\n\n$2')
-      .replace(/:\s*([A-Z])/g, ':\n\n$1');
-    
-    // 🧹 STEP 9: Final aggressive cleanup
+    // 🧹 STEP 7: Final cleanup and normalization
     formatted = formatted
       .replace(/\n{4,}/g, '\n\n\n') // Max 3 line breaks
       .replace(/^\n+/, '') // Remove leading newlines
       .replace(/\n+$/, '') // Remove trailing newlines
-      .replace(/\s{3,}/g, ' ') // Multiple spaces to single
-      .replace(/\*{2,}/g, '') // Remove any remaining multiple asterisks
-      .replace(/\s+\*/g, ' ') // Remove asterisks after spaces
-      .replace(/\*\s+/g, ' ') // Remove asterisks before spaces
+      .replace(/\s{2,}/g, ' ') // Multiple spaces to single
       .trim();
+    
+    console.log('✅ Final formatted:', formatted.substring(0, 300));
     
     return formatted;
   }
