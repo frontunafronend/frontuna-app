@@ -847,102 +847,208 @@ export class EnhancedAIPreviewComponent {
       .replace(/@include\s+[\w-]+[^;]*;/g, ''); // Remove includes
   }
   
-  // 🎯 SMART ANGULAR TEMPLATE RENDERER - Replace Angular template syntax with real data
-  private injectCryptoMockData(html: string): string {
-    console.log('🔧 SMART ANGULAR RENDERER: Processing template with mock data');
-    
-    const cryptoMockData = [
-      { name: 'Bitcoin', symbol: 'BTC', price: '47,000', change: '+3.5%', changeClass: 'positive', icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png' },
-      { name: 'Ethereum', symbol: 'ETH', price: '3,400', change: '+2.1%', changeClass: 'positive', icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
-      { name: 'Cardano', symbol: 'ADA', price: '2.30', change: '-1.2%', changeClass: 'negative', icon: 'https://cryptologos.cc/logos/cardano-ada-logo.png' },
-      { name: 'Solana', symbol: 'SOL', price: '140', change: '+4.9%', changeClass: 'positive', icon: 'https://cryptologos.cc/logos/solana-sol-logo.png' }
-    ];
-    
+  // 🎯 UNIVERSAL ANGULAR TEMPLATE RENDERER - Process ANY Angular template dynamically
+  private processAngularTemplate(html: string, chatResponseData?: any): string {
+    console.log('🔧 UNIVERSAL RENDERER: Processing Angular template dynamically');
     console.log('📝 Original HTML:', html.substring(0, 200) + '...');
     
-    // 🎯 PATTERN 1: Handle *ngFor="let crypto of cryptos" (most common)
-    const ngForPatterns = [
-      /\*ngFor="let crypto of cryptos"/g,
-      /\*ngFor="let crypto of cryptocurrencies"/g,
-      /\*ngFor="let item of items"/g,
-      /\*ngFor="let card of cards"/g
-    ];
+    // 🎯 STEP 1: Extract mock data from TypeScript code or generate generic data
+    let mockData = this.extractMockDataFromContext(chatResponseData) || this.generateGenericMockData(html);
     
-    for (const pattern of ngForPatterns) {
-      if (html.match(pattern)) {
-        console.log('✅ Found ngFor pattern:', pattern);
-        
-        // Find the element with *ngFor directive
-        const ngForMatch = html.match(/<(\w+)[^>]*\*ngFor="[^"]*"[^>]*>([\s\S]*?)<\/\1>/);
-        if (ngForMatch) {
-          const elementTag = ngForMatch[1];
-          const elementContent = ngForMatch[2];
-          const fullElement = ngForMatch[0];
-          
-          console.log('🔧 Processing ngFor element:', elementTag);
-          
-          let repeatedElements = '';
-          cryptoMockData.forEach((crypto, index) => {
-            let processedContent = elementContent
-              // Handle all crypto properties
-              .replace(/\{\{\s*crypto\.name\s*\}\}/g, crypto.name)
-              .replace(/\{\{\s*crypto\.symbol\s*\}\}/g, crypto.symbol)
-              .replace(/\{\{\s*crypto\.price\s*\}\}/g, crypto.price)
-              .replace(/\{\{\s*crypto\.change\s*\}\}/g, crypto.change)
-              // Handle property bindings
-              .replace(/\[src\]="crypto\.icon"/g, `src="${crypto.icon}"`)
-              .replace(/\[alt\]="crypto\.name"/g, `alt="${crypto.name}"`)
-              // Handle class bindings
-              .replace(/\[class\]="crypto\.changeClass"/g, `class="${crypto.changeClass}"`)
-              // Handle pipes
-              .replace(/\{\{\s*crypto\.price\s*\|\s*currency\s*\}\}/g, `$${crypto.price}`)
-              .replace(/\{\{\s*crypto\.price\s*\|\s*number:'1\.0-2'\s*\}\}/g, `$${crypto.price}.00`)
-              // Handle generic item references
-              .replace(/\{\{\s*item\.name\s*\}\}/g, crypto.name)
-              .replace(/\{\{\s*item\.symbol\s*\}\}/g, crypto.symbol)
-              .replace(/\{\{\s*item\.price\s*\}\}/g, crypto.price)
-              .replace(/\{\{\s*item\.change\s*\}\}/g, crypto.change);
-            
-            // Create the repeated element
-            repeatedElements += `<${elementTag} class="crypto-card crypto-${index + 1}">${processedContent}</${elementTag}>`;
-          });
-          
-          // Replace the original ngFor element with repeated elements
-          html = html.replace(fullElement, repeatedElements);
-          console.log('✅ Replaced ngFor with', cryptoMockData.length, 'repeated elements');
-          break;
-        }
-      }
-    }
+    console.log('📊 Using mock data:', mockData);
     
-    // 🎯 PATTERN 2: Handle individual template bindings (fallback)
-    html = html
-      .replace(/\{\{\s*crypto\.name\s*\}\}/g, 'Bitcoin')
-      .replace(/\{\{\s*crypto\.symbol\s*\}\}/g, 'BTC')
-      .replace(/\{\{\s*crypto\.price\s*\}\}/g, '$47,000')
-      .replace(/\{\{\s*crypto\.change\s*\}\}/g, '+3.5%')
-      .replace(/\[src\]="crypto\.icon"/g, 'src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"')
-      .replace(/\[alt\]="crypto\.name"/g, 'alt="Bitcoin"')
-      .replace(/\{\{\s*crypto\.price\s*\|\s*currency\s*\}\}/g, '$47,000')
-      .replace(/\{\{\s*crypto\.price\s*\|\s*number:'1\.0-2'\s*\}\}/g, '$47,000.00');
+    // 🎯 STEP 2: Process *ngFor directives dynamically
+    html = this.processNgForDirectives(html, mockData);
     
-    console.log('✅ Smart Angular template rendering completed');
+    // 🎯 STEP 3: Process template bindings dynamically
+    html = this.processTemplateBindings(html, mockData);
+    
+    console.log('✅ Universal Angular template rendering completed');
     console.log('📝 Final HTML preview:', html.substring(0, 300) + '...');
     
     return html;
   }
   
-  // 🎯 SMART CRYPTO STYLES GENERATOR - Generate CSS based on HTML content
+  // 🎯 EXTRACT MOCK DATA FROM CHAT RESPONSE - Dynamic data extraction
+  private extractMockDataFromContext(chatResponseData?: any): any[] | null {
+    if (!chatResponseData) return null;
+    
+    // Try to find array data in the response
+    const response = typeof chatResponseData === 'string' ? chatResponseData : JSON.stringify(chatResponseData);
+    
+    // Look for array definitions in TypeScript code
+    const arrayMatches = response.match(/(\w+)\s*=\s*\[([\s\S]*?)\]/g);
+    if (arrayMatches) {
+      for (const match of arrayMatches) {
+        try {
+          const arrayContent = match.match(/\[([\s\S]*?)\]/)?.[1];
+          if (arrayContent) {
+            // Try to parse as JSON-like structure
+            const cleanedContent = arrayContent
+              .replace(/'/g, '"')
+              .replace(/(\w+):/g, '"$1":')
+              .replace(/,\s*}/g, '}');
+            
+            const parsedData = JSON.parse(`[${cleanedContent}]`);
+            if (parsedData.length > 0) {
+              console.log('✅ Extracted mock data from chat response:', parsedData);
+              return parsedData;
+            }
+          }
+        } catch (e) {
+          console.log('⚠️ Could not parse extracted data, will generate generic');
+        }
+      }
+    }
+    
+    return null;
+  }
+  
+  // 🎯 GENERATE GENERIC MOCK DATA - Based on template analysis
+  private generateGenericMockData(html: string): any[] {
+    console.log('🔧 Generating generic mock data based on template');
+    
+    // Analyze template to determine data structure
+    const properties = new Set<string>();
+    
+    // Extract property names from template bindings
+    const bindingMatches = html.match(/\{\{\s*\w+\.(\w+)\s*\}\}/g);
+    if (bindingMatches) {
+      bindingMatches.forEach(match => {
+        const prop = match.match(/\{\{\s*\w+\.(\w+)\s*\}\}/)?.[1];
+        if (prop) properties.add(prop);
+      });
+    }
+    
+    // Extract property names from property bindings
+    const propBindingMatches = html.match(/\[\w+\]="?\w+\.(\w+)"?/g);
+    if (propBindingMatches) {
+      propBindingMatches.forEach(match => {
+        const prop = match.match(/\[\w+\]="?\w+\.(\w+)"?/)?.[1];
+        if (prop) properties.add(prop);
+      });
+    }
+    
+    console.log('📊 Detected properties:', Array.from(properties));
+    
+    // Generate mock data based on detected properties
+    const mockItems = [];
+    for (let i = 0; i < 4; i++) {
+      const item: any = {};
+      
+      properties.forEach(prop => {
+        switch (prop.toLowerCase()) {
+          case 'name':
+          case 'title':
+            item[prop] = `Item ${i + 1}`;
+            break;
+          case 'symbol':
+          case 'code':
+            item[prop] = `SYM${i + 1}`;
+            break;
+          case 'price':
+          case 'amount':
+          case 'value':
+            item[prop] = `${(Math.random() * 1000 + 100).toFixed(2)}`;
+            break;
+          case 'change':
+          case 'percentage':
+            const change = (Math.random() * 10 - 5).toFixed(1);
+            const changeNum = parseFloat(change);
+            item[prop] = `${changeNum > 0 ? '+' : ''}${change}%`;
+            item.changeClass = changeNum > 0 ? 'positive' : 'negative';
+            break;
+          case 'description':
+          case 'text':
+            item[prop] = `This is a description for ${item.name || `item ${i + 1}`}`;
+            break;
+          case 'icon':
+          case 'image':
+          case 'src':
+            item[prop] = `https://via.placeholder.com/64x64/4f46e5/ffffff?text=${i + 1}`;
+            break;
+          default:
+            item[prop] = `Value ${i + 1}`;
+        }
+      });
+      
+      mockItems.push(item);
+    }
+    
+    console.log('✅ Generated generic mock data:', mockItems);
+    return mockItems;
+  }
+  
+  // 🎯 PROCESS NGFOR DIRECTIVES - Universal ngFor processing
+  private processNgForDirectives(html: string, mockData: any[]): string {
+    const ngForPattern = /<(\w+)[^>]*\*ngFor="let\s+(\w+)\s+of\s+(\w+)"[^>]*>([\s\S]*?)<\/\1>/g;
+    
+    return html.replace(ngForPattern, (match, elementTag, itemVar, arrayVar, elementContent) => {
+      console.log(`🔧 Processing *ngFor: let ${itemVar} of ${arrayVar}`);
+      
+      let repeatedElements = '';
+      mockData.forEach((item, index) => {
+        let processedContent = elementContent;
+        
+        // Replace all template bindings for this item
+        Object.keys(item).forEach(key => {
+          const value = item[key];
+          processedContent = processedContent
+            .replace(new RegExp(`\\{\\{\\s*${itemVar}\\.${key}\\s*\\}\\}`, 'g'), value)
+            .replace(new RegExp(`\\[src\\]="${itemVar}\\.${key}"`, 'g'), `src="${value}"`)
+            .replace(new RegExp(`\\[alt\\]="${itemVar}\\.${key}"`, 'g'), `alt="${value}"`)
+            .replace(new RegExp(`\\[class\\]="${itemVar}\\.${key}"`, 'g'), `class="${value}"`);
+        });
+        
+        // Handle pipes
+        processedContent = processedContent
+          .replace(new RegExp(`\\{\\{\\s*${itemVar}\\.(\\w+)\\s*\\|\\s*currency\\s*\\}\\}`, 'g'), (match: string, prop: string) => `$${item[prop] || '0'}`)
+          .replace(new RegExp(`\\{\\{\\s*${itemVar}\\.(\\w+)\\s*\\|\\s*number:'1\\.0-2'\\s*\\}\\}`, 'g'), (match: string, prop: string) => `${item[prop] || '0'}.00`);
+        
+        repeatedElements += `<${elementTag} class="dynamic-item item-${index + 1}">${processedContent}</${elementTag}>`;
+      });
+      
+      return repeatedElements;
+    });
+  }
+  
+  // 🎯 PROCESS TEMPLATE BINDINGS - Universal binding processing
+  private processTemplateBindings(html: string, mockData: any[]): string {
+    if (mockData.length === 0) return html;
+    
+    const firstItem = mockData[0];
+    
+    // Process remaining template bindings with first item data
+    Object.keys(firstItem).forEach(key => {
+      const value = firstItem[key];
+      html = html
+        .replace(new RegExp(`\\{\\{\\s*\\w+\\.${key}\\s*\\}\\}`, 'g'), value)
+        .replace(new RegExp(`\\[src\\]="\\w+\\.${key}"`, 'g'), `src="${value}"`)
+        .replace(new RegExp(`\\[alt\\]="\\w+\\.${key}"`, 'g'), `alt="${value}"`);
+    });
+    
+    return html;
+  }
+  
+  // 🎯 UNIVERSAL DYNAMIC STYLES GENERATOR - Generate CSS based on HTML content
   private generateSmartCryptoStyles(html: string): string {
-    if (!html || (!html.includes('crypto-card') && !html.includes('crypto'))) {
+    if (!html) return '';
+    
+    console.log('🎨 Generating universal dynamic styles based on content');
+    
+    // Detect what kind of components we have
+    const hasDynamicItems = html.includes('dynamic-item') || html.includes('item-') || html.includes('*ngFor');
+    const hasCards = html.includes('card') || html.includes('crypto-card');
+    
+    if (!hasDynamicItems && !hasCards) {
       return '';
     }
     
-    console.log('🎨 Generating smart crypto card styles');
-    
     return `
-      /* 🎯 SMART CRYPTO CARD STYLES - Auto-generated based on content */
-      .crypto-card {
+      /* 🎯 UNIVERSAL DYNAMIC COMPONENT STYLES - Auto-generated based on content */
+      .dynamic-item,
+      .crypto-card,
+      .item-card {
         background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
         border: 1px solid #e2e8f0;
         border-radius: 16px;
@@ -956,7 +1062,9 @@ export class EnhancedAIPreviewComponent {
         max-width: 320px;
       }
       
-      .crypto-card::before {
+      .dynamic-item::before,
+      .crypto-card::before,
+      .item-card::before {
         content: '';
         position: absolute;
         top: 0;
@@ -966,14 +1074,19 @@ export class EnhancedAIPreviewComponent {
         background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
       }
       
-      .crypto-card:hover {
+      .dynamic-item:hover,
+      .crypto-card:hover,
+      .item-card:hover {
         transform: translateY(-8px) scale(1.02);
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         border-color: #667eea;
       }
       
+      /* Universal text styling */
+      .dynamic-item h3,
+      .dynamic-item h4,
       .crypto-card h3,
-      .crypto-card .crypto-name {
+      .item-card h3 {
         font-size: 1.25rem;
         font-weight: 700;
         color: #1a202c;
@@ -983,42 +1096,44 @@ export class EnhancedAIPreviewComponent {
         gap: 8px;
       }
       
-      .crypto-card .crypto-symbol {
-        font-size: 0.875rem;
-        color: #718096;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+      .dynamic-item p,
+      .crypto-card p,
+      .item-card p {
+        margin: 8px 0;
+        line-height: 1.5;
+        color: #4a5568;
       }
       
-      .crypto-card .crypto-price {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #2d3748;
-        margin: 12px 0;
-      }
-      
-      .crypto-card .crypto-change {
-        font-size: 0.875rem;
+      .dynamic-item strong,
+      .crypto-card strong,
+      .item-card strong {
         font-weight: 600;
+        color: #2d3748;
+      }
+      
+      /* Status indicators */
+      .positive {
+        background: #c6f6d5;
+        color: #22543d;
         padding: 4px 12px;
         border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
         display: inline-block;
       }
       
-      .crypto-card .positive {
-        background: #c6f6d5;
-        color: #22543d;
-      }
-      
-      .crypto-card .negative {
+      .negative {
         background: #fed7d7;
         color: #742a2a;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-block;
       }
       
-      /* Responsive grid for crypto cards */
-      .crypto-cards-container,
-      .cards-container {
+      /* Responsive grid for dynamic items */
+      .component-preview {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 20px;
@@ -1029,30 +1144,33 @@ export class EnhancedAIPreviewComponent {
       
       /* Mobile responsive */
       @media (max-width: 768px) {
-        .crypto-cards-container,
-        .cards-container {
+        .component-preview {
           grid-template-columns: 1fr;
           padding: 16px;
         }
         
-        .crypto-card {
+        .dynamic-item,
+        .crypto-card,
+        .item-card {
           margin: 8px 0;
           min-width: auto;
           max-width: none;
         }
       }
       
-      /* Animation for crypto cards */
-      .crypto-card {
-        animation: cryptoCardFadeIn 0.6s ease-out forwards;
+      /* Staggered animations for dynamic items */
+      .dynamic-item,
+      .crypto-card,
+      .item-card {
+        animation: dynamicItemFadeIn 0.6s ease-out forwards;
       }
       
-      .crypto-card:nth-child(1) { animation-delay: 0.1s; }
-      .crypto-card:nth-child(2) { animation-delay: 0.2s; }
-      .crypto-card:nth-child(3) { animation-delay: 0.3s; }
-      .crypto-card:nth-child(4) { animation-delay: 0.4s; }
+      .item-1 { animation-delay: 0.1s; }
+      .item-2 { animation-delay: 0.2s; }
+      .item-3 { animation-delay: 0.3s; }
+      .item-4 { animation-delay: 0.4s; }
       
-      @keyframes cryptoCardFadeIn {
+      @keyframes dynamicItemFadeIn {
         from {
           opacity: 0;
           transform: translateY(20px);
@@ -1063,14 +1181,13 @@ export class EnhancedAIPreviewComponent {
         }
       }
       
-      /* Ensure proper text styling */
-      .crypto-card p {
-        margin: 8px 0;
-        line-height: 1.5;
-      }
-      
-      .crypto-card strong {
-        font-weight: 600;
+      /* Image styling */
+      .dynamic-item img,
+      .crypto-card img,
+      .item-card img {
+        border-radius: 8px;
+        max-width: 100%;
+        height: auto;
       }
     `;
   }
@@ -1093,7 +1210,7 @@ export class EnhancedAIPreviewComponent {
       
       if (needsAngularProcessing) {
         console.log('🎯 SMART PREVIEW: Detected Angular template syntax, processing...');
-        html = this.injectCryptoMockData(html);
+        html = this.processAngularTemplate(html, typescriptCode);
       }
       return html;
     }
@@ -1101,73 +1218,9 @@ export class EnhancedAIPreviewComponent {
     // Generate enhanced HTML structure based on component type
     if (typescriptCode.includes('@Component')) {
       // Check for specific component types
-      if (typescriptCode.toLowerCase().includes('crypto') || typescriptCode.toLowerCase().includes('currency')) {
-        return `
-          <div class="container mt-4">
-            <div class="row">
-              <div class="col-md-3 mb-4">
-                <div class="card crypto-card shadow-sm">
-                  <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                      <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="Bitcoin" class="crypto-icon me-2" style="width: 32px; height: 32px;">
-                      <div>
-                        <h6 class="card-title mb-0">Bitcoin</h6>
-                        <small class="text-muted">BTC</small>
-                      </div>
-                    </div>
-                    <h4 class="text-primary">$43,250</h4>
-                    <span class="badge bg-success">+2.5%</span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-3 mb-4">
-                <div class="card crypto-card shadow-sm">
-                  <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                      <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="Ethereum" class="crypto-icon me-2" style="width: 32px; height: 32px;">
-                      <div>
-                        <h6 class="card-title mb-0">Ethereum</h6>
-                        <small class="text-muted">ETH</small>
-                      </div>
-                    </div>
-                    <h4 class="text-primary">$2,650</h4>
-                    <span class="badge bg-success">+1.8%</span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-3 mb-4">
-                <div class="card crypto-card shadow-sm">
-                  <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                      <img src="https://cryptologos.cc/logos/cardano-ada-logo.png" alt="Cardano" class="crypto-icon me-2" style="width: 32px; height: 32px;">
-                      <div>
-                        <h6 class="card-title mb-0">Cardano</h6>
-                        <small class="text-muted">ADA</small>
-                      </div>
-                    </div>
-                    <h4 class="text-primary">$0.48</h4>
-                    <span class="badge bg-danger">-0.5%</span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-3 mb-4">
-                <div class="card crypto-card shadow-sm">
-                  <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                      <img src="https://cryptologos.cc/logos/solana-sol-logo.png" alt="Solana" class="crypto-icon me-2" style="width: 32px; height: 32px;">
-                      <div>
-                        <h6 class="card-title mb-0">Solana</h6>
-                        <small class="text-muted">SOL</small>
-                      </div>
-                    </div>
-                    <h4 class="text-primary">$98.50</h4>
-                    <span class="badge bg-success">+3.2%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
+      // 🎯 UNIVERSAL COMPONENT DETECTION - Generate based on keywords
+      if (this.detectComponentType(typescriptCode)) {
+        return this.generateUniversalComponentHTML(typescriptCode);
       }
       
       if (typescriptCode.toLowerCase().includes('card')) {
@@ -1595,6 +1648,68 @@ export class EnhancedAIPreviewComponent {
         background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
         color: #0d47a1 !important;
       }
+    `;
+  }
+  
+  // 🎯 UNIVERSAL COMPONENT TYPE DETECTION
+  private detectComponentType(typescriptCode: string): boolean {
+    const keywords = [
+      'crypto', 'currency', 'card', 'list', 'table', 'grid', 
+      'dashboard', 'profile', 'user', 'product', 'item'
+    ];
+    
+    return keywords.some(keyword => 
+      typescriptCode.toLowerCase().includes(keyword)
+    );
+  }
+  
+  // 🎯 UNIVERSAL COMPONENT HTML GENERATOR
+  private generateUniversalComponentHTML(typescriptCode: string): string {
+    console.log('🔧 Generating universal component HTML');
+    
+    // Detect if it's a list/array component
+    if (typescriptCode.includes('[]') || typescriptCode.includes('Array') || 
+        typescriptCode.includes('*ngFor') || typescriptCode.includes('items')) {
+      
+      return `
+        <div class="component-container">
+          <div class="dynamic-item">
+            <h3>Item 1</h3>
+            <p>This is the first dynamic item with sample content.</p>
+            <strong>Value: $123.45</strong>
+            <span class="positive">+2.5%</span>
+          </div>
+          <div class="dynamic-item">
+            <h3>Item 2</h3>
+            <p>This is the second dynamic item with sample content.</p>
+            <strong>Value: $234.56</strong>
+            <span class="negative">-1.2%</span>
+          </div>
+          <div class="dynamic-item">
+            <h3>Item 3</h3>
+            <p>This is the third dynamic item with sample content.</p>
+            <strong>Value: $345.67</strong>
+            <span class="positive">+4.8%</span>
+          </div>
+          <div class="dynamic-item">
+            <h3>Item 4</h3>
+            <p>This is the fourth dynamic item with sample content.</p>
+            <strong>Value: $456.78</strong>
+            <span class="positive">+1.9%</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Default single component
+    return `
+      <div class="component-container">
+        <div class="dynamic-item">
+          <h3>Dynamic Component</h3>
+          <p>This is a dynamically generated component based on your code structure.</p>
+          <strong>Generated from AI response</strong>
+        </div>
+      </div>
     `;
   }
 }
