@@ -1571,6 +1571,21 @@ Format your response with clear explanations and working code examples.`
               // Add last few messages for context (limit to prevent token overflow)
               const recentHistory = conversationHistory.slice(-6);
               messages.push(...recentHistory);
+              
+              // Add specific instruction for conversation continuity
+              messages.push({
+                role: 'system',
+                content: `IMPORTANT: This is a continuation of an ongoing conversation about building an Angular component. 
+                
+The user is iteratively improving and building upon the previous code. Please:
+1. Build upon the existing component structure from previous messages
+2. Enhance and extend the existing functionality rather than starting from scratch
+3. Maintain consistency with the previous code architecture
+4. When making changes, provide the complete updated component code
+5. Explain what you're adding/changing from the previous version
+
+Focus on incremental improvements and additions to create a cohesive, evolving component.`
+              });
             }
 
             // Add current user message

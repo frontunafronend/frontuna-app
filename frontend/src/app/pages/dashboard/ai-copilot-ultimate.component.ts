@@ -658,13 +658,16 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     }
   }
 
-  // 🔧 ENHANCED: AUTO-POPULATE MONACO EDITORS FROM CHAT MESSAGE WITH MULTIPLE CODE BLOCKS
+  // 🔧 ENHANCED: AUTO-POPULATE MONACO EDITORS FROM CHAT MESSAGE WITH CONVERSATION CONTINUITY
   autoPopulateMonacoEditors(message: UltimateChatMessage) {
     if (!message.code && !message.codeBlocks) return;
 
     try {
       let populatedCount = 0;
       const codeBlocks = message.codeBlocks || [];
+      const isConversationContinuation = this.chatMessages().length > 1;
+      
+      console.log('🔄 Auto-populating editors. Conversation mode:', isConversationContinuation);
       
       // If we have multiple code blocks, process them all
       if (codeBlocks.length > 0) {
@@ -674,7 +677,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
           const language = block.language?.toLowerCase() || 'typescript';
           const code = this.formatCodeForEditor(block.code, language);
           
-          if (this.populateEditorByLanguage(language, code)) {
+          if (this.populateEditorByLanguage(language, code, isConversationContinuation)) {
             populatedCount++;
           }
         }
@@ -684,7 +687,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         const language = message.codeLanguage?.toLowerCase() || 'typescript';
         const code = this.formatCodeForEditor(message.code, language);
         
-        if (this.populateEditorByLanguage(language, code)) {
+        if (this.populateEditorByLanguage(language, code, isConversationContinuation)) {
           populatedCount++;
         }
       }
@@ -692,7 +695,8 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       // Show success notification
       if (populatedCount > 0) {
         const plural = populatedCount > 1 ? 's' : '';
-        this.notificationService.showSuccess(`✨ ${populatedCount} code block${plural} auto-populated to Monaco editor${plural}!`);
+        const action = isConversationContinuation ? 'updated' : 'populated';
+        this.notificationService.showSuccess(`✨ ${populatedCount} code block${plural} ${action} in Monaco editor${plural}!`);
         
         // 🔧 TRIGGER PREVIEW UPDATE
         setTimeout(() => {
@@ -718,11 +722,12 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       .trim();
   }
 
-  // 🎯 POPULATE EDITOR BY LANGUAGE - Smart editor selection
-  private populateEditorByLanguage(language: string, code: string): boolean {
+  // 🎯 POPULATE EDITOR BY LANGUAGE - Smart editor selection with conversation continuity
+  private populateEditorByLanguage(language: string, code: string, isConversationContinuation: boolean = false): boolean {
     if (!code || code.length < 5) return false;
 
-    console.log(`🤖 Auto-populating ${language} editor:`, code.length, 'characters');
+    const action = isConversationContinuation ? 'Updating' : 'Populating';
+    console.log(`🤖 ${action} ${language} editor:`, code.length, 'characters');
 
     switch (language) {
       case 'typescript':
@@ -733,28 +738,28 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         const htmlFromTemplate = this.extractHTMLFromAngularComponent(code);
         if (htmlFromTemplate) {
           console.log('🎯 Extracted HTML from Angular component template');
-          this.editorState.updateBuffer('html', htmlFromTemplate);
+          this.updateEditorBuffer('html', htmlFromTemplate, isConversationContinuation);
         }
         
         // 🎯 ENHANCED: Extract SCSS from Angular component styles
         const scssFromStyles = this.extractSCSSFromAngularComponent(code);
         if (scssFromStyles) {
           console.log('🎯 Extracted SCSS from Angular component styles');
-          this.editorState.updateBuffer('scss', scssFromStyles);
+          this.updateEditorBuffer('scss', scssFromStyles, isConversationContinuation);
         }
         
-        this.editorState.updateBuffer('typescript', code);
+        this.updateEditorBuffer('typescript', code, isConversationContinuation);
         return true;
         
       case 'html':
       case 'template':
-        this.editorState.updateBuffer('html', code);
+        this.updateEditorBuffer('html', code, isConversationContinuation);
         return true;
         
       case 'scss':
       case 'css':
       case 'sass':
-        this.editorState.updateBuffer('scss', code);
+        this.updateEditorBuffer('scss', code, isConversationContinuation);
         return true;
         
       case 'bash':
@@ -762,14 +767,77 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       case 'cmd':
         // For shell commands, add them as comments to TypeScript
         const commentedCode = `// ${language.toUpperCase()} Commands:\n// ${code.split('\n').join('\n// ')}`;
-        this.editorState.updateBuffer('typescript', commentedCode);
+        this.updateEditorBuffer('typescript', commentedCode, isConversationContinuation);
         return true;
         
       default:
         // Default to TypeScript for unknown languages
-        this.editorState.updateBuffer('typescript', code);
+        this.updateEditorBuffer('typescript', code, isConversationContinuation);
         return true;
     }
+  }
+  
+  // 🔄 SMART EDITOR BUFFER UPDATE - Handles conversation continuity
+  private updateEditorBuffer(editorType: 'typescript' | 'html' | 'scss', newCode: string, isConversationContinuation: boolean): void {
+    const currentCode = this.editorState.buffers()[editorType];
+    
+    if (isConversationContinuation && currentCode && currentCode.trim().length > 0) {
+      // 🔄 CONVERSATION MODE: Intelligently merge/update existing code
+      const updatedCode = this.mergeCodeIntelligently(currentCode, newCode, editorType);
+      console.log(`🔄 Merging ${editorType} code in conversation mode`);
+      this.editorState.updateBuffer(editorType, updatedCode);
+    } else {
+      // 🆕 FRESH START: Replace with new code
+      console.log(`🆕 Setting fresh ${editorType} code`);
+      this.editorState.updateBuffer(editorType, newCode);
+    }
+  }
+  
+  // 🧠 INTELLIGENT CODE MERGING - Merges code based on context and type
+  private mergeCodeIntelligently(existingCode: string, newCode: string, editorType: string): string {
+    switch (editorType) {
+      case 'typescript':
+        return this.mergeTypeScriptCode(existingCode, newCode);
+      case 'html':
+        return this.mergeHTMLCode(existingCode, newCode);
+      case 'scss':
+        return this.mergeSCSSCode(existingCode, newCode);
+      default:
+        return newCode; // Fallback to replacement
+    }
+  }
+  
+  // 🔧 MERGE TYPESCRIPT CODE - Smart merging for Angular components
+  private mergeTypeScriptCode(existing: string, newCode: string): string {
+    // If the new code is a complete component, replace entirely
+    if (newCode.includes('@Component') && newCode.includes('export class')) {
+      return newCode;
+    }
+    
+    // If it's an interface or type, try to merge
+    if (newCode.includes('interface ') || newCode.includes('type ')) {
+      return existing + '\n\n' + newCode;
+    }
+    
+    // Default: replace with new code
+    return newCode;
+  }
+  
+  // 🔧 MERGE HTML CODE - Smart merging for templates
+  private mergeHTMLCode(existing: string, newCode: string): string {
+    // If new code contains a complete template structure, replace
+    if (newCode.includes('<div') && newCode.includes('</div>')) {
+      return newCode;
+    }
+    
+    // If it's additional elements, append
+    return existing + '\n\n' + newCode;
+  }
+  
+  // 🔧 MERGE SCSS CODE - Smart merging for styles
+  private mergeSCSSCode(existing: string, newCode: string): string {
+    // Always append SCSS for cumulative styling
+    return existing + '\n\n' + newCode;
   }
   
   // 🎯 EXTRACT HTML FROM ANGULAR COMPONENT TEMPLATE
