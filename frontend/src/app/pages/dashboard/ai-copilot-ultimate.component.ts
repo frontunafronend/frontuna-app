@@ -731,6 +731,11 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
           console.log('🔍 Attempting HTML extraction...');
           htmlCode = this.bulletproofExtractHTML(typescriptCode) || '';
           console.log('📝 HTML extraction result:', htmlCode ? htmlCode.substring(0, 100) + '...' : 'EMPTY');
+          
+          // 🎯 SMART PROCESSING: Check if extracted HTML needs Angular template processing
+          if (htmlCode && this.needsAngularTemplateProcessing(htmlCode)) {
+            console.log('🎯 HTML contains Angular directives, will be processed in preview');
+          }
         }
         
         // Extract SCSS if not already found
@@ -2074,6 +2079,23 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     }
   }
 }`;
+  }
+  
+  // 🎯 SMART ANGULAR TEMPLATE DETECTION
+  private needsAngularTemplateProcessing(html: string): boolean {
+    const angularPatterns = [
+      /\*ngFor/,
+      /\{\{\s*\w+\./,
+      /\[src\]=/,
+      /\[alt\]=/,
+      /\[class\]=/,
+      /\|\s*currency/,
+      /\|\s*number/,
+      /crypto\./,
+      /item\./
+    ];
+    
+    return angularPatterns.some(pattern => pattern.test(html));
   }
   
   // 🎯 LEGACY METHODS (kept for compatibility)

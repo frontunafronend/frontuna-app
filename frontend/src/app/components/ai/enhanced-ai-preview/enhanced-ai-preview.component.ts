@@ -636,6 +636,7 @@ export class EnhancedAIPreviewComponent {
             
             /* Custom Generated Styles */
             ${css}
+            ${this.generateSmartCryptoStyles(html)}
           </style>
         </head>
         <body>
@@ -846,50 +847,232 @@ export class EnhancedAIPreviewComponent {
       .replace(/@include\s+[\w-]+[^;]*;/g, ''); // Remove includes
   }
   
-  // 🎯 INJECT CRYPTO MOCK DATA - Replace Angular template syntax with real data
+  // 🎯 SMART ANGULAR TEMPLATE RENDERER - Replace Angular template syntax with real data
   private injectCryptoMockData(html: string): string {
-    console.log('🔧 Injecting crypto mock data into HTML');
+    console.log('🔧 SMART ANGULAR RENDERER: Processing template with mock data');
     
     const cryptoMockData = [
-      { name: 'Bitcoin', symbol: 'BTC', price: '43,250', change: '+2.5', icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png' },
-      { name: 'Ethereum', symbol: 'ETH', price: '2,650', change: '+1.8', icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
-      { name: 'Cardano', symbol: 'ADA', price: '0.48', change: '-0.5', icon: 'https://cryptologos.cc/logos/cardano-ada-logo.png' },
-      { name: 'Solana', symbol: 'SOL', price: '98.50', change: '+3.2', icon: 'https://cryptologos.cc/logos/solana-sol-logo.png' }
+      { name: 'Bitcoin', symbol: 'BTC', price: '47,000', change: '+3.5%', changeClass: 'positive', icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png' },
+      { name: 'Ethereum', symbol: 'ETH', price: '3,400', change: '+2.1%', changeClass: 'positive', icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
+      { name: 'Cardano', symbol: 'ADA', price: '2.30', change: '-1.2%', changeClass: 'negative', icon: 'https://cryptologos.cc/logos/cardano-ada-logo.png' },
+      { name: 'Solana', symbol: 'SOL', price: '140', change: '+4.9%', changeClass: 'positive', icon: 'https://cryptologos.cc/logos/solana-sol-logo.png' }
     ];
     
-    // Replace *ngFor with actual repeated elements
-    if (html.includes('*ngFor="let crypto of cryptocurrencies"')) {
-      const cardTemplate = html.match(/<div[^>]*\*ngFor="let crypto of cryptocurrencies"[^>]*>([\s\S]*?)<\/div>/);
-      if (cardTemplate) {
-        let repeatedCards = '';
-        cryptoMockData.forEach(crypto => {
-          let cardHtml = cardTemplate[1]
-            .replace(/\{\{crypto\.name\}\}/g, crypto.name)
-            .replace(/\{\{crypto\.symbol\}\}/g, crypto.symbol)
-            .replace(/\{\{crypto\.price\}\}/g, crypto.price)
-            .replace(/\{\{crypto\.change\}\}/g, crypto.change)
-            .replace(/\[src\]="crypto\.icon"/g, `src="${crypto.icon}"`)
-            .replace(/\[alt\]="crypto\.name"/g, `alt="${crypto.name}"`);
-          
-          repeatedCards += `<div class="crypto-card">${cardHtml}</div>`;
-        });
+    console.log('📝 Original HTML:', html.substring(0, 200) + '...');
+    
+    // 🎯 PATTERN 1: Handle *ngFor="let crypto of cryptos" (most common)
+    const ngForPatterns = [
+      /\*ngFor="let crypto of cryptos"/g,
+      /\*ngFor="let crypto of cryptocurrencies"/g,
+      /\*ngFor="let item of items"/g,
+      /\*ngFor="let card of cards"/g
+    ];
+    
+    for (const pattern of ngForPatterns) {
+      if (html.match(pattern)) {
+        console.log('✅ Found ngFor pattern:', pattern);
         
-        html = html.replace(/<div[^>]*\*ngFor="let crypto of cryptocurrencies"[^>]*>[\s\S]*?<\/div>/, repeatedCards);
+        // Find the element with *ngFor directive
+        const ngForMatch = html.match(/<(\w+)[^>]*\*ngFor="[^"]*"[^>]*>([\s\S]*?)<\/\1>/);
+        if (ngForMatch) {
+          const elementTag = ngForMatch[1];
+          const elementContent = ngForMatch[2];
+          const fullElement = ngForMatch[0];
+          
+          console.log('🔧 Processing ngFor element:', elementTag);
+          
+          let repeatedElements = '';
+          cryptoMockData.forEach((crypto, index) => {
+            let processedContent = elementContent
+              // Handle all crypto properties
+              .replace(/\{\{\s*crypto\.name\s*\}\}/g, crypto.name)
+              .replace(/\{\{\s*crypto\.symbol\s*\}\}/g, crypto.symbol)
+              .replace(/\{\{\s*crypto\.price\s*\}\}/g, crypto.price)
+              .replace(/\{\{\s*crypto\.change\s*\}\}/g, crypto.change)
+              // Handle property bindings
+              .replace(/\[src\]="crypto\.icon"/g, `src="${crypto.icon}"`)
+              .replace(/\[alt\]="crypto\.name"/g, `alt="${crypto.name}"`)
+              // Handle class bindings
+              .replace(/\[class\]="crypto\.changeClass"/g, `class="${crypto.changeClass}"`)
+              // Handle pipes
+              .replace(/\{\{\s*crypto\.price\s*\|\s*currency\s*\}\}/g, `$${crypto.price}`)
+              .replace(/\{\{\s*crypto\.price\s*\|\s*number:'1\.0-2'\s*\}\}/g, `$${crypto.price}.00`)
+              // Handle generic item references
+              .replace(/\{\{\s*item\.name\s*\}\}/g, crypto.name)
+              .replace(/\{\{\s*item\.symbol\s*\}\}/g, crypto.symbol)
+              .replace(/\{\{\s*item\.price\s*\}\}/g, crypto.price)
+              .replace(/\{\{\s*item\.change\s*\}\}/g, crypto.change);
+            
+            // Create the repeated element
+            repeatedElements += `<${elementTag} class="crypto-card crypto-${index + 1}">${processedContent}</${elementTag}>`;
+          });
+          
+          // Replace the original ngFor element with repeated elements
+          html = html.replace(fullElement, repeatedElements);
+          console.log('✅ Replaced ngFor with', cryptoMockData.length, 'repeated elements');
+          break;
+        }
       }
     }
     
-    // Replace individual template bindings
+    // 🎯 PATTERN 2: Handle individual template bindings (fallback)
     html = html
-      .replace(/\{\{crypto\.name\}\}/g, 'Bitcoin')
-      .replace(/\{\{crypto\.symbol\}\}/g, 'BTC')
-      .replace(/\{\{crypto\.price\}\}/g, '$43,250')
-      .replace(/\{\{crypto\.change\}\}/g, '+2.5%')
+      .replace(/\{\{\s*crypto\.name\s*\}\}/g, 'Bitcoin')
+      .replace(/\{\{\s*crypto\.symbol\s*\}\}/g, 'BTC')
+      .replace(/\{\{\s*crypto\.price\s*\}\}/g, '$47,000')
+      .replace(/\{\{\s*crypto\.change\s*\}\}/g, '+3.5%')
       .replace(/\[src\]="crypto\.icon"/g, 'src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"')
       .replace(/\[alt\]="crypto\.name"/g, 'alt="Bitcoin"')
-      .replace(/\{\{crypto\.price \| number:'1\.0-2'\}\}/g, '$43,250.00');
+      .replace(/\{\{\s*crypto\.price\s*\|\s*currency\s*\}\}/g, '$47,000')
+      .replace(/\{\{\s*crypto\.price\s*\|\s*number:'1\.0-2'\s*\}\}/g, '$47,000.00');
     
-    console.log('✅ Crypto mock data injected');
+    console.log('✅ Smart Angular template rendering completed');
+    console.log('📝 Final HTML preview:', html.substring(0, 300) + '...');
+    
     return html;
+  }
+  
+  // 🎯 SMART CRYPTO STYLES GENERATOR - Generate CSS based on HTML content
+  private generateSmartCryptoStyles(html: string): string {
+    if (!html || (!html.includes('crypto-card') && !html.includes('crypto'))) {
+      return '';
+    }
+    
+    console.log('🎨 Generating smart crypto card styles');
+    
+    return `
+      /* 🎯 SMART CRYPTO CARD STYLES - Auto-generated based on content */
+      .crypto-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 24px;
+        margin: 16px 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        min-width: 280px;
+        max-width: 320px;
+      }
+      
+      .crypto-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      }
+      
+      .crypto-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        border-color: #667eea;
+      }
+      
+      .crypto-card h3,
+      .crypto-card .crypto-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1a202c;
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .crypto-card .crypto-symbol {
+        font-size: 0.875rem;
+        color: #718096;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .crypto-card .crypto-price {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 12px 0;
+      }
+      
+      .crypto-card .crypto-change {
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: 20px;
+        display: inline-block;
+      }
+      
+      .crypto-card .positive {
+        background: #c6f6d5;
+        color: #22543d;
+      }
+      
+      .crypto-card .negative {
+        background: #fed7d7;
+        color: #742a2a;
+      }
+      
+      /* Responsive grid for crypto cards */
+      .crypto-cards-container,
+      .cards-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      
+      /* Mobile responsive */
+      @media (max-width: 768px) {
+        .crypto-cards-container,
+        .cards-container {
+          grid-template-columns: 1fr;
+          padding: 16px;
+        }
+        
+        .crypto-card {
+          margin: 8px 0;
+          min-width: auto;
+          max-width: none;
+        }
+      }
+      
+      /* Animation for crypto cards */
+      .crypto-card {
+        animation: cryptoCardFadeIn 0.6s ease-out forwards;
+      }
+      
+      .crypto-card:nth-child(1) { animation-delay: 0.1s; }
+      .crypto-card:nth-child(2) { animation-delay: 0.2s; }
+      .crypto-card:nth-child(3) { animation-delay: 0.3s; }
+      .crypto-card:nth-child(4) { animation-delay: 0.4s; }
+      
+      @keyframes cryptoCardFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      /* Ensure proper text styling */
+      .crypto-card p {
+        margin: 8px 0;
+        line-height: 1.5;
+      }
+      
+      .crypto-card strong {
+        font-weight: 600;
+      }
+    `;
   }
 
 
@@ -899,8 +1082,17 @@ export class EnhancedAIPreviewComponent {
     const htmlMatch = typescriptCode.match(/template\s*=\s*`([^`]*)`/);
     if (htmlMatch) {
       let html = htmlMatch[1];
-      // Inject mock data for crypto components
-      if (html.includes('crypto') || html.includes('{{crypto.')) {
+      // 🎯 SMART DETECTION: Check if this needs Angular template processing
+      const needsAngularProcessing = 
+        html.includes('crypto') || 
+        html.includes('{{crypto.') || 
+        html.includes('*ngFor') ||
+        html.includes('{{ crypto') ||
+        html.includes('{{item.') ||
+        html.includes('*ngFor="let');
+      
+      if (needsAngularProcessing) {
+        console.log('🎯 SMART PREVIEW: Detected Angular template syntax, processing...');
         html = this.injectCryptoMockData(html);
       }
       return html;
