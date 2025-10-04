@@ -489,16 +489,226 @@ export class EnhancedAIPreviewComponent {
     
     const fullHtml = `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <title>AI Generated Preview</title>
-          <style>${css}</style>
+          
+          <!-- 🎨 MATERIAL DESIGN & BOOTSTRAP INTEGRATION -->
+          
+          <!-- Google Fonts for Material Design -->
+          <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+          
+          <!-- Bootstrap 5.3 CSS -->
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+          
+          <!-- Angular Material Theme (Indigo-Pink) -->
+          <link href="https://cdn.jsdelivr.net/npm/@angular/material@17/prebuilt-themes/indigo-pink.css" rel="stylesheet">
+          
+          <!-- Material Design Web Components -->
+          <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+          
+          <!-- Font Awesome Icons -->
+          <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+          
+          <!-- 🎯 ENHANCED BASE STYLES FOR COMPONENTS -->
+          <style>
+            /* Material Design Base */
+            * {
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+              margin: 0;
+              padding: 20px;
+              background: #fafafa;
+              color: rgba(0, 0, 0, 0.87);
+              line-height: 1.5;
+            }
+            
+            /* Material Design Colors */
+            :root {
+              --mdc-theme-primary: #1976d2;
+              --mdc-theme-secondary: #dc004e;
+              --mdc-theme-surface: #ffffff;
+              --mdc-theme-background: #fafafa;
+              --mdc-theme-error: #b00020;
+              --mdc-theme-on-primary: #ffffff;
+              --mdc-theme-on-secondary: #ffffff;
+              --mdc-theme-on-surface: rgba(0, 0, 0, 0.87);
+              --mdc-theme-on-background: rgba(0, 0, 0, 0.87);
+              --mdc-theme-on-error: #ffffff;
+            }
+            
+            /* Bootstrap Enhancement */
+            .container, .container-fluid {
+              max-width: 100%;
+            }
+            
+            /* Material Design Card Enhancement */
+            .mat-card, .mdc-card, .card {
+              border-radius: 8px !important;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+              transition: box-shadow 0.3s ease !important;
+            }
+            
+            .mat-card:hover, .mdc-card:hover, .card:hover {
+              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 16px 32px rgba(0, 0, 0, 0.15) !important;
+            }
+            
+            /* Material Design Button Enhancement */
+            .mat-button, .mat-raised-button, .mat-fab, .mat-mini-fab,
+            .mdc-button, .btn {
+              border-radius: 8px !important;
+              font-weight: 500 !important;
+              text-transform: none !important;
+              transition: all 0.3s ease !important;
+            }
+            
+            .mat-raised-button, .btn-primary {
+              background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+              box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3) !important;
+            }
+            
+            .mat-raised-button:hover, .btn-primary:hover {
+              background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%) !important;
+              box-shadow: 0 4px 8px rgba(25, 118, 210, 0.4) !important;
+              transform: translateY(-1px) !important;
+            }
+            
+            /* Material Design Form Fields */
+            .mat-form-field, .form-control {
+              width: 100% !important;
+            }
+            
+            .mat-input-element, .form-control {
+              border-radius: 8px !important;
+              border: 2px solid #e0e0e0 !important;
+              transition: border-color 0.3s ease !important;
+            }
+            
+            .mat-input-element:focus, .form-control:focus {
+              border-color: #1976d2 !important;
+              box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1) !important;
+            }
+            
+            /* Material Design Icons */
+            .material-icons, .fa, .fas, .far, .fab {
+              vertical-align: middle;
+              margin-right: 8px;
+            }
+            
+            /* Responsive Grid Enhancement */
+            .row {
+              margin: 0 -12px;
+            }
+            
+            .col, [class*="col-"] {
+              padding: 0 12px;
+            }
+            
+            /* Animation Enhancements */
+            @keyframes fadeIn {
+              from { opacity: 0; transform: translateY(20px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            
+            @keyframes slideIn {
+              from { transform: translateX(-20px); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+            
+            .fade-in { animation: fadeIn 0.5s ease-out; }
+            .slide-in { animation: slideIn 0.5s ease-out; }
+            
+            /* Component Container */
+            .component-preview {
+              background: white;
+              border-radius: 12px;
+              padding: 24px;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+              margin: 20px 0;
+              animation: fadeIn 0.5s ease-out;
+            }
+            
+            /* Custom Generated Styles */
+            ${css}
+          </style>
         </head>
         <body>
-          ${html}
-          <script>${js}</script>
+          <!-- 🚀 ENHANCED PREVIEW CONTAINER -->
+          <div class="component-preview">
+            ${html}
+          </div>
+          
+          <!-- 🔧 FRAMEWORK SCRIPTS -->
+          
+          <!-- Bootstrap 5.3 JavaScript -->
+          <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+          
+          <!-- Material Design Web Components -->
+          <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+          
+          <!-- Initialize Material Components -->
+          <script>
+            // Initialize Material Design Components
+            if (window.mdc) {
+              // Auto-initialize all MDC components
+              window.mdc.autoInit();
+              
+              // Initialize specific components
+              const buttons = document.querySelectorAll('.mdc-button');
+              buttons.forEach(button => {
+                if (!button.mdcButton) {
+                  new mdc.ripple.MDCRipple(button);
+                }
+              });
+              
+              const cards = document.querySelectorAll('.mdc-card');
+              cards.forEach(card => {
+                if (!card.mdcCard) {
+                  new mdc.card.MDCCard(card);
+                }
+              });
+              
+              const textFields = document.querySelectorAll('.mdc-text-field');
+              textFields.forEach(textField => {
+                if (!textField.mdcTextField) {
+                  new mdc.textField.MDCTextField(textField);
+                }
+              });
+            }
+            
+            // Initialize Bootstrap components
+            if (window.bootstrap) {
+              // Initialize tooltips
+              const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+              tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+              });
+              
+              // Initialize popovers
+              const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+              popoverTriggerList.map(function (popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl);
+              });
+            }
+            
+            // Custom component JavaScript
+            ${js}
+            
+            // Add smooth animations to new elements
+            document.addEventListener('DOMContentLoaded', function() {
+              const elements = document.querySelectorAll('.component-preview > *');
+              elements.forEach((el, index) => {
+                el.style.animationDelay = (index * 0.1) + 's';
+                el.classList.add('fade-in');
+              });
+            });
+          </script>
         </body>
       </html>
     `;
@@ -645,17 +855,173 @@ export class EnhancedAIPreviewComponent {
       return htmlMatch[1];
     }
     
-    // Generate basic HTML structure based on component type
+    // Generate enhanced HTML structure based on component type
     if (typescriptCode.includes('@Component')) {
+      // Check for specific component types
+      if (typescriptCode.toLowerCase().includes('card')) {
+        return `
+          <div class="container mt-4">
+            <div class="row justify-content-center">
+              <div class="col-md-6">
+                <div class="card shadow-sm">
+                  <div class="card-body">
+                    <h5 class="card-title">
+                      <i class="material-icons">credit_card</i>
+                      Responsive Card Component
+                    </h5>
+                    <p class="card-text">This is a beautiful, responsive card component with Material Design and Bootstrap styling.</p>
+                    <button class="btn btn-primary">
+                      <i class="material-icons">arrow_forward</i>
+                      Learn More
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      if (typescriptCode.toLowerCase().includes('button')) {
+        return `
+          <div class="container mt-4">
+            <div class="row">
+              <div class="col-12">
+                <h4 class="mb-3">Button Components</h4>
+                <div class="d-flex flex-wrap gap-3">
+                  <button class="btn btn-primary">Primary Button</button>
+                  <button class="btn btn-secondary">Secondary</button>
+                  <button class="btn btn-success">Success</button>
+                  <button class="btn btn-outline-primary">
+                    <i class="material-icons">favorite</i>
+                    With Icon
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      if (typescriptCode.toLowerCase().includes('form')) {
+        return `
+          <div class="container mt-4">
+            <div class="row justify-content-center">
+              <div class="col-md-8">
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="mb-0">
+                      <i class="material-icons">assignment</i>
+                      Form Component
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <form>
+                      <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" placeholder="Enter your name">
+                      </div>
+                      <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" placeholder="Enter your email">
+                      </div>
+                      <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea class="form-control" id="message" rows="3" placeholder="Your message"></textarea>
+                      </div>
+                      <button type="submit" class="btn btn-primary">
+                        <i class="material-icons">send</i>
+                        Submit
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      if (typescriptCode.toLowerCase().includes('table')) {
+        return `
+          <div class="container mt-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="material-icons">table_chart</i>
+                  Data Table Component
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead class="table-dark">
+                      <tr>
+                        <th>Name</th>
+                        <th>Symbol</th>
+                        <th>Price</th>
+                        <th>Change</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Bitcoin</td>
+                        <td>BTC</td>
+                        <td>$34,000</td>
+                        <td class="text-success">+2.5%</td>
+                        <td>
+                          <button class="btn btn-sm btn-outline-primary">View</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Ethereum</td>
+                        <td>ETH</td>
+                        <td>$2,400</td>
+                        <td class="text-danger">-1.2%</td>
+                        <td>
+                          <button class="btn btn-sm btn-outline-primary">View</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Default component
       return `
-        <div class="component-container">
-          <h2>Generated Component</h2>
-          <p>This is a dynamically generated component.</p>
+        <div class="container mt-4">
+          <div class="row justify-content-center">
+            <div class="col-md-8">
+              <div class="card">
+                <div class="card-body text-center">
+                  <i class="material-icons" style="font-size: 48px; color: #1976d2;">psychology</i>
+                  <h3 class="mt-3">AI Generated Component</h3>
+                  <p class="text-muted">This component was generated by AI with Material Design and Bootstrap styling.</p>
+                  <button class="btn btn-primary">
+                    <i class="material-icons">explore</i>
+                    Explore Features
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       `;
     }
     
-    return '<div>No HTML template found</div>';
+    return `
+      <div class="container mt-4">
+        <div class="alert alert-info" role="alert">
+          <i class="material-icons">info</i>
+          No HTML template found. Please provide HTML code or generate a component.
+        </div>
+      </div>
+    `;
   }
 
   private generateCSS(typescriptCode: string): string {
@@ -665,29 +1031,258 @@ export class EnhancedAIPreviewComponent {
       return stylesMatch[1];
     }
     
-    // Generate basic CSS based on component type
+    // Generate enhanced CSS based on component type
     if (typescriptCode.includes('@Component')) {
+      
+      // Card component styles
+      if (typescriptCode.toLowerCase().includes('card')) {
+        return `
+          .card {
+            transition: all 0.3s ease !important;
+            border: none !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+          }
+          
+          .card:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+          }
+          
+          .card-title {
+            color: #1976d2 !important;
+            font-weight: 500 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+          }
+          
+          .btn {
+            border-radius: 25px !important;
+            padding: 8px 20px !important;
+            font-weight: 500 !important;
+            transition: all 0.3s ease !important;
+          }
+          
+          .btn:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3) !important;
+          }
+        `;
+      }
+      
+      // Button component styles
+      if (typescriptCode.toLowerCase().includes('button')) {
+        return `
+          .btn {
+            border-radius: 8px !important;
+            font-weight: 500 !important;
+            padding: 12px 24px !important;
+            transition: all 0.3s ease !important;
+            margin: 4px !important;
+          }
+          
+          .btn-primary {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+            border: none !important;
+            box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3) !important;
+          }
+          
+          .btn-primary:hover {
+            background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4) !important;
+          }
+          
+          .btn-outline-primary {
+            border: 2px solid #1976d2 !important;
+            color: #1976d2 !important;
+          }
+          
+          .btn-outline-primary:hover {
+            background: #1976d2 !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3) !important;
+          }
+          
+          .gap-3 {
+            gap: 1rem !important;
+          }
+        `;
+      }
+      
+      // Form component styles
+      if (typescriptCode.toLowerCase().includes('form')) {
+        return `
+          .form-control {
+            border-radius: 8px !important;
+            border: 2px solid #e0e0e0 !important;
+            padding: 12px 16px !important;
+            transition: all 0.3s ease !important;
+          }
+          
+          .form-control:focus {
+            border-color: #1976d2 !important;
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1) !important;
+          }
+          
+          .form-label {
+            font-weight: 500 !important;
+            color: #333 !important;
+            margin-bottom: 8px !important;
+          }
+          
+          .card-header {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+            color: white !important;
+            border-radius: 8px 8px 0 0 !important;
+          }
+          
+          .btn[type="submit"] {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%) !important;
+            border: none !important;
+            border-radius: 25px !important;
+            padding: 12px 30px !important;
+            font-weight: 500 !important;
+          }
+          
+          .btn[type="submit"]:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3) !important;
+          }
+        `;
+      }
+      
+      // Table component styles
+      if (typescriptCode.toLowerCase().includes('table')) {
+        return `
+          .table {
+            border-radius: 8px !important;
+            overflow: hidden !important;
+          }
+          
+          .table thead th {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+            color: white !important;
+            border: none !important;
+            font-weight: 500 !important;
+            padding: 16px !important;
+          }
+          
+          .table tbody tr {
+            transition: all 0.3s ease !important;
+          }
+          
+          .table tbody tr:hover {
+            background: rgba(25, 118, 210, 0.05) !important;
+            transform: scale(1.01) !important;
+          }
+          
+          .table tbody td {
+            padding: 16px !important;
+            border-color: #f0f0f0 !important;
+            vertical-align: middle !important;
+          }
+          
+          .btn-sm {
+            border-radius: 20px !important;
+            padding: 6px 16px !important;
+            font-size: 0.875rem !important;
+          }
+          
+          .text-success {
+            color: #4caf50 !important;
+            font-weight: 500 !important;
+          }
+          
+          .text-danger {
+            color: #f44336 !important;
+            font-weight: 500 !important;
+          }
+        `;
+      }
+      
+      // Default component styles
       return `
-        .component-container {
-          padding: 20px;
-          margin: 10px;
-          border: 1px solid #e0e0e0;
-          border-radius: 8px;
-          background: #ffffff;
+        /* Enhanced Material Design Styles */
+        .card {
+          border: none !important;
+          border-radius: 12px !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+          transition: all 0.3s ease !important;
         }
         
-        .component-container h2 {
-          color: #333;
-          margin-bottom: 10px;
+        .card:hover {
+          transform: translateY(-4px) !important;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
         }
         
-        .component-container p {
-          color: #666;
-          line-height: 1.5;
+        .card-body {
+          padding: 2rem !important;
+        }
+        
+        .material-icons {
+          color: #1976d2 !important;
+          transition: all 0.3s ease !important;
+        }
+        
+        .btn {
+          border-radius: 25px !important;
+          padding: 12px 24px !important;
+          font-weight: 500 !important;
+          transition: all 0.3s ease !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 8px !important;
+        }
+        
+        .btn-primary {
+          background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+          border: none !important;
+          box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3) !important;
+        }
+        
+        .btn-primary:hover {
+          background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%) !important;
+          transform: translateY(-2px) !important;
+          box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4) !important;
+        }
+        
+        h3 {
+          color: #333 !important;
+          font-weight: 500 !important;
+          margin-bottom: 1rem !important;
+        }
+        
+        .text-muted {
+          color: #666 !important;
+          line-height: 1.6 !important;
+        }
+        
+        /* Animation enhancements */
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+        }
+        
+        .material-icons:hover {
+          animation: pulse 0.6s ease-in-out !important;
         }
       `;
     }
     
-    return '';
+    return `
+      /* Default preview styles */
+      .alert {
+        border-radius: 8px !important;
+        border: none !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+      }
+      
+      .alert-info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+        color: #0d47a1 !important;
+      }
+    `;
   }
 }

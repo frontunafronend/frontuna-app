@@ -1592,16 +1592,35 @@ Format your response with clear explanations and working code examples.`
             const aiResponse = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
             const tokensUsed = completion.usage?.total_tokens || 0;
             
-            // Extract code from AI response if present
+            // 🎨 ENHANCED: Extract ALL code blocks from the response
             let codeGenerated = null;
+            const allCodeBlocks = [];
+            
+            // Extract all code blocks using global regex
             const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
-            const codeMatch = codeBlockRegex.exec(aiResponse);
-            if (codeMatch) {
-              codeGenerated = {
-                language: codeMatch[1] || 'typescript',
-                code: codeMatch[2].trim()
-              };
+            let match;
+            
+            while ((match = codeBlockRegex.exec(aiResponse)) !== null) {
+              const language = match[1] || 'typescript';
+              const code = match[2].trim();
+              
+              if (code.length > 10) { // Only include substantial code blocks
+                allCodeBlocks.push({
+                  language: language,
+                  code: code
+                });
+                
+                // Use the first substantial code block as the main code
+                if (!codeGenerated) {
+                  codeGenerated = {
+                    language: language,
+                    code: code
+                  };
+                }
+              }
             }
+            
+            console.log(`📝 Extracted ${allCodeBlocks.length} code blocks from AI response`);
 
             // Generate suggestions based on the response
             const suggestions = [
@@ -1622,6 +1641,7 @@ Format your response with clear explanations and working code examples.`
               data: {
                 message: aiResponse,
                 code: codeGenerated,
+                codeBlocks: allCodeBlocks.length > 0 ? allCodeBlocks : undefined, // Include all code blocks
                 suggestions: suggestions,
                 tokensUsed: tokensUsed,
                 model: 'gpt-4-turbo-preview',
@@ -1629,7 +1649,8 @@ Format your response with clear explanations and working code examples.`
                 sessionId: sessionId || `session_${Date.now()}`,
                 timestamp: new Date().toISOString(),
                 confidence: 0.95,
-                hasCode: !!codeGenerated
+                hasCode: !!codeGenerated,
+                codeBlockCount: allCodeBlocks.length
               }
             }, origin);
 

@@ -171,15 +171,65 @@
   
   .header-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem; // 🎯 More space between header buttons
     
     button {
-      color: var(--copilot-text-secondary);
-      transition: var(--copilot-transition-fast);
+      // 🎨 PROFESSIONAL HEADER BUTTON STYLING
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 10px !important;
+      transition: all 0.3s ease !important;
+      font-weight: 500 !important;
       
-      &:hover {
-        color: var(--copilot-accent);
-        background: rgba(78, 205, 196, 0.1);
+      // 🎯 Clear All Button (first button)
+      &:nth-child(1) {
+        background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%) !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3) !important;
+        
+        &:hover {
+          background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%) !important;
+          transform: translateY(-2px) !important;
+          box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4) !important;
+        }
+      }
+      
+      // 🎯 Export Chat Button (second button)
+      &:nth-child(2) {
+        background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%) !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3) !important;
+        
+        &:hover {
+          background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%) !important;
+          transform: translateY(-2px) !important;
+          box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4) !important;
+        }
+      }
+      
+      // 🎯 Settings Button (third button)
+      &:nth-child(3) {
+        background: linear-gradient(135deg, #607d8b 0%, #455a64 100%) !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(96, 125, 139, 0.3) !important;
+        
+        &:hover {
+          background: linear-gradient(135deg, #455a64 0%, #37474f 100%) !important;
+          transform: translateY(-2px) !important;
+          box-shadow: 0 4px 15px rgba(96, 125, 139, 0.4) !important;
+        }
+      }
+      
+      &:active {
+        transform: translateY(0) !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+      }
+      
+      mat-icon {
+        font-size: 1.2rem !important;
       }
     }
   }
@@ -493,22 +543,183 @@
       }
       
       .message-text {
-        line-height: 1.5;
+        line-height: 1.7; // 🎯 Enhanced line height for better readability
         margin-bottom: 0.5rem;
         color: #1f2937;
         font-size: 0.95rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         
-        strong {
+        // 🎨 SUPER ENHANCED TEXT FORMATTING FOR PERFECT UX
+        strong, b {
           color: var(--copilot-primary);
           font-weight: 600;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
         
+        // 📋 Enhanced headers with perfect spacing
+        h1, h2, h3, h4, h5, h6 {
+          color: var(--copilot-primary);
+          margin: 1.5rem 0 0.75rem 0; // 🎯 More generous spacing
+          font-weight: 600;
+          line-height: 1.4;
+          
+          &:first-child {
+            margin-top: 0.5rem;
+          }
+          
+          // 🎨 Add subtle styling for different header levels
+          &.h3 {
+            font-size: 1.1rem;
+            border-left: 3px solid var(--copilot-primary);
+            padding-left: 0.75rem;
+            margin-left: -0.75rem;
+          }
+        }
+        
+        // 📝 Perfect numbered lists formatting
+        .numbered-item {
+          display: block;
+          margin: 1rem 0;
+          padding: 0.75rem 1rem;
+          background: rgba(var(--copilot-primary-rgb), 0.05);
+          border-left: 3px solid var(--copilot-primary);
+          border-radius: 0 6px 6px 0;
+          
+          strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 1.05em;
+          }
+        }
+        
+        // 📋 Enhanced bullet points with perfect new line spacing
+        ul, ol {
+          margin: 1rem 0;
+          padding-left: 0;
+          
+          li {
+            margin-bottom: 1rem; // 🎯 Even more spacing for better readability
+            line-height: 1.7;
+            padding-left: 1.5rem;
+            position: relative;
+            display: block; // 🎯 Ensure each bullet is on its own line
+            
+            &:before {
+              content: '•';
+              color: var(--copilot-primary);
+              font-weight: bold;
+              position: absolute;
+              left: 0;
+              top: 0;
+            }
+            
+            // 🎨 Special styling for code generation mentions
+            &:contains('Code generated') {
+              background: rgba(var(--copilot-accent-rgb), 0.1);
+              padding: 0.5rem 0.75rem;
+              border-radius: 6px;
+              margin: 1rem 0;
+              
+              &:before {
+                content: '📝';
+              }
+            }
+          }
+        }
+        
+        // 🎯 Enhanced bullet point formatting for AI responses
+        .bullet-point {
+          display: block;
+          margin: 1rem 0;
+          padding-left: 1.5rem;
+          position: relative;
+          line-height: 1.7;
+          
+          &:before {
+            content: '•';
+            color: var(--copilot-primary);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            top: 0;
+          }
+        }
+        
+        // 📐 Perfect paragraph spacing and formatting
+        p {
+          margin: 1rem 0; // 🎯 Generous paragraph spacing
+          text-align: justify;
+          text-justify: inter-word;
+          
+          &:first-child {
+            margin-top: 0;
+          }
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+          
+          // 🎨 Enhanced readability for long paragraphs
+          &:has(+ p) {
+            margin-bottom: 1.25rem;
+          }
+        }
+        
+        // 🔧 Enhanced code mentions styling
         code {
-          background: rgba(0, 0, 0, 0.05);
-          padding: 0.125rem 0.25rem;
-          border-radius: 0.25rem;
-          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-          font-size: 0.875em;
+          background: linear-gradient(135deg, rgba(var(--copilot-primary-rgb), 0.1), rgba(var(--copilot-primary-rgb), 0.05));
+          color: var(--copilot-primary);
+          padding: 0.25rem 0.5rem;
+          border-radius: 4px;
+          font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+          font-size: 0.9em;
+          border: 1px solid rgba(var(--copilot-primary-rgb), 0.2);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        // 🎯 Step indicators with beautiful styling
+        .step-indicator {
+          color: var(--copilot-accent);
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          
+          &:before {
+            content: '🔧';
+            font-size: 1.1em;
+          }
+        }
+        
+        // 🎨 Special formatting for conclusions and sections
+        .conclusion-section {
+          background: rgba(var(--copilot-accent-rgb), 0.05);
+          padding: 1rem;
+          border-radius: 8px;
+          margin: 1.5rem 0;
+          border-left: 4px solid var(--copilot-accent);
+        }
+        
+        // 📝 Enhanced text flow and readability
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        
+        // 🎯 Better spacing for inline elements
+        em, i {
+          font-style: italic;
+          color: #4b5563;
+        }
+        
+        // 🔗 Enhanced link styling (if any)
+        a {
+          color: var(--copilot-primary);
+          text-decoration: none;
+          border-bottom: 1px dotted var(--copilot-primary);
+          
+          &:hover {
+            border-bottom-style: solid;
+          }
         }
       }
       
@@ -551,24 +762,64 @@
       
       .message-actions {
         display: flex;
-        gap: 0.5rem;
-        margin-top: 0.75rem;
+        gap: 0.75rem; // 🎯 More space between message action buttons
+        margin-top: 1rem; // 🎯 More space from message
         flex-wrap: wrap;
         
         button {
-          font-size: 0.75rem;
-          height: 2rem;
-          border-radius: 0.375rem;
-          transition: var(--copilot-transition-fast);
+          font-size: 0.8rem !important;
+          height: 36px !important; // 🎯 Taller buttons
+          border-radius: 18px !important;
+          transition: all 0.3s ease !important;
+          padding: 0 16px !important;
+          font-weight: 500 !important;
           
-          &:disabled {
-            background: #f3f4f6;
-            color: #9ca3af;
+          // 🎨 PROFESSIONAL MESSAGE ACTION BUTTON STYLING
+          
+          // Apply Code Button (first button)
+          &:first-child {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%) !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3) !important;
+            
+            &:hover {
+              background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+              transform: translateY(-2px) !important;
+              box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4) !important;
+            }
+            
+            &:disabled {
+              background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%) !important;
+              color: white !important;
+              cursor: default !important;
+              transform: none !important;
+              box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3) !important;
+            }
+          }
+          
+          // Copy Button (second button)
+          &:last-child {
+            background: linear-gradient(135deg, #607d8b 0%, #455a64 100%) !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: 0 2px 8px rgba(96, 125, 139, 0.3) !important;
+            
+            &:hover {
+              background: linear-gradient(135deg, #455a64 0%, #37474f 100%) !important;
+              transform: translateY(-2px) !important;
+              box-shadow: 0 4px 15px rgba(96, 125, 139, 0.4) !important;
+            }
+          }
+          
+          &:active {
+            transform: translateY(0) !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
           }
           
           mat-icon {
-            font-size: 0.875rem;
-            margin-right: 0.25rem;
+            font-size: 0.9rem !important;
+            margin-right: 0.5rem !important;
           }
         }
       }
@@ -590,27 +841,32 @@
         
         .suggestion-chips {
           display: flex;
-          gap: 0.5rem;
+          gap: 0.75rem; // 🎯 More space between suggestion chips
           flex-wrap: wrap;
           
           .suggestion-chip {
-            font-size: 0.75rem;
-            height: 1.75rem;
+            font-size: 0.8rem !important;
+            height: 32px !important; // 🎯 Taller suggestion chips
             cursor: pointer;
-            transition: var(--copilot-transition-fast);
-            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%) !important; // 🔧 FORCE: Light gradient background
-            color: #475569 !important; // 🔧 FORCE: Darker text for better contrast
-            border: 1px solid #cbd5e1 !important; // 🔧 FORCE: Border visibility
-            border-radius: 0.5rem; // 🔧 ADD: Rounded corners
-            padding: 0.25rem 0.75rem; // 🔧 ADD: Proper padding
-            display: inline-flex; // 🔧 ADD: Better alignment
-            align-items: center; // 🔧 ADD: Center text
-            font-weight: 500; // 🔧 ADD: Medium weight text
+            transition: all 0.3s ease !important;
+            border-radius: 16px !important; // 🎯 More rounded
+            padding: 0 16px !important; // 🎯 More padding
+            display: inline-flex !important;
+            align-items: center !important;
+            font-weight: 500 !important;
+            
+            // 🎨 PROFESSIONAL SUGGESTION CHIP STYLING
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+            color: #0d47a1 !important;
+            border: 2px solid #90caf9 !important;
+            box-shadow: 0 2px 6px rgba(33, 150, 243, 0.2) !important;
             
             &:hover {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; // 🔧 FORCE: Primary gradient on hover
-              color: white;
-              transform: translateY(-1px); // 🔧 ENHANCED: Subtle lift effect
+              background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%) !important;
+              color: white !important;
+              border-color: #1976d2 !important;
+              transform: translateY(-2px) !important;
+              box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3) !important;
               box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3); // 🔧 ENHANCED: Shadow on hover
             }
           }
@@ -626,9 +882,10 @@
   }
   
   .chat-input-container {
-    padding: 1rem;
+    padding: 1.25rem; // 🎯 More padding for better spacing
     background: white;
     border-top: 1px solid var(--copilot-border-light);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05); // 🎨 Subtle shadow for depth
     
     .input-wrapper {
       display: flex;
@@ -640,25 +897,112 @@
         
         textarea {
           resize: none;
-          font-size: 0.875rem;
-          line-height: 1.4;
+          font-size: 0.95rem !important; // 🎯 Slightly larger text
+          line-height: 1.5 !important;
+          min-height: 80px !important; // 🎯 Much taller input area
+          max-height: 200px !important; // 🎯 Allow for more expansion
+          color: #1f2937 !important; // 🎯 ALWAYS black text
+          background: #ffffff !important; // 🎯 Always white background
+          border: 2px solid #e5e7eb !important;
+          border-radius: 8px !important;
+          padding: 12px 16px !important; // 🎯 More comfortable padding
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          
+          &::placeholder {
+            color: #6b7280 !important; // 🎯 Gray placeholder
+            opacity: 1 !important;
+          }
+          
+          &:focus {
+            border-color: var(--copilot-primary) !important;
+            box-shadow: 0 0 0 3px rgba(var(--copilot-primary-rgb), 0.1) !important;
+            outline: none !important;
+            color: #1f2937 !important; // 🎯 Ensure black text on focus
+          }
+          
+          &:hover {
+            border-color: #d1d5db !important;
+          }
         }
       }
       
       .input-actions {
         display: flex;
-        gap: 0.5rem;
+        gap: 0.75rem; // 🎯 More space between buttons
         align-items: center;
         
         button {
-          transition: var(--copilot-transition-fast);
+          transition: all 0.2s ease !important;
+          font-weight: 600 !important;
           
+          // 🎨 BEAUTIFUL SEND BUTTON STYLING
           &[mat-raised-button] {
-            height: 2.5rem;
-            border-radius: 0.5rem;
+            height: 48px !important; // 🎯 Taller buttons to match input
+            border-radius: 8px !important;
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3) !important;
+            border: none !important;
+            padding: 0 24px !important;
+            font-size: 0.95rem !important;
+            font-weight: 600 !important;
+            
+            &:hover {
+              background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%) !important;
+              box-shadow: 0 6px 16px rgba(25, 118, 210, 0.4) !important;
+              transform: translateY(-2px) !important;
+            }
+            
+            &:active {
+              transform: translateY(0) !important;
+              box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3) !important;
+            }
+            
+            &:disabled {
+              background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%) !important;
+              color: rgba(255, 255, 255, 0.7) !important;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+              transform: none !important;
+              cursor: not-allowed !important;
+            }
             
             mat-icon {
-              margin-right: 0.25rem;
+              margin-right: 0.5rem !important;
+              font-size: 1.1rem !important;
+            }
+          }
+          
+          // 🎨 ENSURE ALL BUTTONS HAVE PROPER STYLING
+          &[color="primary"] {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3) !important;
+            border: none !important;
+            
+            &:hover {
+              background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%) !important;
+              box-shadow: 0 6px 16px rgba(25, 118, 210, 0.4) !important;
+              transform: translateY(-2px) !important;
+            }
+          }
+          
+          // 🎨 ICON BUTTONS STYLING
+          &[mat-icon-button] {
+            width: 48px !important;
+            height: 48px !important;
+            border-radius: 8px !important;
+            background: rgba(var(--copilot-primary-rgb), 0.1) !important;
+            color: var(--copilot-primary) !important;
+            border: 2px solid rgba(var(--copilot-primary-rgb), 0.2) !important;
+            
+            &:hover {
+              background: rgba(var(--copilot-primary-rgb), 0.15) !important;
+              border-color: rgba(var(--copilot-primary-rgb), 0.3) !important;
+              transform: translateY(-1px) !important;
+            }
+            
+            mat-icon {
+              font-size: 1.2rem !important;
             }
           }
         }
@@ -667,23 +1011,78 @@
     
     .quick-actions {
       display: flex;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
+      gap: 0.75rem; // 🎯 More space between quick action buttons
+      margin-top: 1rem; // 🎯 More space from input
       flex-wrap: wrap;
       
       button {
-        font-size: 0.75rem;
-        height: 1.75rem;
-        border-radius: 0.875rem;
-        transition: var(--copilot-transition-fast);
+        font-size: 0.8rem !important;
+        height: 36px !important; // 🎯 Taller quick action buttons
+        border-radius: 18px !important;
+        transition: all 0.2s ease !important;
+        padding: 0 16px !important;
+        font-weight: 500 !important;
         
-        &:hover {
-          background: var(--copilot-primary);
-          color: white;
+        // 🎨 PROFESSIONAL BACKGROUND COLORS FOR QUICK ACTION BUTTONS
+        &:nth-child(1) { // Generate Component
+          background: linear-gradient(135deg, #4caf50 0%, #45a049 100%) !important;
+          color: white !important;
+          border: none !important;
+          box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3) !important;
+          
+          &:hover {
+            background: linear-gradient(135deg, #45a049 0%, #388e3c 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4) !important;
+          }
+        }
+        
+        &:nth-child(2) { // Fix Code
+          background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%) !important;
+          color: white !important;
+          border: none !important;
+          box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3) !important;
+          
+          &:hover {
+            background: linear-gradient(135deg, #f57c00 0%, #ef6c00 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4) !important;
+          }
+        }
+        
+        &:nth-child(3) { // Optimize
+          background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%) !important;
+          color: white !important;
+          border: none !important;
+          box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3) !important;
+          
+          &:hover {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4) !important;
+          }
+        }
+        
+        &:nth-child(4) { // Add Tests
+          background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%) !important;
+          color: white !important;
+          border: none !important;
+          box-shadow: 0 2px 8px rgba(156, 39, 176, 0.3) !important;
+          
+          &:hover {
+            background: linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 15px rgba(156, 39, 176, 0.4) !important;
+          }
+        }
+        
+        &:active {
+          transform: translateY(0) !important;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
         }
         
         mat-icon {
-          font-size: 0.875rem;
+          font-size: 0.9rem !important;
           margin-right: 0.25rem;
         }
       }

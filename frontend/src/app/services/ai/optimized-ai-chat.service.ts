@@ -44,6 +44,7 @@ export interface ChatMessage {
   confidence?: number;
   hasAppliedCode?: boolean;
   isCodeMessage?: boolean;
+  codeBlocks?: Array<{language: string, code: string}>; // Multiple code blocks
 }
 
 export interface ChatSession {
@@ -68,6 +69,7 @@ export interface AIResponse {
       language: string;
       code: string;
     };
+    codeBlocks?: Array<{language: string, code: string}>; // Multiple code blocks
     suggestions?: string[];
     tokensUsed: number;
     model: string;
@@ -76,6 +78,7 @@ export interface AIResponse {
     timestamp: string;
     confidence: number;
     hasCode: boolean;
+    codeBlockCount?: number;
   };
   error?: {
     message: string;
@@ -353,50 +356,81 @@ export class OptimizedAIChatService {
   }
 
   /**
-   * ✅ HANDLE SUCCESSFUL RESPONSE - GENERIC CODE EXTRACTION
+   * ✅ HANDLE SUCCESSFUL RESPONSE - ENHANCED FORMATTING & CODE EXTRACTION
    */
   private handleSuccessfulResponse(response: AIResponse): void {
-    // 🔧 GENERIC CODE EXTRACTION - Works with any AI response format
     let extractedCode = null;
     let extractedLanguage = 'typescript';
     let content = response.data?.message || 'Response received';
+    let formattedContent = content;
 
-    // Method 1: Check if response has structured code object
-    if (response.data?.code) {
+    // 🎨 ENHANCED CODE EXTRACTION WITH MULTIPLE BLOCKS
+    const codeBlocks: Array<{language: string, code: string}> = [];
+    
+    // Method 1: Check if response has structured code blocks from backend
+    if (response.data?.codeBlocks && Array.isArray(response.data.codeBlocks)) {
+      // Use backend-provided code blocks directly
+      codeBlocks.push(...response.data.codeBlocks);
+      if (codeBlocks.length > 0 && !extractedCode) {
+        extractedCode = codeBlocks[0].code;
+        extractedLanguage = codeBlocks[0].language;
+      }
+    }
+    // Fallback: Check if response has single structured code object
+    else if (response.data?.code) {
       if (typeof response.data.code === 'string') {
         extractedCode = response.data.code;
+        codeBlocks.push({ language: 'typescript', code: response.data.code });
       } else if (response.data.code.code) {
         extractedCode = response.data.code.code;
         extractedLanguage = response.data.code.language || 'typescript';
+        codeBlocks.push({ language: extractedLanguage, code: response.data.code.code });
       }
     }
-    // Method 2: Extract code from markdown code blocks in content
-    else if (content) {
+    
+    // Method 2: Extract ALL code blocks from markdown content
+    if (content) {
       const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
-      const match = codeBlockRegex.exec(content);
-      if (match) {
-        extractedLanguage = match[1] || 'typescript';
-        extractedCode = match[2].trim();
+      let match;
+      
+      while ((match = codeBlockRegex.exec(content)) !== null) {
+        const language = match[1] || 'typescript';
+        const code = match[2].trim();
+        
+        if (code.length > 10) { // Only extract substantial code blocks
+          codeBlocks.push({ language, code });
+          
+          // Use the first substantial code block as the main extracted code
+          if (!extractedCode) {
+            extractedCode = code;
+            extractedLanguage = language;
+          }
+        }
       }
-      // Method 3: Look for any code-like content (imports, components, etc.)
-      else if (content.includes('import ') || content.includes('@Component') || content.includes('function ') || content.includes('const ')) {
-        extractedCode = content;
-        extractedLanguage = 'typescript';
-      }
+      
+      // 🎨 CLEAN UP CONTENT - Remove code blocks for cleaner text display
+      formattedContent = content
+        .replace(/```[\w]*\n?[\s\S]*?```/g, '\n**[Code generated - see Monaco editor]**\n')
+        .replace(/\n{3,}/g, '\n\n') // Remove excessive line breaks
+        .trim();
+      
+      // 📝 FORMAT TEXT CONTENT FOR BETTER READABILITY
+      formattedContent = this.formatTextContent(formattedContent);
     }
 
     const aiMessage: ChatMessage = {
       id: `ai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type: 'ai',
       sender: 'AI Copilot',
-      content: content,
+      content: formattedContent, // Use formatted content instead of raw content
       timestamp: new Date(),
       code: extractedCode || undefined,
       codeLanguage: extractedLanguage,
       suggestions: response.data?.suggestions || [],
       confidence: response.data?.confidence || 0.95,
       hasAppliedCode: false,
-      isCodeMessage: !!extractedCode
+      isCodeMessage: !!extractedCode,
+      codeBlocks: codeBlocks.length > 0 ? codeBlocks : undefined // Store all code blocks
     };
 
     this._messages.update(messages => [...messages, aiMessage]);
@@ -542,5 +576,68 @@ Please try again in a moment. If the problem persists, check the server logs.`;
       isHealthy: this.isHealthy(),
       sessionId: this._currentSession()?.id || 'none'
     };
+  }
+
+  /**
+   * 🎨 SUPER ENHANCED FORMAT TEXT CONTENT - Clean, professional formatting with guaranteed new rows
+   */
+  private formatTextContent(content: string): string {
+    // 🧹 STEP 1: AGGRESSIVE cleanup of ALL markdown artifacts
+    let formatted = content
+      .replace(/\*{2,}/g, '') // Remove ALL multiple asterisks
+      .replace(/\*/g, '') // Remove ALL single asterisks
+      .replace(/#{1,6}\s*/g, '') // Remove markdown headers
+      .replace(/`{1,3}/g, '') // Remove code backticks
+      .replace(/_{2,}/g, '') // Remove underscores
+      .replace(/\[|\]/g, ''); // Remove square brackets
+    
+    // 🔧 STEP 2: Handle Step indicators with perfect spacing
+    formatted = formatted
+      .replace(/Step\s+(\d+):\s*/gi, '\n\n\n🔧 **Step $1:**\n\n')
+      .replace(/🔧\s*Step\s+(\d+):\s*/gi, '\n\n\n🔧 **Step $1:**\n\n');
+    
+    // 🔢 STEP 3: CRITICAL - Handle ALL numbered items with guaranteed new rows
+    formatted = formatted.replace(/(\s|^|•\s*)(\d+)\.\s*([^.\n]{3,})/g, (match, prefix, num, text) => {
+      // Clean the text of any remaining artifacts
+      const cleanText = text.replace(/\*+/g, '').trim();
+      return `\n\n\n**${num}. ${cleanText}**\n\n`;
+    });
+    
+    // 📋 STEP 4: Handle bullet points with new rows
+    formatted = formatted
+      .replace(/•\s*([^:\n]{3,})/g, '\n\n• $1\n')
+      .replace(/^\s*[-*]\s*([^:\n]{3,})/gm, '\n\n• $1\n');
+    
+    // 📝 STEP 5: Handle code generation mentions
+    formatted = formatted
+      .replace(/Code generated - see Monaco editor/gi, '\n\n📝 **Code generated - see Monaco editor**\n\n');
+    
+    // 📋 STEP 6: Handle section headers and file names
+    formatted = formatted
+      .replace(/(Conclusion|Setup|Create|Using|Example|Explanation|HTML Structure|Styling)/gi, '\n\n\n📋 **$1**\n\n')
+      .replace(/(component\.(ts|html|scss))/gi, '\n\n📋 **$1**\n\n')
+      .replace(/(\w+\.component\.(ts|html|scss))/gi, '\n\n📋 **$1**\n\n');
+    
+    // 🎨 STEP 7: Format technical terms (but keep them clean)
+    formatted = formatted
+      .replace(/\b(Angular|Material|Component|TypeScript|HTML|SCSS|CSS|JavaScript)\b/gi, '**$1**');
+    
+    // 🔧 STEP 8: Ensure proper sentence spacing
+    formatted = formatted
+      .replace(/([.!?])\s*([A-Z🔧📋📝])/g, '$1\n\n$2')
+      .replace(/:\s*([A-Z])/g, ':\n\n$1');
+    
+    // 🧹 STEP 9: Final aggressive cleanup
+    formatted = formatted
+      .replace(/\n{4,}/g, '\n\n\n') // Max 3 line breaks
+      .replace(/^\n+/, '') // Remove leading newlines
+      .replace(/\n+$/, '') // Remove trailing newlines
+      .replace(/\s{3,}/g, ' ') // Multiple spaces to single
+      .replace(/\*{2,}/g, '') // Remove any remaining multiple asterisks
+      .replace(/\s+\*/g, ' ') // Remove asterisks after spaces
+      .replace(/\*\s+/g, ' ') // Remove asterisks before spaces
+      .trim();
+    
+    return formatted;
   }
 }
