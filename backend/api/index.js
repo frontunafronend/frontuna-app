@@ -1539,20 +1539,59 @@ module.exports = async (req, res) => {
           try {
             console.log('🧠 Generating real AI response for:', message.substring(0, 50) + '...');
             
+            // 🎯 ENHANCED USER REQUEST - Add structured component requirements
+            const enhancedUserMessage = enhanceUserRequestForComponents(message);
+            console.log('🔧 Enhanced user request:', enhancedUserMessage.substring(0, 100) + '...');
+            
             // Build conversation messages for OpenAI
             const messages = [
               {
                 role: 'system',
-                content: `You are an expert Angular developer and coding assistant for Frontuna.ai. You help users create professional, modern Angular components with TypeScript, HTML, and SCSS.
+                content: `You are an expert Angular developer and coding assistant for Frontuna.ai - a professional component generation service. You help users create complete, production-ready Angular components.
 
-Context: ${context || 'Angular development assistance'}
+Context: ${context || 'Angular component development service'}
 
-Always provide:
-1. Clear, professional code examples
-2. Best practices and modern Angular features
-3. Proper TypeScript typing
-4. Responsive design with Material Design
-5. Complete, working code that can be copied directly
+🎯 CRITICAL: You MUST ALWAYS provide a COMPLETE COMPONENT PACKAGE for every request:
+
+MANDATORY STRUCTURE:
+1. **TypeScript Component Code** - Complete standalone Angular component with:
+   - Proper imports and decorators
+   - Interface definitions for data structures
+   - Mock data arrays (if applicable)
+   - Component logic and methods
+   - Proper typing
+
+2. **HTML Template** - Complete template with:
+   - Semantic HTML structure
+   - Angular directives (*ngFor, *ngIf, etc.)
+   - Property bindings and interpolation
+   - Responsive Bootstrap classes
+   - Material Design components
+
+3. **SCSS Styles** - Complete styling with:
+   - Component-specific styles
+   - Responsive design (mobile-first)
+   - Hover effects and animations
+   - Material Design principles
+   - Professional color schemes
+
+4. **Mock Data** - If component uses arrays/lists:
+   - Realistic sample data (4-6 items)
+   - Proper data structure matching interfaces
+   - Varied content for demonstration
+
+RESPONSE FORMAT:
+- Provide each code block in separate markdown code blocks
+- Use proper language tags (typescript, html, scss)
+- Include complete, copy-paste ready code
+- No partial examples or "..." placeholders
+
+QUALITY STANDARDS:
+- Production-ready code quality
+- Modern Angular 17+ features (standalone components)
+- Responsive and accessible design
+- Professional UI/UX patterns
+- Complete functionality, no missing pieces
 
 When generating code:
 - Use Angular 17+ standalone components
@@ -1591,7 +1630,7 @@ Focus on incremental improvements and additions to create a cohesive, evolving c
             // Add current user message
             messages.push({
               role: 'user',
-              content: message
+              content: enhancedUserMessage
             });
 
             // Create OpenAI completion
@@ -1888,3 +1927,57 @@ Focus on incremental improvements and additions to create a cohesive, evolving c
     }
   }
 };
+
+// 🎯 ENHANCE USER REQUEST FOR COMPLETE COMPONENT PACKAGES
+function enhanceUserRequestForComponents(originalMessage) {
+  console.log('🔧 Enhancing user request for complete component package');
+  
+  // Check if user already mentioned specific requirements
+  const hasTypeScriptMention = /typescript|component|\.ts/i.test(originalMessage);
+  const hasHTMLMention = /html|template|\.html/i.test(originalMessage);
+  const hasCSSMention = /css|scss|style|\.scss|\.css/i.test(originalMessage);
+  const hasMockMention = /mock|data|sample|example/i.test(originalMessage);
+  
+  // Build enhancement based on what's missing
+  let enhancement = '';
+  
+  if (!hasTypeScriptMention) {
+    enhancement += '\n\n🎯 REQUIRED: Provide complete TypeScript component code with proper interfaces and typing.';
+  }
+  
+  if (!hasHTMLMention) {
+    enhancement += '\n\n🎯 REQUIRED: Provide complete HTML template with Angular directives and responsive design.';
+  }
+  
+  if (!hasCSSMention) {
+    enhancement += '\n\n🎯 REQUIRED: Provide complete SCSS styles with responsive design and hover animations.';
+  }
+  
+  if (!hasMockMention) {
+    enhancement += '\n\n🎯 REQUIRED: If the component uses arrays or lists, provide realistic mock data (4-6 sample items).';
+  }
+  
+  // Always add professional service requirements
+  const serviceRequirements = `
+
+🏢 FRONTUNA COMPONENT SERVICE REQUIREMENTS:
+- This is for a professional component generation service
+- Provide production-ready, copy-paste code
+- Include complete functionality, no placeholders
+- Use modern Angular 17+ standalone components
+- Ensure responsive design with Material Design principles
+- Add proper TypeScript interfaces for all data structures
+- Include realistic mock data for demonstration
+- Make components reusable and well-documented
+
+📦 DELIVERABLE FORMAT:
+1. Complete TypeScript component (with imports, interfaces, mock data)
+2. Complete HTML template (with Angular directives, responsive classes)
+3. Complete SCSS styles (with animations, responsive breakpoints)
+4. All code should be immediately usable in an Angular project`;
+
+  const enhancedMessage = originalMessage + enhancement + serviceRequirements;
+  
+  console.log('✅ User request enhanced with component service requirements');
+  return enhancedMessage;
+}
