@@ -143,18 +143,20 @@ export class OptimizedAIChatService {
       return;
     }
 
-    const healthCheck$ = this.http.get<{ success: boolean }>(`${this.API_BASE.replace('/ai/copilot', '')}/health`)
+    const healthCheck$ = this.http.get<{ status: string; success?: boolean }>(`${this.API_BASE.replace('/ai/copilot', '')}/health`)
       .pipe(
         timeout(5000),
         retry(1),
         tap(response => {
-          this._isHealthy.set(response.success);
-          console.log('🏥 Health check:', response.success ? '✅ Healthy' : '❌ Unhealthy');
+          // Check for either success: true or status: 'ok'
+          const isHealthy = response.success === true || response.status === 'ok';
+          this._isHealthy.set(isHealthy);
+          console.log('🏥 Health check:', isHealthy ? '✅ Healthy' : '❌ Unhealthy', response);
         }),
         catchError(error => {
           console.warn('⚠️ Health check failed:', error.message);
           this._isHealthy.set(false);
-          return of({ success: false });
+          return of({ status: 'error', success: false });
         }),
         finalize(() => {
           this.activeRequests.delete(healthKey);

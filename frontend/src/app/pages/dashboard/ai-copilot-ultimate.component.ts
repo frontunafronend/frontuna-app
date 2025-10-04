@@ -527,6 +527,9 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     // 🎯 START WITHOUT LOADER - Fix stuck loader issue
     this.isInitializing.set(false);
     
+    // 🎯 TRIGGER HEALTH CHECK to update backend status
+    this.optimizedAIChat.checkHealth();
+    
     // Initialize clean editors
     this.initializeCleanEditors();
     
@@ -726,6 +729,20 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       case 'ts':
       case 'javascript':
       case 'js':
+        // 🎯 ENHANCED: Extract HTML from Angular component template
+        const htmlFromTemplate = this.extractHTMLFromAngularComponent(code);
+        if (htmlFromTemplate) {
+          console.log('🎯 Extracted HTML from Angular component template');
+          this.editorState.updateBuffer('html', htmlFromTemplate);
+        }
+        
+        // 🎯 ENHANCED: Extract SCSS from Angular component styles
+        const scssFromStyles = this.extractSCSSFromAngularComponent(code);
+        if (scssFromStyles) {
+          console.log('🎯 Extracted SCSS from Angular component styles');
+          this.editorState.updateBuffer('scss', scssFromStyles);
+        }
+        
         this.editorState.updateBuffer('typescript', code);
         return true;
         
@@ -753,6 +770,40 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         this.editorState.updateBuffer('typescript', code);
         return true;
     }
+  }
+  
+  // 🎯 EXTRACT HTML FROM ANGULAR COMPONENT TEMPLATE
+  private extractHTMLFromAngularComponent(tsCode: string): string | null {
+    // Look for template: ` ... ` or template: " ... "
+    const templateMatch = tsCode.match(/template:\s*[`"']([\s\S]*?)[`"']/);
+    if (templateMatch && templateMatch[1]) {
+      let html = templateMatch[1].trim();
+      
+      // Clean up the HTML - remove excessive indentation
+      const lines = html.split('\n');
+      const minIndent = Math.min(...lines.filter(line => line.trim()).map(line => line.match(/^\s*/)?.[0]?.length || 0));
+      
+      html = lines.map(line => line.substring(minIndent)).join('\n').trim();
+      
+      if (html.length > 20) { // Only return substantial HTML
+        return html;
+      }
+    }
+    return null;
+  }
+  
+  // 🎯 EXTRACT SCSS FROM ANGULAR COMPONENT STYLES
+  private extractSCSSFromAngularComponent(tsCode: string): string | null {
+    // Look for styles: [` ... `] or styleUrls
+    const stylesMatch = tsCode.match(/styles:\s*\[\s*[`"']([\s\S]*?)[`"']\s*\]/);
+    if (stylesMatch && stylesMatch[1]) {
+      let scss = stylesMatch[1].trim();
+      
+      if (scss.length > 10) { // Only return substantial SCSS
+        return scss;
+      }
+    }
+    return null;
   }
   
   copyMessage(message: UltimateChatMessage) {
