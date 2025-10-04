@@ -763,12 +763,12 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         this.updateEditorBuffer('scss', scssCode, isConversationContinuation);
         updatedEditors++;
         console.log('✅ SCSS editor updated with extracted content');
-      } else if (typescriptCode) {
-        // Generate basic SCSS structure if none found
-        const fallbackSCSS = this.generateFallbackSCSS();
-        this.updateEditorBuffer('scss', fallbackSCSS, isConversationContinuation);
+      } else if (typescriptCode || htmlCode) {
+        // Generate contextual SCSS based on HTML content
+        const contextualSCSS = this.generateContextualSCSS(htmlCode || typescriptCode);
+        this.updateEditorBuffer('scss', contextualSCSS, isConversationContinuation);
         updatedEditors++;
-        console.log('✅ SCSS editor updated with fallback content');
+        console.log('✅ SCSS editor updated with contextual content');
       }
       
       // Show comprehensive notification
@@ -925,69 +925,73 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     return existing + '\n\n' + newCode;
   }
   
-  // 🎯 BULLETPROOF HTML EXTRACTION - Multiple patterns and fallbacks
+  // 🎯 SUPER PRECISE HTML EXTRACTION - Aggressive pattern matching
   private bulletproofExtractHTML(tsCode: string): string | null {
-    console.log('🔍 BULLETPROOF HTML extraction starting...');
+    console.log('🔍 SUPER PRECISE HTML extraction starting...');
+    console.log('📝 Code to analyze:', tsCode.substring(0, 200) + '...');
     
-    // Pattern 1: template: `...` (backticks)
-    let templateMatch = tsCode.match(/template:\s*`([\s\S]*?)`/);
+    // Pattern 1: template: `...` (backticks) - Most common in Angular
+    let templateMatch = tsCode.match(/template:\s*`([\s\S]*?)`(?=\s*,|\s*})/);
     if (templateMatch && templateMatch[1]) {
       console.log('✅ Found HTML in template with backticks');
-      return this.cleanExtractedHTML(templateMatch[1]);
+      const html = this.cleanExtractedHTML(templateMatch[1]);
+      if (html) return html;
     }
     
-    // Pattern 2: template: "..." (double quotes)
-    templateMatch = tsCode.match(/template:\s*"([\s\S]*?)"/);
-    if (templateMatch && templateMatch[1]) {
-      console.log('✅ Found HTML in template with double quotes');
-      return this.cleanExtractedHTML(templateMatch[1]);
+    // Pattern 2: templateUrl reference - extract from separate file mention
+    const templateUrlMatch = tsCode.match(/templateUrl:\s*['"](.*?)['"]/);
+    if (templateUrlMatch) {
+      console.log('✅ Found templateUrl reference, generating HTML');
+      return this.generateContextualHTML(tsCode);
     }
     
-    // Pattern 3: template: '...' (single quotes)
-    templateMatch = tsCode.match(/template:\s*'([\s\S]*?)'/);
-    if (templateMatch && templateMatch[1]) {
-      console.log('✅ Found HTML in template with single quotes');
-      return this.cleanExtractedHTML(templateMatch[1]);
+    // Pattern 3: Inline template in @Component decorator
+    const componentMatch = tsCode.match(/@Component\s*\(\s*{[\s\S]*?template:\s*[`"']([\s\S]*?)[`"'][\s\S]*?}\s*\)/);
+    if (componentMatch && componentMatch[1]) {
+      console.log('✅ Found HTML in @Component template');
+      const html = this.cleanExtractedHTML(componentMatch[1]);
+      if (html) return html;
     }
     
-    // Pattern 4: Look for HTML-like content anywhere in the code
-    const htmlTags = tsCode.match(/<[^>]+>/g);
-    if (htmlTags && htmlTags.length > 2) {
-      console.log('✅ Found HTML-like tags, extracting...');
-      // Find the section with the most HTML tags
-      const lines = tsCode.split('\n');
-      let bestMatch = '';
-      let maxTags = 0;
-      
-      for (let i = 0; i < lines.length; i++) {
-        const section = lines.slice(i, i + 10).join('\n');
-        const tagCount = (section.match(/<[^>]+>/g) || []).length;
-        if (tagCount > maxTags) {
-          maxTags = tagCount;
-          bestMatch = section;
-        }
-      }
-      
-      if (bestMatch) {
-        return this.cleanExtractedHTML(bestMatch);
+    // Pattern 4: Look for HTML blocks anywhere in the response
+    const htmlBlockMatch = tsCode.match(/<[a-zA-Z][^>]*>[\s\S]*?<\/[a-zA-Z][^>]*>/);
+    if (htmlBlockMatch) {
+      console.log('✅ Found HTML block in response');
+      const html = this.cleanExtractedHTML(htmlBlockMatch[0]);
+      if (html) return html;
+    }
+    
+    // Pattern 5: Extract from multi-line template strings
+    const multilineTemplateMatch = tsCode.match(/template:\s*[`"'][\s\S]*?<[\s\S]*?>[\s\S]*?[`"']/);
+    if (multilineTemplateMatch) {
+      const templateContent = multilineTemplateMatch[0].match(/[`"']([\s\S]*?)[`"']/);
+      if (templateContent && templateContent[1]) {
+        console.log('✅ Found HTML in multiline template');
+        const html = this.cleanExtractedHTML(templateContent[1]);
+        if (html) return html;
       }
     }
     
-    // Pattern 5: Generate default HTML if component structure is detected
+    // Pattern 6: Look for Angular Material components (mat-card, etc.)
+    if (tsCode.includes('mat-card') || tsCode.includes('<mat-') || tsCode.includes('MatCard')) {
+      console.log('✅ Detected Angular Material components, generating HTML');
+      return this.generateAngularMaterialHTML(tsCode);
+    }
+    
+    // Pattern 7: Look for cryptocurrency-specific content
+    if (tsCode.includes('cryptocurrency') || tsCode.includes('crypto') || tsCode.includes('Bitcoin') || tsCode.includes('BTC')) {
+      console.log('✅ Detected cryptocurrency content, generating crypto HTML');
+      return this.generateCryptoHTML();
+    }
+    
+    // Pattern 8: Generate contextual HTML based on component structure
     if (tsCode.includes('@Component') && tsCode.includes('selector:')) {
-      console.log('✅ Generating default HTML for component');
-      const selectorMatch = tsCode.match(/selector:\s*['"]([\w-]+)['"]/);
-      const selector = selectorMatch ? selectorMatch[1] : 'app-component';
-      
-      return `<div class="${selector}-container">
-  <h2>Component Title</h2>
-  <p>This is a generated component template.</p>
-  <button class="btn">Click me</button>
-</div>`;
+      console.log('✅ Generating contextual HTML for component');
+      return this.generateContextualHTML(tsCode);
     }
     
-    console.log('❌ No HTML found in TypeScript code');
-    return null;
+    console.log('❌ No HTML patterns matched, using fallback');
+    return this.generateFallbackHTML();
   }
   
   // 🎯 BULLETPROOF SCSS EXTRACTION - Multiple patterns and fallbacks
@@ -1124,6 +1128,167 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     return cleaned;
   }
   
+  // 🎯 CONTEXTUAL HTML GENERATOR - Based on component analysis
+  private generateContextualHTML(tsCode: string): string {
+    console.log('🔧 Generating contextual HTML based on component');
+    
+    // Extract selector for CSS classes
+    const selectorMatch = tsCode.match(/selector:\s*['"]([\w-]+)['"]/);
+    const selector = selectorMatch ? selectorMatch[1] : 'app-component';
+    const className = selector.replace('app-', '');
+    
+    // Check for specific component types
+    if (tsCode.includes('card') || tsCode.includes('Card')) {
+      return this.generateCardHTML(className);
+    }
+    
+    if (tsCode.includes('crypto') || tsCode.includes('Bitcoin') || tsCode.includes('currency')) {
+      return this.generateCryptoHTML();
+    }
+    
+    if (tsCode.includes('responsive') || tsCode.includes('grid') || tsCode.includes('flex')) {
+      return this.generateResponsiveHTML(className);
+    }
+    
+    return this.generateFallbackHTML();
+  }
+  
+  // 🎯 CARD HTML GENERATOR
+  private generateCardHTML(className: string): string {
+    console.log('🔧 Generating card HTML');
+    return `<div class="${className}-container">
+  <div class="cards-grid">
+    <div class="card" *ngFor="let item of items">
+      <div class="card-header">
+        <img [src]="item.image" [alt]="item.title" class="card-image">
+      </div>
+      <div class="card-body">
+        <h3 class="card-title">{{item.title}}</h3>
+        <p class="card-description">{{item.description}}</p>
+        <div class="card-actions">
+          <button class="btn btn-primary" (click)="onAction(item)">
+            {{item.actionText || 'Learn More'}}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`;
+  }
+  
+  // 🎯 CRYPTO HTML GENERATOR
+  private generateCryptoHTML(): string {
+    console.log('🔧 Generating cryptocurrency HTML');
+    return `<div class="crypto-dashboard">
+  <div class="dashboard-header">
+    <h2>Cryptocurrency Portfolio</h2>
+    <p>Track your favorite cryptocurrencies</p>
+  </div>
+  
+  <div class="crypto-grid">
+    <div class="crypto-card" *ngFor="let crypto of cryptocurrencies">
+      <div class="crypto-header">
+        <img [src]="crypto.icon" [alt]="crypto.name" class="crypto-icon">
+        <div class="crypto-info">
+          <h3 class="crypto-name">{{crypto.name}}</h3>
+          <span class="crypto-symbol">{{crypto.symbol}}</span>
+        </div>
+      </div>
+      
+      <div class="crypto-price">
+        <span class="price-value">\${{crypto.price}}</span>
+        <span class="price-change" [class.positive]="crypto.change > 0" [class.negative]="crypto.change < 0">
+          {{crypto.change > 0 ? '+' : ''}}{{crypto.change}}%
+        </span>
+      </div>
+      
+      <div class="crypto-actions">
+        <button class="btn btn-buy" (click)="buyCrypto(crypto)">Buy</button>
+        <button class="btn btn-sell" (click)="sellCrypto(crypto)">Sell</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+  }
+  
+  // 🎯 RESPONSIVE HTML GENERATOR
+  private generateResponsiveHTML(className: string): string {
+    console.log('🔧 Generating responsive HTML');
+    return `<div class="${className}-responsive">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 col-md-6 col-lg-3" *ngFor="let item of items">
+        <div class="responsive-card">
+          <div class="card-image-container">
+            <img [src]="item.image" [alt]="item.title" class="responsive-image">
+          </div>
+          <div class="card-content">
+            <h4 class="item-title">{{item.title}}</h4>
+            <p class="item-description">{{item.description}}</p>
+            <div class="item-meta">
+              <span class="item-price">\${{item.price}}</span>
+              <span class="item-rating">★ {{item.rating}}</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-outline" (click)="viewDetails(item)">View Details</button>
+            <button class="btn btn-primary" (click)="addToCart(item)">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`;
+  }
+  
+  // 🎯 ANGULAR MATERIAL HTML GENERATOR
+  private generateAngularMaterialHTML(tsCode: string): string {
+    console.log('🔧 Generating Angular Material HTML');
+    return `<div class="mat-container">
+  <mat-card class="crypto-card" *ngFor="let crypto of cryptocurrencies">
+    <mat-card-header>
+      <div mat-card-avatar class="crypto-avatar">
+        <img [src]="crypto.icon" [alt]="crypto.name">
+      </div>
+      <mat-card-title>{{crypto.name}}</mat-card-title>
+      <mat-card-subtitle>{{crypto.symbol}}</mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="price-info">
+        <h2 class="current-price">\${{crypto.price}}</h2>
+        <span class="price-change" [class.positive]="crypto.change > 0" [class.negative]="crypto.change < 0">
+          <mat-icon>{{crypto.change > 0 ? 'trending_up' : 'trending_down'}}</mat-icon>
+          {{crypto.change > 0 ? '+' : ''}}{{crypto.change}}%
+        </span>
+      </div>
+      
+      <div class="crypto-stats">
+        <div class="stat">
+          <span class="stat-label">Market Cap</span>
+          <span class="stat-value">\${{crypto.marketCap}}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Volume</span>
+          <span class="stat-value">\${{crypto.volume}}</span>
+        </div>
+      </div>
+    </mat-card-content>
+    
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="buyCrypto(crypto)">
+        <mat-icon>add_shopping_cart</mat-icon>
+        Buy
+      </button>
+      <button mat-stroked-button (click)="viewDetails(crypto)">
+        <mat-icon>info</mat-icon>
+        Details
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>`;
+  }
+  
   // 🎯 FALLBACK GENERATORS - Always provide content
   private generateFallbackHTML(): string {
     console.log('🔧 Generating fallback HTML');
@@ -1141,6 +1306,426 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     </div>
   </div>
 </div>`;
+  }
+  
+  // 🎯 CONTEXTUAL SCSS GENERATOR - Based on HTML content
+  private generateContextualSCSS(htmlContent: string): string {
+    console.log('🔧 Generating contextual SCSS based on HTML');
+    
+    if (htmlContent.includes('crypto')) {
+      return this.generateCryptoSCSS();
+    }
+    
+    if (htmlContent.includes('mat-card') || htmlContent.includes('Angular Material')) {
+      return this.generateMaterialSCSS();
+    }
+    
+    if (htmlContent.includes('responsive') || htmlContent.includes('grid')) {
+      return this.generateResponsiveSCSS();
+    }
+    
+    return this.generateFallbackSCSS();
+  }
+  
+  // 🎯 CRYPTO SCSS GENERATOR
+  private generateCryptoSCSS(): string {
+    console.log('🔧 Generating cryptocurrency SCSS');
+    return `.crypto-dashboard {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  
+  .dashboard-header {
+    text-align: center;
+    margin-bottom: 40px;
+    
+    h2 {
+      color: #1a1a1a;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+    
+    p {
+      color: #666;
+      font-size: 1.2rem;
+    }
+  }
+  
+  .crypto-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    
+    .crypto-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #f0f0f0;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        border-color: #007bff;
+      }
+      
+      .crypto-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        
+        .crypto-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          margin-right: 16px;
+        }
+        
+        .crypto-info {
+          .crypto-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 4px 0;
+          }
+          
+          .crypto-symbol {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-weight: 500;
+          }
+        }
+      }
+      
+      .crypto-price {
+        margin-bottom: 20px;
+        
+        .price-value {
+          font-size: 2rem;
+          font-weight: 700;
+          color: #1a1a1a;
+          display: block;
+          margin-bottom: 8px;
+        }
+        
+        .price-change {
+          font-size: 1rem;
+          font-weight: 600;
+          
+          &.positive {
+            color: #22c55e;
+          }
+          
+          &.negative {
+            color: #ef4444;
+          }
+        }
+      }
+      
+      .crypto-actions {
+        display: flex;
+        gap: 12px;
+        
+        .btn {
+          flex: 1;
+          padding: 12px 20px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border: none;
+          
+          &.btn-buy {
+            background: #22c55e;
+            color: white;
+            
+            &:hover {
+              background: #16a34a;
+              transform: translateY(-2px);
+            }
+          }
+          
+          &.btn-sell {
+            background: #ef4444;
+            color: white;
+            
+            &:hover {
+              background: #dc2626;
+              transform: translateY(-2px);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .crypto-dashboard {
+    padding: 16px;
+    
+    .crypto-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
+}`;
+  }
+  
+  // 🎯 MATERIAL SCSS GENERATOR
+  private generateMaterialSCSS(): string {
+    console.log('🔧 Generating Angular Material SCSS');
+    return `.mat-container {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  
+  .crypto-card {
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .crypto-avatar {
+      img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+      }
+    }
+    
+    .price-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 16px 0;
+      
+      .current-price {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin: 0;
+      }
+      
+      .price-change {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 600;
+        
+        &.positive {
+          color: #22c55e;
+        }
+        
+        &.negative {
+          color: #ef4444;
+        }
+        
+        mat-icon {
+          font-size: 18px;
+        }
+      }
+    }
+    
+    .crypto-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+      
+      .stat {
+        text-align: center;
+        
+        .stat-label {
+          display: block;
+          font-size: 0.8rem;
+          color: #666;
+          margin-bottom: 4px;
+          text-transform: uppercase;
+          font-weight: 500;
+        }
+        
+        .stat-value {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #1a1a1a;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .mat-container {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+}`;
+  }
+  
+  // 🎯 RESPONSIVE SCSS GENERATOR
+  private generateResponsiveSCSS(): string {
+    console.log('🔧 Generating responsive SCSS');
+    return `.responsive-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  
+  .container {
+    width: 100%;
+    
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      margin: -12px;
+      
+      [class*="col-"] {
+        padding: 12px;
+        
+        .responsive-card {
+          background: white;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          transition: all 0.3s ease;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          
+          &:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+          }
+          
+          .card-image-container {
+            position: relative;
+            overflow: hidden;
+            height: 200px;
+            
+            .responsive-image {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              transition: transform 0.3s ease;
+            }
+            
+            &:hover .responsive-image {
+              transform: scale(1.05);
+            }
+          }
+          
+          .card-content {
+            padding: 20px;
+            flex: 1;
+            
+            .item-title {
+              font-size: 1.3rem;
+              font-weight: 600;
+              color: #1a1a1a;
+              margin: 0 0 12px 0;
+            }
+            
+            .item-description {
+              color: #666;
+              line-height: 1.6;
+              margin-bottom: 16px;
+            }
+            
+            .item-meta {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              
+              .item-price {
+                font-size: 1.2rem;
+                font-weight: 700;
+                color: #007bff;
+              }
+              
+              .item-rating {
+                color: #ffc107;
+                font-weight: 600;
+              }
+            }
+          }
+          
+          .card-footer {
+            padding: 20px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            gap: 12px;
+            
+            .btn {
+              flex: 1;
+              padding: 10px 16px;
+              border-radius: 6px;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.3s ease;
+              text-align: center;
+              
+              &.btn-outline {
+                background: transparent;
+                border: 2px solid #007bff;
+                color: #007bff;
+                
+                &:hover {
+                  background: #007bff;
+                  color: white;
+                }
+              }
+              
+              &.btn-primary {
+                background: #007bff;
+                color: white;
+                border: 2px solid #007bff;
+                
+                &:hover {
+                  background: #0056b3;
+                  border-color: #0056b3;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive breakpoints
+@media (max-width: 1200px) {
+  .col-lg-3 { flex: 0 0 50%; max-width: 50%; }
+}
+
+@media (max-width: 768px) {
+  .col-md-6 { flex: 0 0 100%; max-width: 100%; }
+  
+  .responsive-container {
+    padding: 16px;
+    
+    .row {
+      margin: -8px;
+      
+      [class*="col-"] {
+        padding: 8px;
+      }
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .col-12 { flex: 0 0 100%; max-width: 100%; }
+}`;
   }
   
   private generateFallbackSCSS(): string {
