@@ -643,15 +643,32 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     }
   }
 
-  // 🔧 NEW: GENERIC AI RESPONSE CODE HANDLER
+  // 🔧 ENHANCED: GENERIC AI RESPONSE CODE HANDLER
   handleAIResponseCode(response: any) {
     try {
+      console.log('🔧 AI Response Code Handler triggered');
+      console.log('📝 Response data:', response);
+      
       // Get the latest message from the chat (which has the extracted code)
       const messages = this.chatMessages();
       const latestMessage = messages[messages.length - 1];
       
-      if (latestMessage && latestMessage.isCodeMessage && latestMessage.code) {
+      console.log('📝 Latest message exists:', !!latestMessage);
+      console.log('📝 Latest message is code message:', latestMessage?.isCodeMessage);
+      console.log('📝 Latest message has code:', !!latestMessage?.code);
+      console.log('📝 Latest message has codeBlocks:', !!latestMessage?.codeBlocks);
+      
+      // Enhanced condition: trigger if there's ANY code-related content
+      if (latestMessage && (
+        (latestMessage.isCodeMessage && latestMessage.code) ||
+        (latestMessage.codeBlocks && latestMessage.codeBlocks.length > 0) ||
+        (latestMessage.content && latestMessage.content.includes('```'))
+      )) {
+        console.log('✅ Triggering Monaco editors auto-population');
         this.autoPopulateMonacoEditors(latestMessage);
+      } else {
+        console.log('⚠️ No code content found in latest message, skipping Monaco update');
+        console.log('📝 Message content preview:', latestMessage?.content?.substring(0, 200) + '...');
       }
     } catch (error) {
       console.error('❌ Error handling AI response code:', error);
@@ -762,7 +779,13 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       }
       
       // 🎯 BULLETPROOF: ALWAYS update HTML editor (FORCE update every time)
-      if (htmlCode && htmlCode.trim().length > 10) {
+      console.log('🔍 HTML UPDATE ANALYSIS:');
+      console.log('  - htmlCode exists:', !!htmlCode);
+      console.log('  - htmlCode length:', htmlCode?.length || 0);
+      console.log('  - htmlCode trimmed length:', htmlCode?.trim().length || 0);
+      console.log('  - htmlCode preview:', htmlCode ? htmlCode.substring(0, 100) + '...' : 'NONE');
+      
+      if (htmlCode && htmlCode.trim().length > 0) {
         console.log('✅ Using extracted HTML content:', htmlCode.length, 'characters');
         console.log('📝 HTML content preview:', htmlCode.substring(0, 200) + '...');
         this.updateEditorBuffer('html', htmlCode, isConversationContinuation);
@@ -770,31 +793,57 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         console.log('✅ HTML editor updated with extracted content');
       } else {
         // ALWAYS generate HTML - never leave empty
-        console.log('🔧 No valid HTML extracted, generating specific HTML for card component');
+        console.log('🔧 No valid HTML extracted, generating specific HTML for component');
         console.log('🔧 Available data - TypeScript:', !!typescriptCode, 'HTML:', !!htmlCode, 'SCSS:', !!scssCode);
-        console.log('🔧 TypeScript contains "card":', typescriptCode.toLowerCase().includes('card'));
-        console.log('🔧 TypeScript contains "responsive":', typescriptCode.toLowerCase().includes('responsive'));
+        console.log('🔧 TypeScript preview:', typescriptCode ? typescriptCode.substring(0, 200) + '...' : 'NONE');
         
         let specificHTML = '';
-        if (typescriptCode.toLowerCase().includes('card') && typescriptCode.toLowerCase().includes('responsive')) {
+        
+        // Enhanced detection for component types
+        const tsLower = (typescriptCode || '').toLowerCase();
+        const hasCard = tsLower.includes('card') || tsLower.includes('mat-card');
+        const hasResponsive = tsLower.includes('responsive');
+        const hasTemplate = tsLower.includes('template:');
+        const hasMatCard = tsLower.includes('matcardmodule') || tsLower.includes('mat-card');
+        
+        console.log('🔧 Component analysis:');
+        console.log('  - Has card:', hasCard);
+        console.log('  - Has responsive:', hasResponsive);
+        console.log('  - Has template:', hasTemplate);
+        console.log('  - Has MatCard:', hasMatCard);
+        
+        if (hasMatCard || (hasCard && hasResponsive)) {
           specificHTML = this.generateSpecificCardHTML();
-          console.log('🎯 Generated specific responsive card HTML');
-        } else if (typescriptCode.toLowerCase().includes('card')) {
+          console.log('🎯 Generated specific responsive Material card HTML');
+        } else if (hasCard) {
           specificHTML = this.generateCardHTML('responsive-card');
           console.log('🎯 Generated generic card HTML');
+        } else if (hasTemplate) {
+          specificHTML = this.generateContextualHTML(typescriptCode);
+          console.log('🎯 Generated contextual HTML from template');
         } else {
-          specificHTML = this.generateContextualHTML(typescriptCode || 'card component');
-          console.log('🎯 Generated contextual HTML');
+          specificHTML = this.generateContextualHTML(typescriptCode || 'component');
+          console.log('🎯 Generated fallback contextual HTML');
         }
+        
+        console.log('🔧 Generated HTML length:', specificHTML.length);
+        console.log('🔧 Generated HTML preview:', specificHTML.substring(0, 200) + '...');
         
         this.updateEditorBuffer('html', specificHTML, isConversationContinuation);
         updatedEditors++;
         console.log('✅ HTML editor FORCE updated with specific content:', specificHTML.length, 'characters');
       }
       
-      // 🚨 EMERGENCY FALLBACK: If still no HTML, force a basic template
-      if (!htmlCode && !this.editorState.buffers().html) {
-        console.log('🚨 EMERGENCY: No HTML in editor, forcing basic template');
+      // 🚨 CRITICAL SAFETY NET: ALWAYS ensure HTML editor has content
+      const currentHtmlBuffer = this.editorState.buffers().html;
+      console.log('🔍 SAFETY NET CHECK:');
+      console.log('  - Current HTML buffer exists:', !!currentHtmlBuffer);
+      console.log('  - Current HTML buffer length:', currentHtmlBuffer?.length || 0);
+      console.log('  - htmlCode was set:', !!htmlCode);
+      console.log('  - Is first request:', !isConversationContinuation);
+      
+      if ((!currentHtmlBuffer || currentHtmlBuffer.trim().length === 0) && !isConversationContinuation) {
+        console.log('🚨 CRITICAL: First request with empty HTML buffer - forcing update');
         const emergencyHTML = `<div class="component-container">
   <div class="card">
     <h3>Responsive Card Component</h3>
@@ -803,7 +852,8 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   </div>
 </div>`;
         this.updateEditorBuffer('html', emergencyHTML, false);
-        console.log('🚨 Emergency HTML template applied');
+        updatedEditors++;
+        console.log('🚨 CRITICAL: Emergency HTML template applied for first request');
       }
       
       // 🎯 BULLETPROOF: ALWAYS update SCSS editor (generate if needed)
@@ -984,15 +1034,25 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   // 🎯 SUPER PRECISE HTML EXTRACTION - Aggressive pattern matching
   private bulletproofExtractHTML(tsCode: string): string | null {
     console.log('🔍 SUPER PRECISE HTML extraction starting...');
-    console.log('📝 Code to analyze:', tsCode.substring(0, 200) + '...');
+    console.log('📝 Code to analyze length:', tsCode.length);
+    console.log('📝 Code preview:', tsCode.substring(0, 300) + '...');
     
     // Pattern 1: template: `...` (backticks) - Most common in Angular
+    console.log('🔍 Trying Pattern 1: template with backticks');
     let templateMatch = tsCode.match(/template:\s*`([\s\S]*?)`(?=\s*,|\s*}|\s*\])/);
     if (templateMatch && templateMatch[1]) {
       console.log('✅ Found HTML in inline template with backticks');
-      console.log('📝 Extracted template content:', templateMatch[1].substring(0, 100) + '...');
+      console.log('📝 Raw extracted content length:', templateMatch[1].length);
+      console.log('📝 Raw extracted content:', templateMatch[1].substring(0, 200) + '...');
       const html = this.cleanExtractedHTML(templateMatch[1]);
-      if (html) return html;
+      console.log('📝 Cleaned HTML length:', html?.length || 0);
+      console.log('📝 Cleaned HTML preview:', html ? html.substring(0, 200) + '...' : 'NONE');
+      if (html && html.trim().length > 0) {
+        console.log('✅ Pattern 1 SUCCESS - returning HTML');
+        return html;
+      }
+    } else {
+      console.log('❌ Pattern 1 failed - no template with backticks found');
     }
     
     // Pattern 2: templateUrl reference - generate specific HTML for the component
@@ -1062,13 +1122,25 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   // 🎯 BULLETPROOF SCSS EXTRACTION - Multiple patterns and fallbacks
   private bulletproofExtractSCSS(tsCode: string): string | null {
     console.log('🔍 BULLETPROOF SCSS extraction starting...');
+    console.log('📝 Code to analyze length:', tsCode.length);
+    console.log('📝 Code preview:', tsCode.substring(0, 300) + '...');
     
     // Pattern 1: styles: [`...`] (backticks) - Enhanced for inline styles
+    console.log('🔍 Trying Pattern 1: styles with backticks');
     let stylesMatch = tsCode.match(/styles:\s*\[\s*`([\s\S]*?)`\s*\](?=\s*\}|\s*\))/);
     if (stylesMatch && stylesMatch[1]) {
       console.log('✅ Found SCSS in inline styles with backticks');
-      console.log('📝 Extracted styles content:', stylesMatch[1].substring(0, 100) + '...');
-      return this.cleanExtractedSCSS(stylesMatch[1]);
+      console.log('📝 Raw extracted styles length:', stylesMatch[1].length);
+      console.log('📝 Raw extracted styles:', stylesMatch[1].substring(0, 200) + '...');
+      const scss = this.cleanExtractedSCSS(stylesMatch[1]);
+      console.log('📝 Cleaned SCSS length:', scss?.length || 0);
+      console.log('📝 Cleaned SCSS preview:', scss ? scss.substring(0, 200) + '...' : 'NONE');
+      if (scss && scss.trim().length > 0) {
+        console.log('✅ Pattern 1 SUCCESS - returning SCSS');
+        return scss;
+      }
+    } else {
+      console.log('❌ Pattern 1 failed - no styles with backticks found');
     }
     
     // Pattern 2: styles: ["..."] (double quotes)
