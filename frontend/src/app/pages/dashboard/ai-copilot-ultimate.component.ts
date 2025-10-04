@@ -644,40 +644,103 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     }
   }
 
-  // 🔧 ENHANCED: AUTO-POPULATE MONACO EDITORS FROM CHAT MESSAGE
+  // 🔧 ENHANCED: AUTO-POPULATE MONACO EDITORS FROM CHAT MESSAGE WITH MULTIPLE CODE BLOCKS
   autoPopulateMonacoEditors(message: UltimateChatMessage) {
-    if (!message.code) return;
+    if (!message.code && !message.codeBlocks) return;
 
     try {
-      const language = message.codeLanguage?.toLowerCase() || 'typescript';
-      const code = message.code;
-
-      console.log('🤖 Auto-populating Monaco editor:', language, code.length, 'characters');
-
-      // Determine which editor to populate based on language
-      if (language === 'typescript' || language === 'ts') {
-        this.editorState.updateBuffer('typescript', code);
-        this.notificationService.showSuccess('✨ TypeScript code auto-populated!');
-      } else if (language === 'html') {
-        this.editorState.updateBuffer('html', code);
-        this.notificationService.showSuccess('✨ HTML code auto-populated!');
-      } else if (language === 'scss' || language === 'css') {
-        this.editorState.updateBuffer('scss', code);
-        this.notificationService.showSuccess('✨ SCSS code auto-populated!');
-      } else {
-        // Default to TypeScript for unknown languages
-        this.editorState.updateBuffer('typescript', code);
-        this.notificationService.showSuccess(`✨ Code auto-populated to TypeScript editor!`);
+      let populatedCount = 0;
+      const codeBlocks = message.codeBlocks || [];
+      
+      // If we have multiple code blocks, process them all
+      if (codeBlocks.length > 0) {
+        console.log('🤖 Processing', codeBlocks.length, 'code blocks');
+        
+        for (const block of codeBlocks) {
+          const language = block.language?.toLowerCase() || 'typescript';
+          const code = this.formatCodeForEditor(block.code, language);
+          
+          if (this.populateEditorByLanguage(language, code)) {
+            populatedCount++;
+          }
+        }
+      } 
+      // Fallback to single code block
+      else if (message.code) {
+        const language = message.codeLanguage?.toLowerCase() || 'typescript';
+        const code = this.formatCodeForEditor(message.code, language);
+        
+        if (this.populateEditorByLanguage(language, code)) {
+          populatedCount++;
+        }
       }
 
-      // 🔧 TRIGGER PREVIEW UPDATE
-      setTimeout(() => {
-        this.updatePreview();
-      }, 500);
+      // Show success notification
+      if (populatedCount > 0) {
+        const plural = populatedCount > 1 ? 's' : '';
+        this.notificationService.showSuccess(`✨ ${populatedCount} code block${plural} auto-populated to Monaco editor${plural}!`);
+        
+        // 🔧 TRIGGER PREVIEW UPDATE
+        setTimeout(() => {
+          this.updatePreview();
+        }, 500);
+      }
 
     } catch (error) {
       console.error('❌ Error auto-populating editors:', error);
       this.notificationService.showError('Failed to auto-populate code');
+    }
+  }
+
+  // 🎨 FORMAT CODE FOR EDITOR - Clean up and format code properly
+  private formatCodeForEditor(code: string, language: string): string {
+    return code
+      .trim()
+      // Remove any markdown artifacts
+      .replace(/^```[\w]*\n?/, '')
+      .replace(/```$/, '')
+      // Ensure proper indentation for TypeScript/HTML
+      .replace(/^(\s*)/gm, (match) => match.replace(/\t/g, '  ')) // Convert tabs to spaces
+      .trim();
+  }
+
+  // 🎯 POPULATE EDITOR BY LANGUAGE - Smart editor selection
+  private populateEditorByLanguage(language: string, code: string): boolean {
+    if (!code || code.length < 5) return false;
+
+    console.log(`🤖 Auto-populating ${language} editor:`, code.length, 'characters');
+
+    switch (language) {
+      case 'typescript':
+      case 'ts':
+      case 'javascript':
+      case 'js':
+        this.editorState.updateBuffer('typescript', code);
+        return true;
+        
+      case 'html':
+      case 'template':
+        this.editorState.updateBuffer('html', code);
+        return true;
+        
+      case 'scss':
+      case 'css':
+      case 'sass':
+        this.editorState.updateBuffer('scss', code);
+        return true;
+        
+      case 'bash':
+      case 'shell':
+      case 'cmd':
+        // For shell commands, add them as comments to TypeScript
+        const commentedCode = `// ${language.toUpperCase()} Commands:\n// ${code.split('\n').join('\n// ')}`;
+        this.editorState.updateBuffer('typescript', commentedCode);
+        return true;
+        
+      default:
+        // Default to TypeScript for unknown languages
+        this.editorState.updateBuffer('typescript', code);
+        return true;
     }
   }
   
