@@ -1637,10 +1637,11 @@ Focus on incremental improvements and additions to create a cohesive, evolving c
             const completion = await openai.chat.completions.create({
               model: 'gpt-4-turbo-preview',
               messages: messages,
-              max_tokens: 3000, // Increased for complex component requests
-              temperature: 0.7,
-              presence_penalty: 0.1,
-              frequency_penalty: 0.1
+              max_tokens: 2000, // Optimized for faster response
+              temperature: 0.3, // Lower for more focused responses
+              presence_penalty: 0,
+              frequency_penalty: 0,
+              stream: false // Ensure no streaming for consistent timing
             });
 
             const aiResponse = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
@@ -1970,11 +1971,18 @@ function enhanceUserRequestForComponents(originalMessage) {
 - Include realistic mock data for demonstration
 - Make components reusable and well-documented
 
-📦 DELIVERABLE FORMAT:
+📦 MANDATORY DELIVERABLE FORMAT (ALWAYS PROVIDE ALL THREE):
 1. Complete TypeScript component (with imports, interfaces, mock data)
-2. Complete HTML template (with Angular directives, responsive classes)
+2. Complete HTML template (with Angular directives, responsive classes) 
 3. Complete SCSS styles (with animations, responsive breakpoints)
-4. All code should be immediately usable in an Angular project`;
+
+🚨 CRITICAL: You MUST provide separate code blocks for:
+- TypeScript (.ts file content)
+- HTML (.html template content)  
+- SCSS (.scss styling content)
+
+Even if the user only asks for one part, ALWAYS provide all three parts in separate code blocks.
+All code should be immediately usable in an Angular project.`;
 
   const enhancedMessage = originalMessage + enhancement + serviceRequirements;
   

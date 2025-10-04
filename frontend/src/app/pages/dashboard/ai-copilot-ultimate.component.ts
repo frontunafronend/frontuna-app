@@ -758,12 +758,14 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       // 🎯 BULLETPROOF: ALWAYS update HTML editor (FORCE update every time)
       if (htmlCode && htmlCode.trim().length > 10) {
         console.log('✅ Using extracted HTML content:', htmlCode.length, 'characters');
+        console.log('📝 HTML content preview:', htmlCode.substring(0, 200) + '...');
         this.updateEditorBuffer('html', htmlCode, isConversationContinuation);
         updatedEditors++;
         console.log('✅ HTML editor updated with extracted content');
       } else {
         // ALWAYS generate HTML - never leave empty
         console.log('🔧 No valid HTML extracted, generating specific HTML for card component');
+        console.log('🔧 Available data - TypeScript:', !!typescriptCode, 'HTML:', !!htmlCode, 'SCSS:', !!scssCode);
         console.log('🔧 TypeScript contains "card":', typescriptCode.toLowerCase().includes('card'));
         console.log('🔧 TypeScript contains "responsive":', typescriptCode.toLowerCase().includes('responsive'));
         
@@ -782,6 +784,20 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         this.updateEditorBuffer('html', specificHTML, isConversationContinuation);
         updatedEditors++;
         console.log('✅ HTML editor FORCE updated with specific content:', specificHTML.length, 'characters');
+      }
+      
+      // 🚨 EMERGENCY FALLBACK: If still no HTML, force a basic template
+      if (!htmlCode && !this.editorState.buffers().html) {
+        console.log('🚨 EMERGENCY: No HTML in editor, forcing basic template');
+        const emergencyHTML = `<div class="component-container">
+  <div class="card">
+    <h3>Responsive Card Component</h3>
+    <p>This is a responsive card with hover animations.</p>
+    <button class="btn btn-primary">Action</button>
+  </div>
+</div>`;
+        this.updateEditorBuffer('html', emergencyHTML, false);
+        console.log('🚨 Emergency HTML template applied');
       }
       
       // 🎯 BULLETPROOF: ALWAYS update SCSS editor (generate if needed)
