@@ -744,6 +744,12 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
           scssCode = this.bulletproofExtractSCSS(typescriptCode) || '';
           console.log('📝 SCSS extraction result:', scssCode ? scssCode.substring(0, 100) + '...' : 'EMPTY');
         }
+        
+        // 🎯 CLEAN TYPESCRIPT: Remove inline template and styles if extracted
+        if (htmlCode || scssCode) {
+          console.log('🧹 Cleaning TypeScript code - removing inline template and styles');
+          typescriptCode = this.cleanTypeScriptCode(typescriptCode, !!htmlCode, !!scssCode);
+        }
       }
       
       // Step 4: FORCE UPDATE ALL THREE EDITORS (BULLETPROOF GUARANTEE)
@@ -981,9 +987,10 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     console.log('📝 Code to analyze:', tsCode.substring(0, 200) + '...');
     
     // Pattern 1: template: `...` (backticks) - Most common in Angular
-    let templateMatch = tsCode.match(/template:\s*`([\s\S]*?)`(?=\s*,|\s*})/);
+    let templateMatch = tsCode.match(/template:\s*`([\s\S]*?)`(?=\s*,|\s*}|\s*\])/);
     if (templateMatch && templateMatch[1]) {
-      console.log('✅ Found HTML in template with backticks');
+      console.log('✅ Found HTML in inline template with backticks');
+      console.log('📝 Extracted template content:', templateMatch[1].substring(0, 100) + '...');
       const html = this.cleanExtractedHTML(templateMatch[1]);
       if (html) return html;
     }
@@ -1056,10 +1063,11 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   private bulletproofExtractSCSS(tsCode: string): string | null {
     console.log('🔍 BULLETPROOF SCSS extraction starting...');
     
-    // Pattern 1: styles: [`...`] (backticks)
-    let stylesMatch = tsCode.match(/styles:\s*\[\s*`([\s\S]*?)`\s*\]/);
+    // Pattern 1: styles: [`...`] (backticks) - Enhanced for inline styles
+    let stylesMatch = tsCode.match(/styles:\s*\[\s*`([\s\S]*?)`\s*\](?=\s*\}|\s*\))/);
     if (stylesMatch && stylesMatch[1]) {
-      console.log('✅ Found SCSS in styles with backticks');
+      console.log('✅ Found SCSS in inline styles with backticks');
+      console.log('📝 Extracted styles content:', stylesMatch[1].substring(0, 100) + '...');
       return this.cleanExtractedSCSS(stylesMatch[1]);
     }
     
@@ -2112,6 +2120,40 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     ];
     
     return angularPatterns.some(pattern => pattern.test(html));
+  }
+  
+  // 🧹 CLEAN TYPESCRIPT CODE - Remove inline template and styles for separate editors
+  private cleanTypeScriptCode(tsCode: string, hasExtractedHTML: boolean, hasExtractedSCSS: boolean): string {
+    console.log('🧹 Cleaning TypeScript code - removing inline template and styles');
+    
+    let cleanedCode = tsCode;
+    
+    // Remove inline template and replace with templateUrl
+    if (hasExtractedHTML) {
+      cleanedCode = cleanedCode.replace(
+        /template:\s*`[\s\S]*?`(?=\s*,|\s*}|\s*\])/g,
+        "templateUrl: './component.html'"
+      );
+      console.log('✅ Replaced inline template with templateUrl');
+    }
+    
+    // Remove inline styles and replace with styleUrls
+    if (hasExtractedSCSS) {
+      cleanedCode = cleanedCode.replace(
+        /styles:\s*\[\s*`[\s\S]*?`\s*\](?=\s*\}|\s*\))/g,
+        "styleUrls: ['./component.scss']"
+      );
+      console.log('✅ Replaced inline styles with styleUrls');
+    }
+    
+    // Clean up any extra commas or formatting issues
+    cleanedCode = cleanedCode
+      .replace(/,(\s*,)+/g, ',') // Remove duplicate commas
+      .replace(/,(\s*})/g, '$1') // Remove trailing commas before closing braces
+      .replace(/,(\s*\])/g, '$1'); // Remove trailing commas before closing brackets
+    
+    console.log('✅ TypeScript code cleaned and formatted');
+    return cleanedCode;
   }
   
   // 🎯 LEGACY METHODS (kept for compatibility)
