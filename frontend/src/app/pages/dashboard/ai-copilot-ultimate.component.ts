@@ -658,18 +658,24 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     }
   }
 
-  // 🔧 ENHANCED: AUTO-POPULATE MONACO EDITORS FROM CHAT MESSAGE WITH CONVERSATION CONTINUITY
+  // 🔧 BULLETPROOF: AUTO-POPULATE ALL MONACO EDITORS FROM CHAT MESSAGE
   autoPopulateMonacoEditors(message: UltimateChatMessage) {
     if (!message.code && !message.codeBlocks) return;
 
     try {
-      let populatedCount = 0;
       const codeBlocks = message.codeBlocks || [];
       const isConversationContinuation = this.chatMessages().length > 1;
       
-      console.log('🔄 Auto-populating editors. Conversation mode:', isConversationContinuation);
+      console.log('🔄 BULLETPROOF: Auto-populating ALL editors. Conversation mode:', isConversationContinuation);
+      console.log('📦 Available code blocks:', codeBlocks.length);
+      console.log('📝 Single code available:', !!message.code);
       
-      // If we have multiple code blocks, process them all
+      // 🎯 BULLETPROOF APPROACH: Always try to populate all three editors
+      let typescriptCode = '';
+      let htmlCode = '';
+      let scssCode = '';
+      
+      // Step 1: Process all available code blocks
       if (codeBlocks.length > 0) {
         console.log('🤖 Processing', codeBlocks.length, 'code blocks');
         
@@ -677,31 +683,110 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
           const language = block.language?.toLowerCase() || 'typescript';
           const code = this.formatCodeForEditor(block.code, language);
           
-          if (this.populateEditorByLanguage(language, code, isConversationContinuation)) {
-            populatedCount++;
+          console.log(`📝 Processing ${language} block:`, code.substring(0, 100) + '...');
+          
+          switch (language) {
+            case 'typescript':
+            case 'ts':
+            case 'javascript':
+            case 'js':
+              typescriptCode = code;
+              break;
+            case 'html':
+            case 'template':
+              htmlCode = code;
+              break;
+            case 'scss':
+            case 'css':
+            case 'sass':
+              scssCode = code;
+              break;
           }
         }
-      } 
-      // Fallback to single code block
-      else if (message.code) {
+      }
+      
+      // Step 2: Fallback to single code block
+      if (message.code && !typescriptCode) {
         const language = message.codeLanguage?.toLowerCase() || 'typescript';
         const code = this.formatCodeForEditor(message.code, language);
         
-        if (this.populateEditorByLanguage(language, code, isConversationContinuation)) {
-          populatedCount++;
+        if (language.includes('typescript') || language.includes('js')) {
+          typescriptCode = code;
+        } else if (language.includes('html')) {
+          htmlCode = code;
+        } else if (language.includes('scss') || language.includes('css')) {
+          scssCode = code;
+        } else {
+          typescriptCode = code; // Default to TypeScript
         }
       }
-
-      // Show success notification
-      if (populatedCount > 0) {
-        const plural = populatedCount > 1 ? 's' : '';
+      
+      // Step 3: BULLETPROOF EXTRACTION - Always try to extract HTML/SCSS from TypeScript
+      if (typescriptCode) {
+        console.log('🔍 BULLETPROOF: Extracting HTML/SCSS from TypeScript code');
+        
+        // Extract HTML if not already found
+        if (!htmlCode) {
+          htmlCode = this.bulletproofExtractHTML(typescriptCode) || '';
+        }
+        
+        // Extract SCSS if not already found
+        if (!scssCode) {
+          scssCode = this.bulletproofExtractSCSS(typescriptCode) || '';
+        }
+      }
+      
+      // Step 4: FORCE UPDATE ALL THREE EDITORS (BULLETPROOF GUARANTEE)
+      let updatedEditors = 0;
+      
+      if (typescriptCode) {
+        this.updateEditorBuffer('typescript', typescriptCode, isConversationContinuation);
+        updatedEditors++;
+        console.log('✅ TypeScript editor updated');
+      }
+      
+      // 🎯 BULLETPROOF: ALWAYS update HTML editor (generate if needed)
+      if (htmlCode) {
+        this.updateEditorBuffer('html', htmlCode, isConversationContinuation);
+        updatedEditors++;
+        console.log('✅ HTML editor updated with extracted content');
+      } else if (typescriptCode) {
+        // Generate basic HTML structure if none found
+        const fallbackHTML = this.generateFallbackHTML();
+        this.updateEditorBuffer('html', fallbackHTML, isConversationContinuation);
+        updatedEditors++;
+        console.log('✅ HTML editor updated with fallback content');
+      }
+      
+      // 🎯 BULLETPROOF: ALWAYS update SCSS editor (generate if needed)
+      if (scssCode) {
+        this.updateEditorBuffer('scss', scssCode, isConversationContinuation);
+        updatedEditors++;
+        console.log('✅ SCSS editor updated with extracted content');
+      } else if (typescriptCode) {
+        // Generate basic SCSS structure if none found
+        const fallbackSCSS = this.generateFallbackSCSS();
+        this.updateEditorBuffer('scss', fallbackSCSS, isConversationContinuation);
+        updatedEditors++;
+        console.log('✅ SCSS editor updated with fallback content');
+      }
+      
+      // Show comprehensive notification
+      if (updatedEditors > 0) {
         const action = isConversationContinuation ? 'updated' : 'populated';
-        this.notificationService.showSuccess(`✨ ${populatedCount} code block${plural} ${action} in Monaco editor${plural}!`);
+        const editorsList = [];
+        if (typescriptCode) editorsList.push('TypeScript');
+        if (htmlCode) editorsList.push('HTML');
+        if (scssCode) editorsList.push('SCSS');
+        
+        this.notificationService.showSuccess(`✨ ${editorsList.join(', ')} editor${updatedEditors > 1 ? 's' : ''} ${action}!`);
         
         // 🔧 TRIGGER PREVIEW UPDATE
         setTimeout(() => {
           this.updatePreview();
         }, 500);
+      } else {
+        console.warn('⚠️ No editors were updated - no valid code found');
       }
 
     } catch (error) {
@@ -840,38 +925,326 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     return existing + '\n\n' + newCode;
   }
   
-  // 🎯 EXTRACT HTML FROM ANGULAR COMPONENT TEMPLATE
-  private extractHTMLFromAngularComponent(tsCode: string): string | null {
-    // Look for template: ` ... ` or template: " ... "
-    const templateMatch = tsCode.match(/template:\s*[`"']([\s\S]*?)[`"']/);
+  // 🎯 BULLETPROOF HTML EXTRACTION - Multiple patterns and fallbacks
+  private bulletproofExtractHTML(tsCode: string): string | null {
+    console.log('🔍 BULLETPROOF HTML extraction starting...');
+    
+    // Pattern 1: template: `...` (backticks)
+    let templateMatch = tsCode.match(/template:\s*`([\s\S]*?)`/);
     if (templateMatch && templateMatch[1]) {
-      let html = templateMatch[1].trim();
+      console.log('✅ Found HTML in template with backticks');
+      return this.cleanExtractedHTML(templateMatch[1]);
+    }
+    
+    // Pattern 2: template: "..." (double quotes)
+    templateMatch = tsCode.match(/template:\s*"([\s\S]*?)"/);
+    if (templateMatch && templateMatch[1]) {
+      console.log('✅ Found HTML in template with double quotes');
+      return this.cleanExtractedHTML(templateMatch[1]);
+    }
+    
+    // Pattern 3: template: '...' (single quotes)
+    templateMatch = tsCode.match(/template:\s*'([\s\S]*?)'/);
+    if (templateMatch && templateMatch[1]) {
+      console.log('✅ Found HTML in template with single quotes');
+      return this.cleanExtractedHTML(templateMatch[1]);
+    }
+    
+    // Pattern 4: Look for HTML-like content anywhere in the code
+    const htmlTags = tsCode.match(/<[^>]+>/g);
+    if (htmlTags && htmlTags.length > 2) {
+      console.log('✅ Found HTML-like tags, extracting...');
+      // Find the section with the most HTML tags
+      const lines = tsCode.split('\n');
+      let bestMatch = '';
+      let maxTags = 0;
       
-      // Clean up the HTML - remove excessive indentation
-      const lines = html.split('\n');
-      const minIndent = Math.min(...lines.filter(line => line.trim()).map(line => line.match(/^\s*/)?.[0]?.length || 0));
+      for (let i = 0; i < lines.length; i++) {
+        const section = lines.slice(i, i + 10).join('\n');
+        const tagCount = (section.match(/<[^>]+>/g) || []).length;
+        if (tagCount > maxTags) {
+          maxTags = tagCount;
+          bestMatch = section;
+        }
+      }
       
-      html = lines.map(line => line.substring(minIndent)).join('\n').trim();
-      
-      if (html.length > 20) { // Only return substantial HTML
-        return html;
+      if (bestMatch) {
+        return this.cleanExtractedHTML(bestMatch);
       }
     }
+    
+    // Pattern 5: Generate default HTML if component structure is detected
+    if (tsCode.includes('@Component') && tsCode.includes('selector:')) {
+      console.log('✅ Generating default HTML for component');
+      const selectorMatch = tsCode.match(/selector:\s*['"]([\w-]+)['"]/);
+      const selector = selectorMatch ? selectorMatch[1] : 'app-component';
+      
+      return `<div class="${selector}-container">
+  <h2>Component Title</h2>
+  <p>This is a generated component template.</p>
+  <button class="btn">Click me</button>
+</div>`;
+    }
+    
+    console.log('❌ No HTML found in TypeScript code');
     return null;
   }
   
-  // 🎯 EXTRACT SCSS FROM ANGULAR COMPONENT STYLES
-  private extractSCSSFromAngularComponent(tsCode: string): string | null {
-    // Look for styles: [` ... `] or styleUrls
-    const stylesMatch = tsCode.match(/styles:\s*\[\s*[`"']([\s\S]*?)[`"']\s*\]/);
+  // 🎯 BULLETPROOF SCSS EXTRACTION - Multiple patterns and fallbacks
+  private bulletproofExtractSCSS(tsCode: string): string | null {
+    console.log('🔍 BULLETPROOF SCSS extraction starting...');
+    
+    // Pattern 1: styles: [`...`] (backticks)
+    let stylesMatch = tsCode.match(/styles:\s*\[\s*`([\s\S]*?)`\s*\]/);
     if (stylesMatch && stylesMatch[1]) {
-      let scss = stylesMatch[1].trim();
+      console.log('✅ Found SCSS in styles with backticks');
+      return this.cleanExtractedSCSS(stylesMatch[1]);
+    }
+    
+    // Pattern 2: styles: ["..."] (double quotes)
+    stylesMatch = tsCode.match(/styles:\s*\[\s*"([\s\S]*?)"\s*\]/);
+    if (stylesMatch && stylesMatch[1]) {
+      console.log('✅ Found SCSS in styles with double quotes');
+      return this.cleanExtractedSCSS(stylesMatch[1]);
+    }
+    
+    // Pattern 3: styles: ['...'] (single quotes)
+    stylesMatch = tsCode.match(/styles:\s*\[\s*'([\s\S]*?)'\s*\]/);
+    if (stylesMatch && stylesMatch[1]) {
+      console.log('✅ Found SCSS in styles with single quotes');
+      return this.cleanExtractedSCSS(stylesMatch[1]);
+    }
+    
+    // Pattern 4: Look for CSS-like content anywhere in the code
+    const cssProperties = tsCode.match(/[\w-]+:\s*[^;]+;/g);
+    if (cssProperties && cssProperties.length > 3) {
+      console.log('✅ Found CSS-like properties, extracting...');
+      // Find the section with the most CSS properties
+      const lines = tsCode.split('\n');
+      let bestMatch = '';
+      let maxProps = 0;
       
-      if (scss.length > 10) { // Only return substantial SCSS
-        return scss;
+      for (let i = 0; i < lines.length; i++) {
+        const section = lines.slice(i, i + 20).join('\n');
+        const propCount = (section.match(/[\w-]+:\s*[^;]+;/g) || []).length;
+        if (propCount > maxProps) {
+          maxProps = propCount;
+          bestMatch = section;
+        }
+      }
+      
+      if (bestMatch) {
+        return this.cleanExtractedSCSS(bestMatch);
       }
     }
+    
+    // Pattern 5: Generate default SCSS if component structure is detected
+    if (tsCode.includes('@Component') && tsCode.includes('selector:')) {
+      console.log('✅ Generating default SCSS for component');
+      const selectorMatch = tsCode.match(/selector:\s*['"]([\w-]+)['"]/);
+      const selector = selectorMatch ? selectorMatch[1] : 'app-component';
+      
+      return `.${selector}-container {
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+  h2 {
+    color: #333;
+    margin-bottom: 16px;
+  }
+  
+  p {
+    color: #666;
+    line-height: 1.5;
+  }
+  
+  .btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    
+    &:hover {
+      background: #0056b3;
+    }
+  }
+}`;
+    }
+    
+    console.log('❌ No SCSS found in TypeScript code');
     return null;
+  }
+  
+  // 🧹 CLEAN EXTRACTED HTML
+  private cleanExtractedHTML(html: string): string {
+    if (!html || html.trim().length < 5) return '';
+    
+    let cleaned = html.trim();
+    
+    // Remove excessive indentation
+    const lines = cleaned.split('\n');
+    const nonEmptyLines = lines.filter(line => line.trim());
+    if (nonEmptyLines.length > 0) {
+      const minIndent = Math.min(...nonEmptyLines.map(line => line.match(/^\s*/)?.[0]?.length || 0));
+      cleaned = lines.map(line => line.substring(minIndent)).join('\n').trim();
+    }
+    
+    // Ensure it looks like HTML
+    if (!cleaned.includes('<') || !cleaned.includes('>')) {
+      return '';
+    }
+    
+    console.log('🧹 Cleaned HTML:', cleaned.substring(0, 100) + '...');
+    return cleaned;
+  }
+  
+  // 🧹 CLEAN EXTRACTED SCSS
+  private cleanExtractedSCSS(scss: string): string {
+    if (!scss || scss.trim().length < 5) return '';
+    
+    let cleaned = scss.trim();
+    
+    // Remove excessive indentation
+    const lines = cleaned.split('\n');
+    const nonEmptyLines = lines.filter(line => line.trim());
+    if (nonEmptyLines.length > 0) {
+      const minIndent = Math.min(...nonEmptyLines.map(line => line.match(/^\s*/)?.[0]?.length || 0));
+      cleaned = lines.map(line => line.substring(minIndent)).join('\n').trim();
+    }
+    
+    // Ensure it looks like CSS/SCSS
+    if (!cleaned.includes('{') && !cleaned.includes(':')) {
+      return '';
+    }
+    
+    console.log('🧹 Cleaned SCSS:', cleaned.substring(0, 100) + '...');
+    return cleaned;
+  }
+  
+  // 🎯 FALLBACK GENERATORS - Always provide content
+  private generateFallbackHTML(): string {
+    console.log('🔧 Generating fallback HTML');
+    return `<div class="component-container">
+  <div class="header">
+    <h2>Component Title</h2>
+    <p>This is a generated component template.</p>
+  </div>
+  
+  <div class="content">
+    <div class="card">
+      <h3>Card Title</h3>
+      <p>Card description goes here.</p>
+      <button class="btn btn-primary">Action</button>
+    </div>
+  </div>
+</div>`;
+  }
+  
+  private generateFallbackSCSS(): string {
+    console.log('🔧 Generating fallback SCSS');
+    return `.component-container {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  
+  .header {
+    text-align: center;
+    margin-bottom: 30px;
+    
+    h2 {
+      color: #333;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    
+    p {
+      color: #666;
+      font-size: 1.1rem;
+    }
+  }
+  
+  .content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    
+    .card {
+      flex: 1;
+      min-width: 250px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      
+      h3 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+      
+      p {
+        color: #666;
+        margin-bottom: 15px;
+        line-height: 1.5;
+      }
+      
+      .btn {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.3s ease;
+        
+        &:hover {
+          background: #0056b3;
+        }
+        
+        &.btn-primary {
+          background: #007bff;
+          
+          &:hover {
+            background: #0056b3;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .component-container {
+    padding: 15px;
+    
+    .content {
+      flex-direction: column;
+      
+      .card {
+        min-width: auto;
+      }
+    }
+  }
+}`;
+  }
+  
+  // 🎯 LEGACY METHODS (kept for compatibility)
+  private extractHTMLFromAngularComponent(tsCode: string): string | null {
+    return this.bulletproofExtractHTML(tsCode);
+  }
+  
+  private extractSCSSFromAngularComponent(tsCode: string): string | null {
+    return this.bulletproofExtractSCSS(tsCode);
   }
   
   copyMessage(message: UltimateChatMessage) {
