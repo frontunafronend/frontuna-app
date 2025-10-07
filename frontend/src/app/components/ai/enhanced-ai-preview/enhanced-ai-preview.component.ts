@@ -1920,47 +1920,112 @@ export class EnhancedAIPreviewComponent {
 
   /**
    * 🔧 CRITICAL FIX: Fix Bootstrap Grid Structure
-   * Moves *ngFor from row to column elements for proper side-by-side layout
+   * Ensures proper HTML structure with balanced opening/closing tags
    */
   private fixBootstrapGridStructure(html: string): string {
-    console.log('🔧 Fixing Bootstrap grid structure...');
+    console.log('🔧 Fixing Bootstrap grid structure and HTML balance...');
     
-    // Pattern: <div class="row" *ngFor="..."> should become <div class="row"> with *ngFor on columns
-    const wrongPattern = /<div class="row"([^>]*?)\*ngFor="([^"]*)"([^>]*?)>([\s\S]*?)<\/div>/g;
-    
-    const fixedHtml = html.replace(wrongPattern, (match: string, beforeAttrs: string, ngForValue: string, afterAttrs: string, content: string) => {
-      console.log('🎯 Found incorrect Bootstrap grid structure, fixing...');
-      console.log('📝 Original ngFor:', ngForValue);
-      
-      // Extract the column elements and add *ngFor to them
-      const columnPattern = /<div class="col[^"]*"([^>]*?)>/g;
-      
-      let fixedContent = content.replace(columnPattern, (colMatch: string, colAttrs: string) => {
-        // Add *ngFor to the column element
-        const cleanColAttrs = colAttrs.trim();
-        const ngForAttr = `*ngFor="${ngForValue}"`;
+    // First, fix the *ngFor placement issue
+    let fixedHtml = html.replace(/<div class="row"([^>]*?)\*ngFor="([^"]*)"([^>]*?)>([\s\S]*?)<\/div>/g, 
+      (match: string, beforeAttrs: string, ngForValue: string, afterAttrs: string, content: string) => {
+        console.log('🎯 Moving *ngFor from row to column elements...');
         
-        if (cleanColAttrs) {
+        // Move *ngFor to column elements
+        const fixedContent = content.replace(/<div class="col[^"]*"([^>]*?)>/g, (colMatch: string, colAttrs: string) => {
+          const cleanColAttrs = colAttrs.trim();
+          const ngForAttr = `*ngFor="${ngForValue}"`;
           return colMatch.replace('>', ` ${ngForAttr}>`);
-        } else {
-          return colMatch.replace('>', ` ${ngForAttr}>`);
-        }
-      });
-      
-      // Create the fixed row without *ngFor
-      const cleanBeforeAttrs = beforeAttrs.trim();
-      const cleanAfterAttrs = afterAttrs.trim();
-      const allAttrs = [cleanBeforeAttrs, cleanAfterAttrs].filter(a => a && a.length > 0).join(' ').trim();
-      
-      const fixedRow = `<div class="row"${allAttrs ? ' ' + allAttrs : ''}>${fixedContent}</div>`;
-      
-      console.log('✅ Fixed Bootstrap grid structure');
-      console.log('📝 Fixed structure preview:', fixedRow.substring(0, 200));
-      
-      return fixedRow;
-    });
+        });
+        
+        const cleanBeforeAttrs = beforeAttrs.trim();
+        const cleanAfterAttrs = afterAttrs.trim();
+        const allAttrs = [cleanBeforeAttrs, cleanAfterAttrs].filter(a => a && a.length > 0).join(' ').trim();
+        
+        return `<div class="row"${allAttrs ? ' ' + allAttrs : ''}>${fixedContent}</div>`;
+      }
+    );
     
+    // 🔧 CRITICAL: Fix missing closing tags that cause nesting
+    // This is the main issue - cards are nesting because closing </div> tags are missing
+    fixedHtml = this.balanceHtmlTags(fixedHtml);
+    
+    console.log('✅ Bootstrap grid structure and HTML balance fixed');
     return fixedHtml;
+  }
+
+  /**
+   * 🔧 BALANCE HTML TAGS
+   * Ensures all opening tags have corresponding closing tags
+   */
+  private balanceHtmlTags(html: string): string {
+    console.log('🔧 Balancing HTML tags...');
+    
+    // Stack to track opening tags
+    const tagStack: string[] = [];
+    const selfClosingTags = ['img', 'br', 'hr', 'input', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr'];
+    
+    // Find all tags
+    const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g;
+    const tags: Array<{tag: string, isClosing: boolean, isSelfClosing: boolean, fullMatch: string, index: number}> = [];
+    
+    let match;
+    while ((match = tagRegex.exec(html)) !== null) {
+      const fullTag = match[0];
+      const tagName = match[1].toLowerCase();
+      const isClosing = fullTag.startsWith('</');
+      const isSelfClosing = selfClosingTags.includes(tagName) || fullTag.endsWith('/>');
+      
+      tags.push({
+        tag: tagName,
+        isClosing,
+        isSelfClosing,
+        fullMatch: fullTag,
+        index: match.index
+      });
+    }
+    
+    // Build balanced HTML
+    let result = '';
+    let lastIndex = 0;
+    const openTags: string[] = [];
+    
+    for (const tagInfo of tags) {
+      // Add content before this tag
+      result += html.substring(lastIndex, tagInfo.index);
+      
+      if (tagInfo.isClosing) {
+        // Closing tag
+        if (openTags.length > 0 && openTags[openTags.length - 1] === tagInfo.tag) {
+          openTags.pop();
+          result += tagInfo.fullMatch;
+        } else {
+          // Orphaned closing tag - skip it
+          console.log(`⚠️ Skipping orphaned closing tag: ${tagInfo.fullMatch}`);
+        }
+      } else if (tagInfo.isSelfClosing) {
+        // Self-closing tag
+        result += tagInfo.fullMatch;
+      } else {
+        // Opening tag
+        openTags.push(tagInfo.tag);
+        result += tagInfo.fullMatch;
+      }
+      
+      lastIndex = tagInfo.index + tagInfo.fullMatch.length;
+    }
+    
+    // Add remaining content
+    result += html.substring(lastIndex);
+    
+    // Close any remaining open tags
+    while (openTags.length > 0) {
+      const tagToClose = openTags.pop();
+      result += `</${tagToClose}>`;
+      console.log(`🔧 Added missing closing tag: </${tagToClose}>`);
+    }
+    
+    console.log('✅ HTML tags balanced successfully');
+    return result;
   }
 
   /**
