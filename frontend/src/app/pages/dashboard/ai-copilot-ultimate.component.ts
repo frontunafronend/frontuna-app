@@ -756,23 +756,6 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     }
   }
   
-  clearChatHistory() {
-    this.optimizedAIChat.clearChat();
-    this.notificationService.showInfo('Chat history cleared');
-  }
-
-  /**
-   * 🚀 START NEW FRESH CONVERSATION - Completely new session with API
-   */
-  startNewConversation() {
-    this.optimizedAIChat.startFreshConversation();
-    this.notificationService.showSuccess('Started fresh conversation with AI');
-    
-    // Also clear the editor buffers for a completely fresh start
-    this.editorState.clearBuffers();
-    
-    console.log('🚀 New fresh conversation started - no previous context sent to API');
-  }
 
   /**
    * 🎯 ENHANCE PROMPT WITH ANGULAR CONTEXT AND MOCK DATA REQUEST
