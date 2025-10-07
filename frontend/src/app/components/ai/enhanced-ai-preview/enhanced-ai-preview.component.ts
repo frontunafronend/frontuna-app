@@ -1897,8 +1897,8 @@ export class EnhancedAIPreviewComponent {
    * Simple and reliable *ngFor processing
    */
   private processNgForSimple(html: string, mockData: any): string {
-    // Simple regex to find *ngFor directives
-    const ngForRegex = /<(\w+)([^>]*)\*ngFor="let\s+(\w+)\s+of\s+(\w+)"([^>]*?)>([\s\S]*?)<\/\1>/g;
+    // Enhanced regex to find *ngFor directives with proper attribute handling
+    const ngForRegex = /<(\w+)([^>]*?)\*ngFor="let\s+(\w+)\s+of\s+(\w+)"([^>]*?)>([\s\S]*?)<\/\1>/g;
     
     return html.replace(ngForRegex, (match: string, tagName: string, beforeAttrs: string, itemVar: string, arrayVar: string, afterAttrs: string, content: string) => {
       // Find the array in mockData
@@ -1928,6 +1928,17 @@ export class EnhancedAIPreviewComponent {
           return match;
         });
         
+        // Replace complex style bindings like [style.background-image]="'url(' + crypto.imageUrl + ')'"
+        processedContent = processedContent.replace(/\[style\.([^\]]+)\]="[^"]*(\w+)\.(\w+)[^"]*"/g, (match: string, styleProp: string, varName: string, propName: string) => {
+          if (varName === itemVar && item[propName] !== undefined) {
+            if (styleProp === 'background-image') {
+              return `style="${styleProp}: url(${item[propName]})"`;
+            }
+            return `style="${styleProp}: ${item[propName]}"`;
+          }
+          return match;
+        });
+        
         // Replace alt bindings alt="{{ item.property }}"
         processedContent = processedContent.replace(/alt="\{\{\s*(\w+)\.(\w+)\s*\}\}"/g, (match: string, varName: string, propName: string) => {
           if (varName === itemVar && item[propName] !== undefined) {
@@ -1937,9 +1948,9 @@ export class EnhancedAIPreviewComponent {
         });
         
         // Create the element with processed content
-        const cleanBeforeAttrs = beforeAttrs.replace(/\*ngFor="[^"]*"/, '').trim();
-        const cleanAfterAttrs = afterAttrs.trim();
-        const allAttrs = [cleanBeforeAttrs, cleanAfterAttrs].filter(a => a).join(' ');
+        const cleanBeforeAttrs = beforeAttrs.replace(/\*ngFor="[^"]*"/, '').replace(/^\s+|\s+$/g, '');
+        const cleanAfterAttrs = afterAttrs.replace(/^\s+|\s+$/g, '');
+        const allAttrs = [cleanBeforeAttrs, cleanAfterAttrs].filter(a => a && a.length > 0).join(' ');
         
         return `<${tagName}${allAttrs ? ' ' + allAttrs : ''}>${processedContent}</${tagName}>`;
       }).join('\n');
