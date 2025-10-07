@@ -854,13 +854,9 @@ USER REQUEST: `;
       
       // Step 1: Process all available code blocks
       if (codeBlocks.length > 0) {
-        console.log('🔧 Monaco Editor: Processing', codeBlocks.length, 'code blocks');
-        
         for (const block of codeBlocks) {
           const language = block.language?.toLowerCase() || 'typescript';
           const code = this.formatCodeForEditor(block.code, language);
-          
-          console.log(`📝 Processing ${language} block:`, code.substring(0, 100) + '...');
           
           switch (language) {
             case 'typescript':
@@ -872,7 +868,6 @@ USER REQUEST: `;
             case 'html':
             case 'template':
               htmlCode = code;
-              console.log('🎯 HTML Code being set to Monaco:', htmlCode.substring(0, 200) + '...');
               break;
             case 'scss':
             case 'css':
@@ -1071,28 +1066,13 @@ USER REQUEST: `;
   private updateEditorBuffer(editorType: 'typescript' | 'html' | 'scss', newCode: string, isConversationContinuation: boolean): void {
     const currentCode = this.editorState.buffers()[editorType];
     
-    if (editorType === 'html') {
-      console.log('🎯 Monaco HTML Editor Update:');
-      console.log('📝 New HTML code length:', newCode.length);
-      console.log('🔍 HTML preview:', newCode.substring(0, 300) + '...');
-      console.log('🔄 Is conversation continuation:', isConversationContinuation);
-    }
-    
     if (isConversationContinuation && currentCode && currentCode.trim().length > 0) {
       // 🔄 CONVERSATION MODE: Intelligently merge/update existing code
       const updatedCode = this.mergeCodeIntelligently(currentCode, newCode, editorType);
       this.editorState.updateBuffer(editorType, updatedCode);
-      
-      if (editorType === 'html') {
-        console.log('✅ HTML Editor updated (merged):', updatedCode.substring(0, 200) + '...');
-      }
     } else {
       // 🆕 FRESH START: Replace with new code
       this.editorState.updateBuffer(editorType, newCode);
-      
-      if (editorType === 'html') {
-        console.log('✅ HTML Editor updated (fresh):', newCode.substring(0, 200) + '...');
-      }
     }
   }
   

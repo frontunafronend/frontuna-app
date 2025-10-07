@@ -437,9 +437,6 @@ export class OptimizedAIChatService {
           
           // Update the HTML code block with improved version
           if (guardResult.improvedHtml && htmlBlock) {
-            console.log('🛡️ AI Guard: Updating HTML block with enhanced version');
-            console.log('📝 Original HTML length:', htmlBlock.code.length);
-            
             // CRITICAL: Update both the htmlBlock reference AND the codeBlocks array
             htmlBlock.code = guardResult.improvedHtml;
             
@@ -447,10 +444,6 @@ export class OptimizedAIChatService {
             if (extractedLanguage === 'html') {
               extractedCode = guardResult.improvedHtml;
             }
-            
-            console.log('📝 Enhanced HTML length:', htmlBlock.code.length);
-            console.log('🎯 Enhanced HTML preview:', guardResult.improvedHtml.substring(0, 200) + '...');
-            console.log('✅ Updated both htmlBlock and extractedCode references');
             
             // Add guard suggestions to the formatted content
             const guardSuggestions = guardResult.suggestions.slice(0, 3).map(s => `• ${s}`).join('\n');
@@ -463,22 +456,12 @@ export class OptimizedAIChatService {
       formattedContent = this.formatTextContent(formattedContent);
     }
 
-    // 🔧 FINAL VERIFICATION: Log what's being sent to Monaco
+    // 🔧 Verify Bootstrap HTML enhancement (minimal logging)
     if (codeBlocks.length > 0) {
-      console.log('📦 Final codeBlocks being sent to Monaco:');
-      codeBlocks.forEach((block, index) => {
-        console.log(`  ${index + 1}. ${block.language}: ${block.code.length} characters`);
-        if (block.language === 'html') {
-          console.log(`     HTML Preview: ${block.code.substring(0, 150)}...`);
-          
-          // 🛡️ CRITICAL: Verify if this is enhanced Bootstrap HTML
-          if (block.code.includes('<!DOCTYPE html>') && block.code.includes('<nav')) {
-            console.log('✅ CONFIRMED: Enhanced Bootstrap HTML detected in codeBlocks');
-          } else if (block.code.includes('<div') && !block.code.includes('<nav')) {
-            console.log('❌ WARNING: Only component HTML detected - Bootstrap enhancement may have failed');
-          }
-        }
-      });
+      const htmlBlock = codeBlocks.find(block => block.language === 'html');
+      if (htmlBlock && !htmlBlock.code.includes('<!DOCTYPE html>') && htmlBlock.code.includes('<div')) {
+        console.log('⚠️ Bootstrap enhancement may be needed');
+      }
     }
 
     const aiMessage: ChatMessage = {

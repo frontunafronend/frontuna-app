@@ -470,34 +470,20 @@ export class EnhancedAIPreviewComponent {
     const buffers = this.editorState.buffers();
     const scssCode = buffers.scss;
     
-    console.log('🎨 CSS Code Computed:');
-    console.log('📝 SCSS from Monaco:', scssCode?.length || 0, 'characters');
-    console.log('🔍 SCSS preview:', scssCode?.substring(0, 100) + '...' || 'No SCSS');
-    
     if (scssCode && scssCode.trim().length > 0) {
       // Convert SCSS to CSS (simplified)
-      const convertedCSS = this.convertSCSSToCSS(scssCode);
-      console.log('✅ Converted CSS length:', convertedCSS.length);
-      return convertedCSS;
+      return this.convertSCSSToCSS(scssCode);
     }
     
     // Fallback to generated CSS from TypeScript
     const tsCode = buffers.typescript || this.aiResponse?.code || '';
-    const generatedCSS = tsCode ? this.generateCSS(tsCode) : '';
-    console.log('🔄 Generated CSS fallback length:', generatedCSS.length);
-    return generatedCSS;
+    return tsCode ? this.generateCSS(tsCode) : '';
   });
 
   readonly previewUrl = computed(() => {
     const html = this.htmlCode();
     const css = this.cssCode();
     const js = this.currentCode();
-    
-    console.log('🖼️ Preview URL Generation:');
-    console.log('📝 HTML length:', html?.length || 0);
-    console.log('🎨 CSS length:', css?.length || 0);
-    console.log('📜 JS length:', js?.length || 0);
-    console.log('🔍 CSS preview:', css?.substring(0, 150) + '...' || 'No CSS');
     
     if (!html && !css && !js) return this.sanitizer.bypassSecurityTrustResourceUrl('about:blank');
     
