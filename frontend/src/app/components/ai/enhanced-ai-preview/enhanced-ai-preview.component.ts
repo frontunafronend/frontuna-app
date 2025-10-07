@@ -1990,50 +1990,78 @@ export class EnhancedAIPreviewComponent {
       const trimmed = expression.trim();
       console.log(`🔍 Processing interpolation: ${trimmed}`);
       
-      // Handle simple property access
-      if (mockData[trimmed]) {
-        console.log(`✅ Found direct property: ${trimmed} = ${mockData[trimmed]}`);
-        return mockData[trimmed];
+      // Handle pipes (e.g., element.price | currency)
+      if (trimmed.includes('|')) {
+        const [propertyPart, pipePart] = trimmed.split('|').map((s: string) => s.trim());
+        console.log(`🔧 Processing pipe: ${propertyPart} | ${pipePart}`);
+        
+        // Get the base value first
+        let baseValue = this.resolvePropertyValue(propertyPart, mockData, availableArrays);
+        
+        // Apply pipe transformation
+        if (pipePart === 'currency') {
+          baseValue = typeof baseValue === 'number' ? `$${baseValue.toFixed(2)}` : `$${baseValue}`;
+        } else if (pipePart.startsWith('number')) {
+          baseValue = typeof baseValue === 'number' ? baseValue.toFixed(2) : baseValue;
+        }
+        
+        console.log(`✅ Pipe result: ${baseValue}`);
+        return baseValue;
       }
       
-      // Handle object property access (e.g., product.name, product.id, product.price)
-      const parts = trimmed.split('.');
-      if (parts.length === 2) {
-        const [obj, prop] = parts;
-        console.log(`🔍 Looking for ${obj}.${prop}`);
-        
-        // For Angular Material tables, we need to use the first item from the array
-        // since we can't actually iterate in static HTML
-        for (const arrayName of availableArrays) {
-          const arrayData = mockData[arrayName];
-          if (arrayData && arrayData.length > 0) {
-            const firstItem = arrayData[0];
-            if (firstItem && firstItem.hasOwnProperty(prop)) {
-              const value = firstItem[prop];
-              console.log(`✅ Found property in ${arrayName}[0].${prop} = ${value}`);
-              return value;
-            }
+      // Handle regular property access
+      const value = this.resolvePropertyValue(trimmed, mockData, availableArrays);
+      return value;
+    });
+  }
+
+  /**
+   * Helper method to resolve property values
+   */
+  private resolvePropertyValue(expression: string, mockData: any, availableArrays: string[]): any {
+    // Handle simple property access
+    if (mockData[expression]) {
+      console.log(`✅ Found direct property: ${expression} = ${mockData[expression]}`);
+      return mockData[expression];
+    }
+    
+    // Handle object property access (e.g., product.name, product.id, product.price)
+    const parts = expression.split('.');
+    if (parts.length === 2) {
+      const [obj, prop] = parts;
+      console.log(`🔍 Looking for ${obj}.${prop}`);
+      
+      // For Angular Material tables, we need to use the first item from the array
+      // since we can't actually iterate in static HTML
+      for (const arrayName of availableArrays) {
+        const arrayData = mockData[arrayName];
+        if (arrayData && arrayData.length > 0) {
+          const firstItem = arrayData[0];
+          if (firstItem && firstItem.hasOwnProperty(prop)) {
+            const value = firstItem[prop];
+            console.log(`✅ Found property in ${arrayName}[0].${prop} = ${value}`);
+            return value;
           }
         }
-        
-        // Check if we have an array with this name
-        const arrayData = mockData[obj + 's'] || mockData[obj]; // Try both singular and plural
-        if (Array.isArray(arrayData) && arrayData.length > 0) {
-          const value = arrayData[0][prop]; // Use first item for template processing
-          console.log(`✅ Found array property: ${obj}.${prop} = ${value}`);
-          return value;
-        }
-        
-        // Check direct object access
-        if (mockData[obj] && mockData[obj][prop]) {
-          console.log(`✅ Found object property: ${obj}.${prop} = ${mockData[obj][prop]}`);
-          return mockData[obj][prop];
-        }
       }
       
-      console.log(`❌ Could not resolve: ${trimmed}`);
-      return `[${trimmed}]`;
-    });
+      // Check if we have an array with this name
+      const arrayData = mockData[obj + 's'] || mockData[obj]; // Try both singular and plural
+      if (Array.isArray(arrayData) && arrayData.length > 0) {
+        const value = arrayData[0][prop]; // Use first item for template processing
+        console.log(`✅ Found array property: ${obj}.${prop} = ${value}`);
+        return value;
+      }
+      
+      // Check direct object access
+      if (mockData[obj] && mockData[obj][prop]) {
+        console.log(`✅ Found object property: ${obj}.${prop} = ${mockData[obj][prop]}`);
+        return mockData[obj][prop];
+      }
+    }
+    
+    console.log(`❌ Could not resolve: ${expression}`);
+    return `[${expression}]`;
   }
 
   /**

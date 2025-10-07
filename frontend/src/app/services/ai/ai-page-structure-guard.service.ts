@@ -368,14 +368,24 @@ export class AIPageStructureGuardService {
   } {
     console.log('🛡️ AI Guard: Analyzing page structure for user request:', userRequest);
     
-    // Check if user requested a Bootstrap home page
-    const isBootstrapHomeRequest = /bootstrap.*home.*page|home.*page.*bootstrap|bootstrap.*layout/i.test(userRequest);
+    // Enhanced Bootstrap home page detection
+    const isBootstrapHomeRequest = /bootstrap.*home.*page|home.*page.*bootstrap|bootstrap.*layout|bootstrap.*container|wrapped.*page.*home|homepage.*bootstrap|bootstrap.*index/i.test(userRequest);
+    const hasContainerRequest = /container|wrapped|homepage|home.*page/i.test(userRequest);
     
-    if (isBootstrapHomeRequest) {
+    // Check if HTML only contains table/cards without proper page structure
+    const hasOnlyTableOrCards = (html.includes('mat-table') || html.includes('mat-card')) && 
+                                !html.includes('<nav') && 
+                                !html.includes('<header') && 
+                                !html.includes('<footer');
+    
+    if (isBootstrapHomeRequest || (hasContainerRequest && hasOnlyTableOrCards)) {
+      console.log('🛡️ AI Guard: Detected Bootstrap home page request or incomplete structure');
+      
       const validation = this.validateBootstrapHomePage(html, typescript);
       
       if (!validation.isValid || validation.completenessScore < 80) {
         console.log('🛡️ AI Guard: Bootstrap home page needs improvement');
+        console.log(`📊 Current completeness: ${validation.completenessScore}/100`);
         
         const enhancedCardContent = this.enhanceCardContentForBootstrap(html);
         const completeHomePage = this.generateCompleteBootstrapHomePage(enhancedCardContent);
