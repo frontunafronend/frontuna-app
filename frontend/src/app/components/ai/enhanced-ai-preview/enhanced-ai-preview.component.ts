@@ -1908,15 +1908,70 @@ export class EnhancedAIPreviewComponent {
    * Process *ngFor directives
    */
   private processNgFor(html: string, mockData: any): string {
-    // Find and process *ngFor directives with proper tag matching
-    const ngForPattern = /<(\w+)([^>]*\*ngFor="let\s+(\w+)\s+of\s+(\w+)"[^>]*)>([\s\S]*?)<\/\1>/g;
+    // More robust pattern that handles nested tags better
+    let processedHtml = html;
+    let match;
+    const ngForPattern = /<(\w+)([^>]*)\*ngFor="let\s+(\w+)\s+of\s+(\w+)"([^>]*)>/g;
     
-    return html.replace(ngForPattern, (match, tagName, attributes, itemVar, arrayVar, content) => {
-      let array = mockData[arrayVar];
+    // Find all *ngFor starting tags first
+    const ngForMatches = [];
+    while ((match = ngForPattern.exec(html)) !== null) {
+      ngForMatches.push({
+        fullMatch: match[0],
+        tagName: match[1],
+        beforeNgFor: match[2],
+        itemVar: match[3],
+        arrayVar: match[4],
+        afterNgFor: match[5],
+        startIndex: match.index
+      });
+    }
+    
+    // Process each *ngFor from end to start to avoid index shifting
+    for (let i = ngForMatches.length - 1; i >= 0; i--) {
+      const ngForMatch = ngForMatches[i];
       
-      // If no direct match, try to find the array by looking for similar names
+      // Find the corresponding closing tag
+      const openTag = ngForMatch.fullMatch;
+      const tagName = ngForMatch.tagName;
+      const startIndex = ngForMatch.startIndex;
+      
+      // Find the matching closing tag
+      let tagDepth = 1;
+      let currentIndex = startIndex + openTag.length;
+      let closingTagIndex = -1;
+      
+      while (tagDepth > 0 && currentIndex < html.length) {
+        const openTagMatch = html.substring(currentIndex).match(new RegExp(`<${tagName}[^>]*>`, 'i'));
+        const closeTagMatch = html.substring(currentIndex).match(new RegExp(`</${tagName}>`, 'i'));
+        
+        let nextOpenIndex = openTagMatch ? currentIndex + openTagMatch.index : Infinity;
+        let nextCloseIndex = closeTagMatch ? currentIndex + closeTagMatch.index : Infinity;
+        
+        if (nextCloseIndex < nextOpenIndex) {
+          tagDepth--;
+          if (tagDepth === 0) {
+            closingTagIndex = nextCloseIndex;
+          }
+          currentIndex = nextCloseIndex + closeTagMatch[0].length;
+        } else if (nextOpenIndex < Infinity) {
+          tagDepth++;
+          currentIndex = nextOpenIndex + openTagMatch[0].length;
+        } else {
+          break;
+        }
+      }
+      
+      if (closingTagIndex === -1) continue;
+      
+      // Extract the content between tags
+      const content = html.substring(startIndex + openTag.length, closingTagIndex);
+      const closeTag = `</${tagName}>`;
+      
+      // Get array data
+      let array = mockData[ngForMatch.arrayVar];
       if (!array) {
-        const possibleNames = [arrayVar, arrayVar + 's', arrayVar.slice(0, -1)];
+        const possibleNames = [ngForMatch.arrayVar, ngForMatch.arrayVar + 's', ngForMatch.arrayVar.slice(0, -1)];
         for (const name of possibleNames) {
           if (mockData[name] && Array.isArray(mockData[name])) {
             array = mockData[name];
@@ -1926,29 +1981,42 @@ export class EnhancedAIPreviewComponent {
       }
       
       if (!Array.isArray(array) || array.length === 0) {
-        return `<!-- No data for ${arrayVar} -->`;
+        // Replace the entire *ngFor block with empty comment
+        processedHtml = processedHtml.substring(0, startIndex) + 
+                      `<!-- No data for ${ngForMatch.arrayVar} -->` + 
+                      processedHtml.substring(closingTagIndex + closeTag.length);
+        continue;
       }
-
-      // Remove *ngFor from attributes
-      const cleanAttributes = attributes.replace(/\*ngFor="[^"]*"/, '').trim();
       
       // Generate repeated content
-      return array.map((item, index) => {
+      const repeatedContent = array.map((item, index) => {
         let itemContent = content;
         
-        // Replace item properties (e.g., product.name -> actual name)
+        // Replace item properties
         Object.keys(item).forEach(key => {
-          const regex = new RegExp(`${itemVar}\\.${key}`, 'g');
+          const regex = new RegExp(`${ngForMatch.itemVar}\\.${key}`, 'g');
           const value = item[key];
           itemContent = itemContent.replace(regex, value);
         });
         
-        // Create clean opening tag
-        const openTag = cleanAttributes ? `<${tagName} ${cleanAttributes}>` : `<${tagName}>`;
+        // Create clean opening tag (remove *ngFor)
+        const cleanAttributes = (ngForMatch.beforeNgFor + ngForMatch.afterNgFor)
+          .replace(/\s*\*ngFor="[^"]*"\s*/, ' ')
+          .trim();
+        const cleanOpenTag = cleanAttributes ? 
+          `<${tagName} ${cleanAttributes}>` : 
+          `<${tagName}>`;
         
-        return openTag + itemContent + `</${tagName}>`;
+        return cleanOpenTag + itemContent + closeTag;
       }).join('\n');
-    });
+      
+      // Replace the original *ngFor block with repeated content
+      processedHtml = processedHtml.substring(0, startIndex) + 
+                    repeatedContent + 
+                    processedHtml.substring(closingTagIndex + closeTag.length);
+    }
+    
+    return processedHtml;
   }
 
   /**
