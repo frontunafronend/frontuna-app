@@ -112,14 +112,14 @@ export class OptimizedAIChatService {
 
   // 🔧 CONFIGURATION
   private readonly API_BASE = `${this.environmentService.apiUrl}/ai/copilot`;
-  private readonly TIMEOUT_MS = 45000; // 45 seconds for complex requests
-  private readonly MAX_RETRIES = 1; // Reduce retries to avoid long waits
-  private readonly DEBOUNCE_MS = 300; // Prevent spam
+  private readonly TIMEOUT_MS = 15000; // 15 seconds - reduced from 45s
+  private readonly MAX_RETRIES = 0; // No retries for faster response
+  private readonly DEBOUNCE_MS = 100; // Reduced debounce for faster response
 
   // 🎯 REQUEST DEDUPLICATION - Prevent duplicate calls
   private activeRequests = new Map<string, Observable<any>>();
   private lastRequestTime = 0;
-  private readonly MIN_REQUEST_INTERVAL = 1000; // 1 second between requests
+  private readonly MIN_REQUEST_INTERVAL = 500; // 0.5 seconds between requests (faster)
 
   constructor() {
     this.initializeService();
@@ -439,9 +439,18 @@ export class OptimizedAIChatService {
           if (guardResult.improvedHtml && htmlBlock) {
             console.log('🛡️ AI Guard: Updating HTML block with enhanced version');
             console.log('📝 Original HTML length:', htmlBlock.code.length);
+            
+            // CRITICAL: Update both the htmlBlock reference AND the codeBlocks array
             htmlBlock.code = guardResult.improvedHtml;
+            
+            // Also update extractedCode if it was HTML
+            if (extractedLanguage === 'html') {
+              extractedCode = guardResult.improvedHtml;
+            }
+            
             console.log('📝 Enhanced HTML length:', htmlBlock.code.length);
             console.log('🎯 Enhanced HTML preview:', guardResult.improvedHtml.substring(0, 200) + '...');
+            console.log('✅ Updated both htmlBlock and extractedCode references');
             
             // Add guard suggestions to the formatted content
             const guardSuggestions = guardResult.suggestions.slice(0, 3).map(s => `• ${s}`).join('\n');
@@ -452,6 +461,17 @@ export class OptimizedAIChatService {
       
       // 📝 FORMAT TEXT CONTENT FOR BETTER READABILITY
       formattedContent = this.formatTextContent(formattedContent);
+    }
+
+    // 🔧 FINAL VERIFICATION: Log what's being sent to Monaco
+    if (codeBlocks.length > 0) {
+      console.log('📦 Final codeBlocks being sent to Monaco:');
+      codeBlocks.forEach((block, index) => {
+        console.log(`  ${index + 1}. ${block.language}: ${block.code.length} characters`);
+        if (block.language === 'html') {
+          console.log(`     HTML Preview: ${block.code.substring(0, 150)}...`);
+        }
+      });
     }
 
     const aiMessage: ChatMessage = {
