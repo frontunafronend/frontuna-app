@@ -680,8 +680,6 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   // 🔧 CLEANUP
   private readonly destroy$ = new Subject<void>();
   
-  @ViewChild('chatContainer') chatContainer!: ElementRef;
-  
   ngOnInit() {
     // 🎯 START WITHOUT LOADER - Fix stuck loader issue
     this.isInitializing.set(false);
