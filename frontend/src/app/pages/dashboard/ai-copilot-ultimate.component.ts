@@ -226,19 +226,7 @@ interface AICopilotGuards {
           
           <!-- Chat Messages Container -->
           <div class="chat-messages-container" 
-               #chatContainer
-               (scroll)="onChatScroll($event)">
-            
-            <!-- Back to Top Button -->
-            <button mat-fab 
-                    class="back-to-top-btn"
-                    color="accent"
-                    [class.visible]="showBackToTop()"
-                    (click)="scrollToTop()"
-                    matTooltip="Back to top"
-                    matTooltipPosition="left">
-              <mat-icon>keyboard_arrow_up</mat-icon>
-            </button>
+               #chatContainer>
             <!-- Welcome Message -->
             <div class="chat-message ai-message welcome-message" *ngIf="chatMessages().length === 0">
               <div class="message-avatar">
@@ -331,6 +319,14 @@ interface AICopilotGuards {
                   <button mat-button (click)="copyMessage(message)">
                     <mat-icon>content_copy</mat-icon>
                     Copy
+                  </button>
+                  
+                  <button mat-button 
+                          color="primary"
+                          (click)="scrollToTop()"
+                          matTooltip="Scroll to top of chat">
+                    <mat-icon>keyboard_arrow_up</mat-icon>
+                    Back to Top
                   </button>
                 </div>
                 
@@ -532,29 +528,17 @@ interface AICopilotGuards {
       background: #fafafa;
     }
     
-    .back-to-top-btn {
-      position: absolute !important;
-      bottom: 16px !important;
-      right: 16px !important;
-      z-index: 100 !important;
-      opacity: 0 !important;
-      visibility: hidden !important;
-      transition: all 0.3s ease !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-      background: rgba(255, 255, 255, 0.95) !important;
-      backdrop-filter: blur(8px) !important;
+    .message-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
     }
     
-    .back-to-top-btn.visible {
-      opacity: 1 !important;
-      visibility: visible !important;
-      transform: translateY(0) !important;
-    }
-    
-    .back-to-top-btn:hover {
-      transform: translateY(-2px) !important;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
-      background: rgba(255, 255, 255, 1) !important;
+    .message-actions button {
+      font-size: 0.875rem;
     }
   `],
   styleUrls: ['./ai-copilot-ultimate.component.scss']
@@ -597,8 +581,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   // 🎯 NEW: Angular Material Toggle Feature
   useAngularMaterial = signal(false); // Default disabled - HTML/Bootstrap mode
   
-  // 🎯 NEW: Back to Top Feature
-  showBackToTop = signal(false); // Show/hide back to top button
+  // 🎯 CHAT CONTAINER REFERENCE
   @ViewChild('chatContainer', { static: false }) chatContainer!: ElementRef;
   
   // 🎯 COMPUTED VALUES
@@ -2571,14 +2554,6 @@ USER REQUEST: `;
     }
   }
 
-  // 🎯 SCROLL EVENT HANDLER - Call this on scroll to show/hide back to top button
-  onChatScroll(event: Event) {
-    const element = event.target as HTMLElement;
-    if (element) {
-      // Show button when scrolled down more than 300px
-      this.showBackToTop.set(element.scrollTop > 300);
-    }
-  }
 
   createPreviewResponse(): AIResponse | null {
     const buffers = this.editorState.buffers();
