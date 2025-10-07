@@ -85,7 +85,6 @@ export class SecureAuthService {
         this.verifyTokenWithBackend(storedAuthData.accessToken).subscribe({
           next: (isValid) => {
             if (!isValid) {
-              console.warn('⚠️ Stored token is invalid, attempting refresh...');
               if (storedAuthData.refreshToken) {
                 this.attemptTokenRefresh(storedAuthData.refreshToken);
               } else {
@@ -108,7 +107,6 @@ export class SecureAuthService {
       }
 
     } catch (error) {
-      console.error('❌ Auth initialization error:', error);
       this.clearAuthState();
     }
   }
@@ -138,7 +136,6 @@ export class SecureAuthService {
           this.handleAuthSuccess(authResponse);
         }),
       catchError(error => {
-        console.error('❌ Login failed:', error);
         this.handleAuthError(error);
         return throwError(() => error);
       }),
@@ -173,7 +170,6 @@ export class SecureAuthService {
           this.handleAuthSuccess(authResponse);
         }),
       catchError(error => {
-        console.error('❌ Signup failed:', error);
         this.handleAuthError(error);
         return throwError(() => error);
       }),

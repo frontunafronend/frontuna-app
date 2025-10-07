@@ -132,13 +132,6 @@ export class EnvironmentConfigService {
    */
   logEnvironmentInfo(): void {
     if (this.isDevelopment) {
-      console.group('🔧 Environment Configuration');
-      console.log('Environment:', this.isProduction ? 'Production' : 'Development');
-      console.log('Is Local:', this.isLocal);
-      console.log('API Base URL:', this.apiConfig.baseUrl);
-      console.log('CORS Mode:', this.corsConfig.mode);
-      console.log('Features:', this.features);
-      console.groupEnd();
     }
   }
 }

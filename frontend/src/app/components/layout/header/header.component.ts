@@ -1166,7 +1166,6 @@ export class HeaderComponent {
 
   constructor() {
     // Initialize user data when component loads
-    console.log('🔧 HEADER COMPONENT INITIALIZING WITH ENHANCED USER DATA');
     
     // 🎯 REACTIVE AUTH STATE MONITORING - Watch for auth changes
     // Subscribe to current user changes using signal effect

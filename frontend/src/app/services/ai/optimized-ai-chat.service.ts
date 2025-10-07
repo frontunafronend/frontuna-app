@@ -127,7 +127,6 @@ export class OptimizedAIChatService {
    * 🚀 INITIALIZE SERVICE - Single initialization point
    */
   private initializeService(): void {
-    console.log('🤖 Optimized AI Chat Service initialized');
     this.performHealthCheck();
     this.createSession();
   }
@@ -151,10 +150,8 @@ export class OptimizedAIChatService {
           // Check for either success: true or status: 'ok'
           const isHealthy = response.success === true || response.status === 'ok';
           this._isHealthy.set(isHealthy);
-          console.log('🏥 Health check:', isHealthy ? '✅ Healthy' : '❌ Unhealthy', response);
         }),
         catchError(error => {
-          console.warn('⚠️ Health check failed:', error.message);
           this._isHealthy.set(false);
           return of({ status: 'error', success: false });
         }),
@@ -197,11 +194,9 @@ export class OptimizedAIChatService {
             lastActivity: new Date()
           };
           this._currentSession.set(session);
-          console.log('✅ Session created:', session.id);
         }
       }),
       catchError(error => {
-        console.error('❌ Session creation failed:', error);
         this.notificationService.showError('Failed to create AI session');
         return throwError(() => error);
       }),
@@ -257,18 +252,19 @@ export class OptimizedAIChatService {
     this._messages.update(messages => [...messages, userMessage]);
     this._isLoading.set(true);
 
-    // 🎯 SEND REQUEST WITH CONVERSATION CONTEXT
-    const conversationHistory = this._messages().slice(-5).map(msg => ({
-      role: msg.type === 'user' ? 'user' : 'assistant',
-      content: msg.content
-    }));
+    // 🎯 ENHANCE MESSAGE WITH FRAMEWORK CONTEXT AND FULL CODE REQUEST
+    const enhancedMessage = this.enhanceMessageWithFrameworkContext(message.trim());
+    console.log('🎯 Enhanced message with framework context:', enhancedMessage.substring(0, 200) + '...');
     
+    // 🎯 SEND REQUEST AS FRESH SESSION - NO CONVERSATION HISTORY
+    // Each request is a completely new conversation with the API
     const requestPayload = {
       sessionId: session.id,
-      message: message.trim(),
-      context: context || 'Angular development chat',
-      conversationHistory: conversationHistory, // 🔧 NEW: Include conversation context
-      continuePreviousConversation: conversationHistory.length > 0 // 🔧 NEW: Flag for continuity
+      message: enhancedMessage,
+      context: context || 'Angular 17+ Standalone Components Development',
+      // 🚀 FRESH SESSION: No conversation history sent to API
+      conversationHistory: [], // Always empty for fresh sessions
+      continuePreviousConversation: false // Always false for fresh sessions
     };
 
     return this.http.post<AIResponse>(`${this.API_BASE}/chat`, requestPayload)
@@ -558,6 +554,58 @@ Please try again in a moment. If the problem persists, check the server logs.`;
   refreshSession(): void {
     this._currentSession.set(null);
     this.createSession();
+  }
+
+  /**
+   * 🚀 START FRESH CONVERSATION - Completely new chat session with API
+   */
+  startFreshConversation(): void {
+    console.log('🚀 Starting completely fresh conversation with API');
+    
+    // Clear all local state
+    this._messages.set([]);
+    this._currentSession.set(null);
+    this.lastRequestTime = 0;
+    
+    // Clear any active requests
+    this.activeRequests.clear();
+    
+    // Create brand new session
+    this.createSession();
+    
+    console.log('✅ Fresh conversation session ready');
+  }
+
+  /**
+   * 🎯 ENHANCE MESSAGE WITH FRAMEWORK CONTEXT
+   * Automatically adds framework type and requests full code implementation
+   */
+  private enhanceMessageWithFrameworkContext(originalMessage: string): string {
+    const frameworkContext = `
+🎯 FRAMEWORK CONTEXT:
+- Framework: Angular 17+ (Latest)
+- Architecture: Standalone Components
+- Styling: SCSS with Angular Material
+- TypeScript: Latest version
+- Build: Angular CLI with Vite
+
+🚀 CODE REQUIREMENTS:
+- Provide COMPLETE, FULL implementation code
+- Include ALL necessary imports and dependencies
+- Generate TypeScript component class with full logic
+- Include complete HTML template with all elements
+- Provide complete SCSS styles with responsive design
+- Make code production-ready and fully functional
+- Include proper error handling and type safety
+- Use Angular Material components when appropriate
+- Follow Angular best practices and conventions
+
+📋 USER REQUEST:
+${originalMessage}
+
+Please provide the complete, full code implementation that can be directly used in an Angular 17+ standalone component project.`;
+
+    return frameworkContext;
   }
 
   /**

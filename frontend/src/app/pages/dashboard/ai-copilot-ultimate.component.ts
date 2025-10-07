@@ -146,6 +146,14 @@ interface AICopilotGuards {
             
           <!-- Quick Actions -->
           <div class="header-actions">
+            <button mat-raised-button 
+                    color="primary"
+                    matTooltip="Start Fresh Conversation - New Session with API" 
+                    (click)="startNewConversation()">
+              <mat-icon>add_comment</mat-icon>
+              New Chat
+            </button>
+            
             <button mat-icon-button 
                     matTooltip="Clear Chat History" 
                     (click)="clearChatHistory()">
@@ -186,6 +194,20 @@ interface AICopilotGuards {
               <mat-option value="claude-3">Claude 3 Sonnet</mat-option>
               <mat-option value="gemini-pro">Gemini Pro</mat-option>
             </mat-select>
+            
+            <!-- 🎯 NEW: Mock Data Toggle -->
+            <div class="mock-data-toggle">
+              <mat-slide-toggle 
+                [checked]="includeMockData()"
+                (change)="includeMockData.set($event.checked)"
+                color="primary"
+                matTooltip="Include realistic mock data in generated components (names, addresses, products, etc.)">
+                <span class="toggle-label">
+                  <mat-icon>{{ includeMockData() ? 'data_object' : 'data_object_off' }}</mat-icon>
+                  Mock Data
+                </span>
+              </mat-slide-toggle>
+            </div>
           </div>
           
           <!-- Chat Messages Container -->
@@ -208,6 +230,12 @@ interface AICopilotGuards {
                   <br>• 🎨 Create responsive designs and animations
                   <br>• 🧪 Write tests and documentation
                   <br>• 🚀 Implement best practices and patterns
+                  <br><br>
+                  <strong>🎯 Auto-Enhanced Prompts:</strong>
+                  <br>• Every message automatically includes Angular 17+ framework context
+                  <br>• Always requests complete, full code implementation
+                  <br>• Ensures production-ready, standalone components
+                  <br>• Mock data toggle above controls realistic sample data inclusion
                   <br><br>
                   <strong>Try asking me:</strong> "Create a responsive card component with animations"
                 </div>
@@ -311,7 +339,12 @@ interface AICopilotGuards {
                           placeholder="Ask me anything about coding... (Shift+Enter for new line)"
                           rows="1">
                 </textarea>
-                <mat-hint>Press Enter to send, Shift+Enter for new line</mat-hint>
+                <mat-hint>
+                  Press Enter to send, Shift+Enter for new line
+                  <span *ngIf="includeMockData()" class="mock-data-indicator">
+                    • Mock data enabled
+                  </span>
+                </mat-hint>
               </mat-form-field>
               
               <div class="input-actions">
@@ -433,7 +466,7 @@ interface AICopilotGuards {
         <!-- Direct preview content -->
         <div class="preview-content">
             <app-enhanced-ai-preview
-              [aiResponse]="createPreviewResponse()">
+              [aiResponse]="previewResponse()">
             </app-enhanced-ai-preview>
           </div>
       </div>
@@ -485,9 +518,63 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   isDarkMode = false;
   showPreview = signal(true); // 🔧 NEW: Preview visibility state
   
+  // 🎯 NEW: Mock Data Toggle Feature
+  includeMockData = signal(true); // Default enabled
+  
   // 🎯 COMPUTED VALUES
   currentModel = computed(() => this.selectedModel);
   editorHeight = computed(() => '400px');
+  
+  // 🚀 REACTIVE PREVIEW RESPONSE - Updates automatically when editor buffers change
+  previewResponse = computed(() => {
+    const buffers = this.editorState.buffers();
+    
+    if (!buffers.html && !buffers.scss && !buffers.typescript) {
+      return null;
+    }
+    
+    const combinedCode = [
+      buffers.html ? `<!-- HTML -->\n${buffers.html}` : '',
+      buffers.scss ? `/* CSS */\n${buffers.scss}` : '',
+      buffers.typescript ? `// TypeScript\n${buffers.typescript}` : ''
+    ].filter(Boolean).join('\n\n');
+    
+    return {
+      id: 'monaco-preview',
+      promptId: 'monaco-editor',
+      content: 'Live Preview from Monaco Editors',
+      code: combinedCode,
+      confidence: 1.0,
+      processingTime: 0,
+      timestamp: new Date(),
+      success: true,
+      data: {
+        message: 'Live preview generated from current editor content',
+        code: {
+          language: 'typescript',
+          code: combinedCode
+        },
+        codeBlocks: [
+          buffers.typescript ? { language: 'typescript', code: buffers.typescript } : null,
+          buffers.html ? { language: 'html', code: buffers.html } : null,
+          buffers.scss ? { language: 'scss', code: buffers.scss } : null
+        ].filter(Boolean),
+        suggestions: [],
+        tokensUsed: 0,
+        model: 'monaco-editor',
+        responseTime: 0,
+        sessionId: 'monaco-preview',
+        timestamp: new Date().toISOString(),
+        confidence: 1.0,
+        hasCode: true,
+        codeBlockCount: [buffers.typescript, buffers.html, buffers.scss].filter(Boolean).length
+      },
+      error: {
+        message: '',
+        details: ''
+      }
+    };
+  });
   
   // Monaco Editor Options - Fixed CORS worker issue
   monacoOptions = {
@@ -522,27 +609,22 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   @ViewChild('chatContainer') chatContainer!: ElementRef;
   
   ngOnInit() {
-    console.log('🚀 AI COPILOT ULTIMATE v3.0 - OPTIMIZED VERSION - Initializing...');
-    
     // 🎯 START WITHOUT LOADER - Fix stuck loader issue
     this.isInitializing.set(false);
     
     // 🎯 TRIGGER HEALTH CHECK to update backend status
     this.optimizedAIChat.checkHealth();
     
-    // Initialize clean editors
-    this.initializeCleanEditors();
+    // Initialize completely empty editors
+    this.initializeEmptyEditors();
     
     // 🎯 ENHANCED AUTO-SCROLL EFFECT - Triggers on every message change
     effect(() => {
       const messages = this.chatMessages();
       if (messages.length > 0) {
-        console.log('📜 Messages updated, triggering auto-scroll. Count:', messages.length);
         this.scrollToBottom();
       }
     }, { allowSignalWrites: true });
-    
-    console.log('✅ AI COPILOT ULTIMATE v3.0 - READY IMMEDIATELY!');
   }
   
   ngOnDestroy() {
@@ -554,11 +636,16 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   async sendMessage() {
     if (!this.currentMessage.trim()) return;
     
-    const message = this.currentMessage.trim();
+    let message = this.currentMessage.trim();
     this.currentMessage = '';
     
+    // 🎯 ENHANCE MESSAGE WITH FRAMEWORK CONTEXT AND MOCK DATA
+    message = this.enhancePromptWithContext(message);
+    
+    // 🎯 Show enhancement notification
+    console.log('🎯 Enhanced message:', message.substring(0, 100) + '...');
+    
     // 🎯 IMMEDIATE SCROLL after sending message
-    console.log('📜 User sent message, scrolling to bottom');
     this.scrollToBottom();
     
     // Track analytics
@@ -577,31 +664,26 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
         next: (response) => {
-            console.log('✅ AI Response received:', response);
             
             // 🔧 AUTO-POPULATE MONACO EDITORS - GENERIC MECHANISM
             this.handleAIResponseCode(response);
             
             // 🎯 SCROLL after AI response with extra delay for content rendering
-            console.log('📜 AI response received, scrolling to bottom');
             setTimeout(() => {
               this.scrollToBottom();
             }, 100);
         },
         error: (error) => {
-            console.error('❌ AI Response failed:', error);
             this.notificationService.showError('AI service temporarily unavailable');
         }
       });
     } catch (error) {
-      console.error('❌ Send message error:', error);
       this.notificationService.showError('Failed to send message');
     }
   }
   
   sendSuggestion(suggestion: string) {
     this.currentMessage = suggestion;
-    console.log('📜 Suggestion clicked, will scroll after sending');
     this.sendMessage();
   }
   
@@ -616,6 +698,63 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   clearChatHistory() {
     this.optimizedAIChat.clearChat();
     this.notificationService.showInfo('Chat history cleared');
+  }
+
+  /**
+   * 🚀 START NEW FRESH CONVERSATION - Completely new session with API
+   */
+  startNewConversation() {
+    this.optimizedAIChat.startFreshConversation();
+    this.notificationService.showSuccess('Started fresh conversation with AI');
+    
+    // Also clear the editor buffers for a completely fresh start
+    this.editorState.clearBuffers();
+    
+    console.log('🚀 New fresh conversation started - no previous context sent to API');
+  }
+
+  /**
+   * 🎯 ENHANCE PROMPT WITH ANGULAR CONTEXT AND MOCK DATA REQUEST
+   */
+  private enhancePromptWithContext(originalMessage: string): string {
+    let enhancedMessage = originalMessage;
+    
+    // Add Angular framework context
+    const frameworkContext = `
+IMPORTANT CONTEXT: Use Angular 17+ with standalone components, TypeScript, and modern practices.
+
+`;
+    
+    // Add mock data request if toggle is enabled
+    const mockDataRequest = this.includeMockData() ? `
+MOCK DATA REQUIREMENT: Please include realistic, diverse mock data in your component. Generate sample data that demonstrates the component's functionality with real-world examples (names, addresses, products, etc.). Make the data varied and interesting to showcase the component properly.
+
+` : '';
+    
+    // Add complete implementation request
+    const implementationRequest = `
+IMPLEMENTATION REQUIREMENTS:
+- Provide complete, production-ready code
+- Include all necessary imports and dependencies
+- Use Angular Material where appropriate
+- Ensure responsive design
+- Add proper TypeScript typing
+- Include error handling where relevant
+
+USER REQUEST: `;
+    
+    enhancedMessage = frameworkContext + mockDataRequest + implementationRequest + originalMessage;
+    
+    return enhancedMessage;
+  }
+
+  /**
+   * 🎯 TOGGLE MOCK DATA SETTING
+   */
+  toggleMockData() {
+    this.includeMockData.set(!this.includeMockData());
+    const status = this.includeMockData() ? 'enabled' : 'disabled';
+    this.notificationService.showInfo(`Mock data ${status} for future requests`);
   }
   
   exportChat() {
@@ -646,17 +785,9 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   // 🔧 ENHANCED: GENERIC AI RESPONSE CODE HANDLER
   handleAIResponseCode(response: any) {
     try {
-      console.log('🔧 AI Response Code Handler triggered');
-      console.log('📝 Response data:', response);
-      
       // Get the latest message from the chat (which has the extracted code)
       const messages = this.chatMessages();
       const latestMessage = messages[messages.length - 1];
-      
-      console.log('📝 Latest message exists:', !!latestMessage);
-      console.log('📝 Latest message is code message:', latestMessage?.isCodeMessage);
-      console.log('📝 Latest message has code:', !!latestMessage?.code);
-      console.log('📝 Latest message has codeBlocks:', !!latestMessage?.codeBlocks);
       
       // Enhanced condition: trigger if there's ANY code-related content
       if (latestMessage && (
@@ -664,28 +795,57 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         (latestMessage.codeBlocks && latestMessage.codeBlocks.length > 0) ||
         (latestMessage.content && latestMessage.content.includes('```'))
       )) {
-        console.log('✅ Triggering Monaco editors auto-population');
         this.autoPopulateMonacoEditors(latestMessage);
       } else {
-        console.log('⚠️ No code content found in latest message, skipping Monaco update');
-        console.log('📝 Message content preview:', latestMessage?.content?.substring(0, 200) + '...');
+        // 🔧 FALLBACK: Try to extract code from message content directly
+        this.extractCodeFromMessageContent(latestMessage);
       }
     } catch (error) {
-      console.error('❌ Error handling AI response code:', error);
+      // Handle error silently
+    }
+  }
+
+  // 🔧 NEW: Extract code from message content when codeBlocks are missing
+  private extractCodeFromMessageContent(message: UltimateChatMessage | undefined) {
+    if (!message || !message.content) return;
+    
+    // Extract code blocks from markdown-style content
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    const codeBlocks: any[] = [];
+    let match;
+    
+    while ((match = codeBlockRegex.exec(message.content)) !== null) {
+      const language = match[1] || 'typescript';
+      const code = match[2].trim();
+      
+      if (code) {
+        codeBlocks.push({
+          language: language.toLowerCase(),
+          code: code
+        });
+      }
+    }
+    
+    if (codeBlocks.length > 0) {
+      // Create a temporary message with extracted code blocks
+      const tempMessage: UltimateChatMessage = {
+        ...message,
+        codeBlocks: codeBlocks,
+        isCodeMessage: true
+      };
+      
+      this.autoPopulateMonacoEditors(tempMessage);
     }
   }
 
   // 🔧 BULLETPROOF: AUTO-POPULATE ALL MONACO EDITORS FROM CHAT MESSAGE
   autoPopulateMonacoEditors(message: UltimateChatMessage) {
-    if (!message.code && !message.codeBlocks) return;
+    if (!message.code && !message.codeBlocks && !message.content?.includes('```')) return;
 
     try {
       const codeBlocks = message.codeBlocks || [];
       const isConversationContinuation = this.chatMessages().length > 1;
       
-      console.log('🔄 BULLETPROOF: Auto-populating ALL editors. Conversation mode:', isConversationContinuation);
-      console.log('📦 Available code blocks:', codeBlocks.length);
-      console.log('📝 Single code available:', !!message.code);
       
       // 🎯 BULLETPROOF APPROACH: Always try to populate all three editors
       let typescriptCode = '';
@@ -694,13 +854,11 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       
       // Step 1: Process all available code blocks
       if (codeBlocks.length > 0) {
-        console.log('🤖 Processing', codeBlocks.length, 'code blocks');
         
         for (const block of codeBlocks) {
           const language = block.language?.toLowerCase() || 'typescript';
           const code = this.formatCodeForEditor(block.code, language);
           
-          console.log(`📝 Processing ${language} block:`, code.substring(0, 100) + '...');
           
           switch (language) {
             case 'typescript':
@@ -740,31 +898,24 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       
       // Step 3: BULLETPROOF EXTRACTION - Always try to extract HTML/SCSS from TypeScript
       if (typescriptCode) {
-        console.log('🔍 BULLETPROOF: Extracting HTML/SCSS from TypeScript code');
-        console.log('📝 TypeScript code preview:', typescriptCode.substring(0, 300) + '...');
         
         // Extract HTML if not already found
         if (!htmlCode) {
-          console.log('🔍 Attempting HTML extraction...');
           htmlCode = this.bulletproofExtractHTML(typescriptCode) || '';
-          console.log('📝 HTML extraction result:', htmlCode ? htmlCode.substring(0, 100) + '...' : 'EMPTY');
           
           // 🎯 SMART PROCESSING: Check if extracted HTML needs Angular template processing
           if (htmlCode && this.needsAngularTemplateProcessing(htmlCode)) {
-            console.log('🎯 HTML contains Angular directives, will be processed in preview');
+            // HTML contains Angular directives, will be processed in preview
           }
         }
         
         // Extract SCSS if not already found
         if (!scssCode) {
-          console.log('🔍 Attempting SCSS extraction...');
           scssCode = this.bulletproofExtractSCSS(typescriptCode) || '';
-          console.log('📝 SCSS extraction result:', scssCode ? scssCode.substring(0, 100) + '...' : 'EMPTY');
         }
         
         // 🎯 CLEAN TYPESCRIPT: Remove inline template and styles if extracted
         if (htmlCode || scssCode) {
-          console.log('🧹 Cleaning TypeScript code - removing inline template and styles');
           typescriptCode = this.cleanTypeScriptCode(typescriptCode, !!htmlCode, !!scssCode);
         }
       }
@@ -775,27 +926,15 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
       if (typescriptCode) {
         this.updateEditorBuffer('typescript', typescriptCode, isConversationContinuation);
         updatedEditors++;
-        console.log('✅ TypeScript editor updated');
       }
       
       // 🎯 BULLETPROOF: ALWAYS update HTML editor (FORCE update every time)
-      console.log('🔍 HTML UPDATE ANALYSIS:');
-      console.log('  - htmlCode exists:', !!htmlCode);
-      console.log('  - htmlCode length:', htmlCode?.length || 0);
-      console.log('  - htmlCode trimmed length:', htmlCode?.trim().length || 0);
-      console.log('  - htmlCode preview:', htmlCode ? htmlCode.substring(0, 100) + '...' : 'NONE');
       
       if (htmlCode && htmlCode.trim().length > 0) {
-        console.log('✅ Using extracted HTML content:', htmlCode.length, 'characters');
-        console.log('📝 HTML content preview:', htmlCode.substring(0, 200) + '...');
         this.updateEditorBuffer('html', htmlCode, isConversationContinuation);
         updatedEditors++;
-        console.log('✅ HTML editor updated with extracted content');
       } else {
         // ALWAYS generate HTML - never leave empty
-        console.log('🔧 No valid HTML extracted, generating specific HTML for component');
-        console.log('🔧 Available data - TypeScript:', !!typescriptCode, 'HTML:', !!htmlCode, 'SCSS:', !!scssCode);
-        console.log('🔧 TypeScript preview:', typescriptCode ? typescriptCode.substring(0, 200) + '...' : 'NONE');
         
         let specificHTML = '';
         
@@ -806,76 +945,31 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         const hasTemplate = tsLower.includes('template:');
         const hasMatCard = tsLower.includes('matcardmodule') || tsLower.includes('mat-card');
         
-        console.log('🔧 Component analysis:');
-        console.log('  - Has card:', hasCard);
-        console.log('  - Has responsive:', hasResponsive);
-        console.log('  - Has template:', hasTemplate);
-        console.log('  - Has MatCard:', hasMatCard);
         
         if (hasMatCard || (hasCard && hasResponsive)) {
           specificHTML = this.generateSpecificCardHTML();
-          console.log('🎯 Generated specific responsive Material card HTML');
         } else if (hasCard) {
           specificHTML = this.generateCardHTML('responsive-card');
-          console.log('🎯 Generated generic card HTML');
         } else if (hasTemplate) {
           specificHTML = this.generateContextualHTML(typescriptCode);
-          console.log('🎯 Generated contextual HTML from template');
         } else {
           specificHTML = this.generateContextualHTML(typescriptCode || 'component');
-          console.log('🎯 Generated fallback contextual HTML');
         }
-        
-        console.log('🔧 Generated HTML length:', specificHTML.length);
-        console.log('🔧 Generated HTML preview:', specificHTML.substring(0, 200) + '...');
         
         this.updateEditorBuffer('html', specificHTML, isConversationContinuation);
         updatedEditors++;
-        console.log('✅ HTML editor FORCE updated with specific content:', specificHTML.length, 'characters');
       }
       
-      // 🚨 CRITICAL SAFETY NET: ALWAYS ensure HTML editor has content
-      const currentHtmlBuffer = this.editorState.buffers().html;
-      console.log('🔍 SAFETY NET CHECK:');
-      console.log('  - Current HTML buffer exists:', !!currentHtmlBuffer);
-      console.log('  - Current HTML buffer length:', currentHtmlBuffer?.length || 0);
-      console.log('  - htmlCode was set:', !!htmlCode);
-      console.log('  - Is first request:', !isConversationContinuation);
+      // 🚨 REMOVED: No automatic HTML content generation on first load
+      // Let editors start completely empty for a clean initial state
       
-      if ((!currentHtmlBuffer || currentHtmlBuffer.trim().length === 0) && !isConversationContinuation) {
-        console.log('🚨 CRITICAL: First request with empty HTML buffer - forcing update');
-        const emergencyHTML = `<div class="component-container">
-  <div class="card">
-    <h3>Responsive Card Component</h3>
-    <p>This is a responsive card with hover animations.</p>
-    <button class="btn btn-primary">Action</button>
-  </div>
-</div>`;
-        this.updateEditorBuffer('html', emergencyHTML, false);
-        updatedEditors++;
-        console.log('🚨 CRITICAL: Emergency HTML template applied for first request');
-      }
-      
-      // 🎯 BULLETPROOF: ALWAYS update SCSS editor (generate if needed)
+      // 🎯 ONLY update SCSS editor if we have actual SCSS code from AI
       if (scssCode && scssCode.trim().length > 10) {
         this.updateEditorBuffer('scss', scssCode, isConversationContinuation);
         updatedEditors++;
-        console.log('✅ SCSS editor updated with extracted content');
-      } else {
-        // Generate specific SCSS for card components
-        let specificSCSS = '';
-        if (typescriptCode.toLowerCase().includes('card') && typescriptCode.toLowerCase().includes('responsive')) {
-          specificSCSS = this.generateSpecificCardSCSS();
-          console.log('🎯 Generated specific responsive card SCSS');
-        } else {
-          specificSCSS = this.generateContextualSCSS(htmlCode || typescriptCode);
-          console.log('🎯 Generated contextual SCSS');
-        }
-        
-        this.updateEditorBuffer('scss', specificSCSS, isConversationContinuation);
-        updatedEditors++;
-        console.log('✅ SCSS editor updated with specific content:', specificSCSS.length, 'characters');
+        console.log('✅ SCSS editor updated with AI-generated content:', scssCode.length, 'characters');
       }
+      // 🚨 REMOVED: No automatic SCSS generation - let editors start empty
       
       // Show comprehensive notification
       if (updatedEditors > 0) {
@@ -887,16 +981,21 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         
         this.notificationService.showSuccess(`✨ ${editorsList.join(', ')} editor${updatedEditors > 1 ? 's' : ''} ${action}!`);
         
-        // 🔧 TRIGGER PREVIEW UPDATE
+        // 🔧 TRIGGER PREVIEW UPDATE with proper timing
+        console.log('🚀 Triggering preview update after code population...');
         setTimeout(() => {
           this.updatePreview();
-        }, 500);
+        }, 100); // Reduced delay for faster response
+        
+        // Also trigger immediate preview refresh
+        this.refreshFullPreview();
+        
+        console.log('✅ Preview update triggered - should be visible now!');
       } else {
-        console.warn('⚠️ No editors were updated - no valid code found');
+        // No editors were updated - no valid code found
       }
 
     } catch (error) {
-      console.error('❌ Error auto-populating editors:', error);
       this.notificationService.showError('Failed to auto-populate code');
     }
   }
@@ -918,7 +1017,6 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     if (!code || code.length < 5) return false;
 
     const action = isConversationContinuation ? 'Updating' : 'Populating';
-    console.log(`🤖 ${action} ${language} editor:`, code.length, 'characters');
 
     switch (language) {
       case 'typescript':
@@ -928,14 +1026,12 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
         // 🎯 ENHANCED: Extract HTML from Angular component template
         const htmlFromTemplate = this.extractHTMLFromAngularComponent(code);
         if (htmlFromTemplate) {
-          console.log('🎯 Extracted HTML from Angular component template');
           this.updateEditorBuffer('html', htmlFromTemplate, isConversationContinuation);
         }
         
         // 🎯 ENHANCED: Extract SCSS from Angular component styles
         const scssFromStyles = this.extractSCSSFromAngularComponent(code);
         if (scssFromStyles) {
-          console.log('🎯 Extracted SCSS from Angular component styles');
           this.updateEditorBuffer('scss', scssFromStyles, isConversationContinuation);
         }
         
@@ -975,11 +1071,9 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     if (isConversationContinuation && currentCode && currentCode.trim().length > 0) {
       // 🔄 CONVERSATION MODE: Intelligently merge/update existing code
       const updatedCode = this.mergeCodeIntelligently(currentCode, newCode, editorType);
-      console.log(`🔄 Merging ${editorType} code in conversation mode`);
       this.editorState.updateBuffer(editorType, updatedCode);
     } else {
       // 🆕 FRESH START: Replace with new code
-      console.log(`🆕 Setting fresh ${editorType} code`);
       this.editorState.updateBuffer(editorType, newCode);
     }
   }
@@ -1033,9 +1127,6 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   
   // 🎯 SUPER PRECISE HTML EXTRACTION - Aggressive pattern matching
   private bulletproofExtractHTML(tsCode: string): string | null {
-    console.log('🔍 SUPER PRECISE HTML extraction starting...');
-    console.log('📝 Code to analyze length:', tsCode.length);
-    console.log('📝 Code preview:', tsCode.substring(0, 300) + '...');
     
     // Pattern 1: template: `...` (backticks) - Most common in Angular
     console.log('🔍 Trying Pattern 1: template with backticks');
@@ -2263,20 +2354,23 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     }, 300); // Small debounce for performance
   }
 
-  // 🎯 PREVIEW FUNCTIONALITY
-  refreshFullPreview() {
-    this.notificationService.showInfo('Preview refreshed');
-  }
 
   // 🔧 NEW: UPDATE LIVE PREVIEW
   updatePreview() {
-    // Force preview update by creating a new preview response
-    const previewResponse = this.createPreviewResponse();
-    if (previewResponse) {
-      console.log('🔄 Updating live preview with new code');
-      // The preview component will automatically update via the computed signal
-      this.showPreview.set(true); // Ensure preview is visible
-    }
+    // The preview now updates automatically via the computed previewResponse signal
+    // Just ensure preview is visible
+    this.showPreview.set(true);
+    console.log('🔄 Preview updated automatically via reactive computed property');
+  }
+
+  // 🔧 NEW: REFRESH FULL PREVIEW
+  refreshFullPreview() {
+    // Force a complete refresh of the preview component
+    this.showPreview.set(false);
+    setTimeout(() => {
+      this.showPreview.set(true);
+      console.log('🔄 Preview refreshed - reactive computed will handle the update');
+    }, 50);
   }
 
   createPreviewResponse(): AIResponse | null {
@@ -2368,105 +2462,11 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     this.notificationService.showInfo('Settings reset to defaults');
   }
 
-  // 🎯 INITIALIZE CLEAN EDITORS
-  private initializeCleanEditors() {
-    const cleanHTML = `<!-- 🤖 AI Copilot Ultimate v3.0 - Ready for Code Generation -->
-<div class="ai-ready-component">
-  <div class="welcome-card">
-    <h2>🚀 AI Copilot Ultimate v3.0</h2>
-    <p>Optimized and ready for professional code generation!</p>
-    <div class="features">
-      <span class="feature">✨ Smart Code Generation</span>
-      <span class="feature">🎨 Beautiful UI Components</span>
-      <span class="feature">⚡ Optimized Performance</span>
-    </div>
-  </div>
-</div>`;
-
-    const cleanSCSS = `/* 🤖 AI Copilot Ultimate v3.0 - Professional Styles */
-.ai-ready-component {
-  padding: 2rem;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-
-  .welcome-card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 16px;
-    padding: 2.5rem;
-    text-align: center;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    max-width: 500px;
+  // 🎯 INITIALIZE COMPLETELY EMPTY EDITORS
+  private initializeEmptyEditors() {
+    // Clear all editor buffers to start with a clean slate
+    this.editorState.clearBuffers();
     
-    h2 {
-        color: #333;
-      margin: 0 0 1rem 0;
-      font-size: 2rem;
-      font-weight: 600;
-      }
-      
-      p {
-        color: #666;
-      margin: 0 0 1.5rem 0;
-      font-size: 1.1rem;
-      line-height: 1.6;
-    }
-
-    .features {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      
-      .feature {
-        color: #555;
-        font-size: 0.9rem;
-        padding: 0.5rem;
-        background: rgba(102, 126, 234, 0.1);
-        border-radius: 8px;
-      }
-    }
-  }
-}`;
-
-    const cleanTypeScript = `// 🤖 AI Copilot Ultimate v3.0 - Ready for Generation
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-
-@Component({
-  selector: 'app-ai-generated',
-  standalone: true,
-  imports: [CommonModule],
-  template: \`
-    <!-- AI-generated HTML will replace this -->
-  \`,
-  styles: [\`
-    /* AI-generated SCSS will replace this */
-  \`]
-})
-export class AIGeneratedComponent implements OnInit {
-  // 🤖 AI will generate component properties and methods here
-  
-  constructor() {
-    console.log('🚀 AI Generated Component v3.0 initialized');
-  }
-  
-  ngOnInit(): void {
-    // AI will generate initialization logic here
-  }
-  
-  // AI will generate component methods here
-}`;
-
-    // Apply clean templates to editors immediately
-    this.editorState.updateBuffer('html', cleanHTML);
-    this.editorState.updateBuffer('scss', cleanSCSS);
-    this.editorState.updateBuffer('typescript', cleanTypeScript);
-    
-    console.log('🤖 AI Copilot Ultimate v3.0 editors initialized!');
+    console.log('✅ Editors initialized as completely empty - ready for AI code generation');
   }
 }

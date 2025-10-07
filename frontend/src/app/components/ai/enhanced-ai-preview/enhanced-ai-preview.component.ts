@@ -849,13 +849,10 @@ export class EnhancedAIPreviewComponent {
   
   // 🎯 UNIVERSAL ANGULAR TEMPLATE RENDERER - Process ANY Angular template dynamically
   private processAngularTemplate(html: string, chatResponseData?: any): string {
-    console.log('🔧 UNIVERSAL RENDERER: Processing Angular template dynamically');
-    console.log('📝 Original HTML:', html.substring(0, 200) + '...');
     
     // 🎯 STEP 1: Extract mock data from TypeScript code or generate generic data
     let mockData = this.extractMockDataFromContext(chatResponseData) || this.generateGenericMockData(html);
     
-    console.log('📊 Using mock data:', mockData);
     
     // 🎯 STEP 2: Process *ngFor directives dynamically
     html = this.processNgForDirectives(html, mockData);
@@ -863,8 +860,6 @@ export class EnhancedAIPreviewComponent {
     // 🎯 STEP 3: Process template bindings dynamically
     html = this.processTemplateBindings(html, mockData);
     
-    console.log('✅ Universal Angular template rendering completed');
-    console.log('📝 Final HTML preview:', html.substring(0, 300) + '...');
     
     return html;
   }

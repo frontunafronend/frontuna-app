@@ -282,6 +282,42 @@
       min-width: 140px;
       font-size: 0.875rem;
     }
+    
+    // 🎯 NEW: Mock Data Toggle Styling
+    .mock-data-toggle {
+      display: flex;
+      align-items: center;
+      margin-left: 1rem;
+      
+      .mat-slide-toggle {
+        .mat-slide-toggle-label {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: var(--copilot-text-primary, #374151);
+          
+          .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            
+            mat-icon {
+              font-size: 18px;
+              width: 18px;
+              height: 18px;
+            }
+          }
+        }
+        
+        &.mat-checked {
+          .toggle-label {
+            color: var(--copilot-primary, #667eea);
+          }
+        }
+      }
+    }
   }
   
   .chat-messages-container {
@@ -944,6 +980,13 @@
     background: white;
     border-top: 1px solid var(--copilot-border-light);
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05); // 🎨 Subtle shadow for depth
+    
+    // 🎯 NEW: Mock Data Indicator
+    .mock-data-indicator {
+      color: var(--copilot-primary, #667eea);
+      font-weight: 500;
+      margin-left: 0.5rem;
+    }
     
     .input-wrapper {
       display: flex;

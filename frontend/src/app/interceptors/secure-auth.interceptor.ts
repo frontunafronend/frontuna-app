@@ -53,7 +53,6 @@ export const secureAuthInterceptor: HttpInterceptorFn = (req, next) => {
             return next(retryReq);
           }),
           catchError((refreshError) => {
-            console.error('❌ Token refresh failed:', refreshError);
             
             // Only show error message for definitive auth failures, not network errors
             if (refreshError.status === 401 || refreshError.status === 403) {
@@ -61,7 +60,6 @@ export const secureAuthInterceptor: HttpInterceptorFn = (req, next) => {
                 notificationService.showError('Session expired. Please log in again.');
               }
             } else {
-              console.warn('🔄 Token refresh failed due to network/server error, request will fail but session preserved');
             }
             
             return throwError(() => error);

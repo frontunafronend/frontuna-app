@@ -45,9 +45,7 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-actual
   openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
-  console.log('✅ OpenAI initialized successfully');
 } else {
-  console.log('⚠️ OpenAI API key not configured - AI features will use fallback responses');
 }
 const JWT_EXPIRES_IN = '15m';
 const REFRESH_TOKEN_EXPIRES_IN = '30d';
