@@ -1945,18 +1945,18 @@ export class EnhancedAIPreviewComponent {
         const openTagMatch = html.substring(currentIndex).match(new RegExp(`<${tagName}[^>]*>`, 'i'));
         const closeTagMatch = html.substring(currentIndex).match(new RegExp(`</${tagName}>`, 'i'));
         
-        let nextOpenIndex = openTagMatch ? currentIndex + openTagMatch.index : Infinity;
-        let nextCloseIndex = closeTagMatch ? currentIndex + closeTagMatch.index : Infinity;
+        let nextOpenIndex = openTagMatch && openTagMatch.index !== undefined ? currentIndex + openTagMatch.index : Infinity;
+        let nextCloseIndex = closeTagMatch && closeTagMatch.index !== undefined ? currentIndex + closeTagMatch.index : Infinity;
         
         if (nextCloseIndex < nextOpenIndex) {
           tagDepth--;
           if (tagDepth === 0) {
             closingTagIndex = nextCloseIndex;
           }
-          currentIndex = nextCloseIndex + closeTagMatch[0].length;
+          currentIndex = nextCloseIndex + (closeTagMatch?.[0]?.length || 0);
         } else if (nextOpenIndex < Infinity) {
           tagDepth++;
-          currentIndex = nextOpenIndex + openTagMatch[0].length;
+          currentIndex = nextOpenIndex + (openTagMatch?.[0]?.length || 0);
         } else {
           break;
         }
