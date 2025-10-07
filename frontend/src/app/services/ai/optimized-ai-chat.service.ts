@@ -641,17 +641,25 @@ Please try again in a moment. If the problem persists, check the server logs.`;
 
 ✨ UNIVERSAL CODE GENERATION:
 - Accept ANY component request (cards, forms, tables, dashboards, etc.)
-- Generate COMPLETE, FULL implementation code
+- Generate COMPLETE, FULL implementation code in separate code blocks
 - Include ALL necessary imports and dependencies
-- Create TypeScript component class with full logic
-- Provide complete HTML template with all elements
-- Include complete SCSS styles with responsive design
+- Create TypeScript component class with full logic and mock data
+- Provide complete HTML template with all elements and bindings
+- Include complete SCSS styles with responsive design and animations
 - Make code production-ready and fully functional
 - Add proper error handling and type safety
 - Use appropriate UI framework (Angular Material, Bootstrap, or custom CSS)
 - Follow Angular best practices and modern conventions
 - Include realistic mock data when beneficial
 - Support any UI pattern or component type
+
+🔧 CODE BLOCK REQUIREMENTS:
+- Always provide code in properly formatted markdown code blocks
+- Use ```typescript for TypeScript component code
+- Use ```html for HTML template code  
+- Use ```scss for SCSS styling code
+- Each code block should be complete and functional
+- Include all imports, interfaces, and dependencies
 
 🎯 FLEXIBLE REQUIREMENTS:
 - Interpret the user's request creatively and comprehensively

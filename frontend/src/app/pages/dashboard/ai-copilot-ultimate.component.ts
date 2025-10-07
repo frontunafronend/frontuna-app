@@ -766,15 +766,22 @@ MOCK DATA REQUIREMENT: Please include realistic, diverse mock data in your compo
 
 ` : '';
     
-    // Add complete implementation request
+    // Add complete implementation request with conditional styling
+    const stylingRequirement = this.useAngularMaterial() ? 
+      '- Use Angular Material components for UI elements when appropriate' : 
+      '- Use Bootstrap classes and simple HTML elements for styling';
+    
     const implementationRequest = `
 IMPLEMENTATION REQUIREMENTS:
 - Provide complete, production-ready code
-- Include all necessary imports and dependencies
-- Use Angular Material where appropriate
-- Ensure responsive design
-- Add proper TypeScript typing
+- Include ALL necessary imports and dependencies
+${stylingRequirement}
+- Ensure responsive design with proper CSS/SCSS
+- Add proper TypeScript typing and interfaces
 - Include error handling where relevant
+- Generate COMPLETE TypeScript component class
+- Provide FULL HTML template with all elements
+- Include COMPLETE SCSS styles with animations
 
 USER REQUEST: `;
     
