@@ -417,8 +417,16 @@ export class OptimizedAIChatService {
       // 🛡️ AI GUARD: Check if page structure needs improvement
       const lastUserMessage = this._messages().slice().reverse().find(m => m.type === 'user');
       if (lastUserMessage && extractedCode) {
+        // Extract HTML code from code blocks
+        const htmlBlock = codeBlocks.find(block => 
+          block.language === 'html' || 
+          block.code.includes('<div') || 
+          block.code.includes('<mat-')
+        );
+        const htmlCode = htmlBlock ? htmlBlock.code : '';
+        
         const guardResult = this.pageGuard.guardPageStructure(
-          htmlCode || '', 
+          htmlCode, 
           extractedCode, 
           lastUserMessage.content
         );
@@ -427,9 +435,9 @@ export class OptimizedAIChatService {
           console.log('🛡️ AI Guard: Improving page structure...');
           console.log(`📊 Completeness score: ${guardResult.completenessScore}/100`);
           
-          // Update the HTML code with improved version
-          if (guardResult.improvedHtml) {
-            htmlCode = guardResult.improvedHtml;
+          // Update the HTML code block with improved version
+          if (guardResult.improvedHtml && htmlBlock) {
+            htmlBlock.code = guardResult.improvedHtml;
             
             // Add guard suggestions to the formatted content
             const guardSuggestions = guardResult.suggestions.slice(0, 3).map(s => `• ${s}`).join('\n');
