@@ -546,7 +546,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   includeMockData = signal(true); // Default enabled
   
   // 🎯 NEW: Angular Material Toggle Feature
-  useAngularMaterial = signal(true); // Default enabled
+  useAngularMaterial = signal(false); // Default disabled - HTML/Bootstrap mode
   
   // 🎯 COMPUTED VALUES
   currentModel = computed(() => this.selectedModel);
