@@ -653,6 +653,14 @@ Please try again in a moment. If the problem persists, check the server logs.`;
 - Include realistic mock data when beneficial
 - Support any UI pattern or component type
 
+🎨 ICON FRAMEWORK INTEGRATION:
+- Use Font Awesome 6 for free icons (class="fas fa-icon-name" or class="far fa-icon-name")
+- Include Bootstrap Icons when appropriate (class="bi bi-icon-name")
+- Add Heroicons for modern UI (use SVG or class names)
+- Choose icons that enhance UX and match component purpose
+- Include icons in mock data (iconClass, iconName properties)
+- Add appropriate icons to buttons, cards, navigation, forms, etc.
+
 🔧 CODE BLOCK REQUIREMENTS:
 - Always provide code in properly formatted markdown code blocks
 - Use triple backticks with 'typescript' for TypeScript component code

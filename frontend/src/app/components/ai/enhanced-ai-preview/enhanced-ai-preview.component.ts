@@ -518,6 +518,12 @@ export class EnhancedAIPreviewComponent {
           <!-- Font Awesome Icons -->
           <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
           
+          <!-- Bootstrap Icons -->
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+          
+          <!-- Heroicons (via CDN) -->
+          <link href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/style.css" rel="stylesheet">
+          
           <!-- 🎯 ENHANCED BASE STYLES FOR COMPONENTS -->
           <style>
             /* Material Design Base */
@@ -1805,28 +1811,28 @@ export class EnhancedAIPreviewComponent {
       return `
         <div class="component-container">
           <div class="dynamic-item">
-            <h3>Item 1</h3>
+            <h3><i class="fas fa-chart-line"></i> Item 1</h3>
             <p>This is the first dynamic item with sample content.</p>
             <strong>Value: $123.45</strong>
-            <span class="positive">+2.5%</span>
+            <span class="positive"><i class="fas fa-arrow-up"></i> +2.5%</span>
           </div>
           <div class="dynamic-item">
-            <h3>Item 2</h3>
+            <h3><i class="fas fa-chart-bar"></i> Item 2</h3>
             <p>This is the second dynamic item with sample content.</p>
             <strong>Value: $234.56</strong>
-            <span class="negative">-1.2%</span>
+            <span class="negative"><i class="fas fa-arrow-down"></i> -1.2%</span>
           </div>
           <div class="dynamic-item">
-            <h3>Item 3</h3>
+            <h3><i class="fas fa-chart-pie"></i> Item 3</h3>
             <p>This is the third dynamic item with sample content.</p>
             <strong>Value: $345.67</strong>
-            <span class="positive">+4.8%</span>
+            <span class="positive"><i class="fas fa-arrow-up"></i> +4.8%</span>
           </div>
           <div class="dynamic-item">
-            <h3>Item 4</h3>
+            <h3><i class="fas fa-chart-area"></i> Item 4</h3>
             <p>This is the fourth dynamic item with sample content.</p>
             <strong>Value: $456.78</strong>
-            <span class="positive">+1.9%</span>
+            <span class="positive"><i class="fas fa-arrow-up"></i> +1.9%</span>
           </div>
         </div>
       `;
@@ -1836,9 +1842,9 @@ export class EnhancedAIPreviewComponent {
     return `
       <div class="component-container">
         <div class="dynamic-item">
-          <h3>Dynamic Component</h3>
+          <h3><i class="fas fa-magic"></i> Dynamic Component</h3>
           <p>This is a dynamically generated component based on your code structure.</p>
-          <strong>Generated from AI response</strong>
+          <strong><i class="fas fa-robot"></i> Generated from AI response</strong>
         </div>
       </div>
     `;
@@ -1863,12 +1869,26 @@ export class EnhancedAIPreviewComponent {
       const mockData = this.extractMockDataFromTypeScript(typescript);
       
       if (Object.keys(mockData).length === 0) {
-        // Create default data if none found
+        // Create default data with icons if none found
         mockData.products = [
-          { id: 1, name: 'Eco-friendly Water Bottle', description: 'A durable, eco-friendly water bottle designed to last a lifetime.', price: 25, imageUrl: 'https://via.placeholder.com/300x200/4f46e5/ffffff?text=Product+1' },
-          { id: 2, name: 'Wireless Earbuds', description: 'Experience true wireless freedom and crystal clear sound.', price: 75, imageUrl: 'https://via.placeholder.com/300x200/7c3aed/ffffff?text=Product+2' },
-          { id: 3, name: 'Organic Cotton T-shirt', description: 'Soft, sustainable, and perfect for everyday wear.', price: 35, imageUrl: 'https://via.placeholder.com/300x200/ec4899/ffffff?text=Product+3' },
-          { id: 4, name: 'Smartwatch Fitness Tracker', description: 'Keep track of your fitness goals and stay connected on the go.', price: 120, imageUrl: 'https://via.placeholder.com/300x200/06b6d4/ffffff?text=Product+4' }
+          { id: 1, name: 'Eco-friendly Water Bottle', description: 'A durable, eco-friendly water bottle designed to last a lifetime.', price: 25, imageUrl: 'https://via.placeholder.com/300x200/4f46e5/ffffff?text=Product+1', icon: 'fas fa-tint', category: 'Eco-Friendly' },
+          { id: 2, name: 'Wireless Earbuds', description: 'Experience true wireless freedom and crystal clear sound.', price: 75, imageUrl: 'https://via.placeholder.com/300x200/7c3aed/ffffff?text=Product+2', icon: 'fas fa-headphones', category: 'Electronics' },
+          { id: 3, name: 'Organic Cotton T-shirt', description: 'Soft, sustainable, and perfect for everyday wear.', price: 35, imageUrl: 'https://via.placeholder.com/300x200/ec4899/ffffff?text=Product+3', icon: 'fas fa-tshirt', category: 'Clothing' },
+          { id: 4, name: 'Smartwatch Fitness Tracker', description: 'Keep track of your fitness goals and stay connected on the go.', price: 120, imageUrl: 'https://via.placeholder.com/300x200/06b6d4/ffffff?text=Product+4', icon: 'fas fa-stopwatch', category: 'Fitness' }
+        ];
+        
+        mockData.cards = [
+          { id: 1, title: 'Mountain Adventure', description: 'Explore the heights with our guided mountain tours.', imageUrl: 'https://via.placeholder.com/300x200/0000FF/ffffff?text=Mountain', icon: 'fas fa-mountain', category: 'Adventure' },
+          { id: 2, title: 'City Exploration', description: 'Discover the city\'s hidden gems with our urban walks.', imageUrl: 'https://via.placeholder.com/300x200/FF0000/ffffff?text=City', icon: 'fas fa-city', category: 'Urban' },
+          { id: 3, title: 'Safari Expedition', description: 'Get close to nature with our exclusive safari tours.', imageUrl: 'https://via.placeholder.com/300x200/FFFF00/000000?text=Safari', icon: 'fas fa-paw', category: 'Wildlife' },
+          { id: 4, title: 'Beach Holidays', description: 'Relax and unwind on the world\'s most pristine beaches.', imageUrl: 'https://via.placeholder.com/300x200/00FF00/ffffff?text=Beach', icon: 'fas fa-umbrella-beach', category: 'Relaxation' }
+        ];
+        
+        mockData.services = [
+          { id: 1, name: 'Web Development', description: 'Custom web solutions for your business needs.', icon: 'fas fa-code', price: 500 },
+          { id: 2, name: 'Mobile Apps', description: 'Native and cross-platform mobile applications.', icon: 'fas fa-mobile-alt', price: 800 },
+          { id: 3, name: 'UI/UX Design', description: 'Beautiful and intuitive user interface design.', icon: 'fas fa-palette', price: 300 },
+          { id: 4, name: 'Digital Marketing', description: 'Grow your online presence and reach more customers.', icon: 'fas fa-bullhorn', price: 400 }
         ];
       }
       
@@ -1915,6 +1935,10 @@ export class EnhancedAIPreviewComponent {
         // Replace interpolation {{ item.property }}
         processedContent = processedContent.replace(/\{\{\s*(\w+)\.(\w+)\s*\}\}/g, (match: string, varName: string, propName: string) => {
           if (varName === itemVar && item[propName] !== undefined) {
+            // Special handling for icon properties
+            if (propName === 'icon' && item[propName]) {
+              return `<i class="${item[propName]}"></i>`;
+            }
             return item[propName];
           }
           return match;
