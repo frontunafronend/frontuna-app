@@ -13,7 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { FrameworkRendererService, FrameworkComponent } from '../../services/framework-renderer/framework-renderer.service';
+import { FrameworkRendererService, FrameworkComponent } from '@app/services/framework-renderer/framework-renderer.service';
 
 import { CodeDisplayComponent } from '@app/components/shared/code-display/code-display.component';
 import { EditorStateService } from '@app/services/editor-state.service';
