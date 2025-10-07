@@ -825,21 +825,6 @@ USER REQUEST: `;
     this.notificationService.showInfo(`Switched to ${status} mode for future requests`);
   }
   
-  exportChat() {
-    const chatData = {
-      messages: this.chatMessages(),
-      timestamp: new Date().toISOString(),
-      model: this.selectedModel
-    };
-    
-    const blob = new Blob([JSON.stringify(chatData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ai-copilot-chat-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
   
   applyCodeToEditor(message: UltimateChatMessage) {
     if (message.code) {
