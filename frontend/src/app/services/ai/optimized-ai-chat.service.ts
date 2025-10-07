@@ -655,9 +655,9 @@ Please try again in a moment. If the problem persists, check the server logs.`;
 
 🔧 CODE BLOCK REQUIREMENTS:
 - Always provide code in properly formatted markdown code blocks
-- Use ```typescript for TypeScript component code
-- Use ```html for HTML template code  
-- Use ```scss for SCSS styling code
+- Use triple backticks with 'typescript' for TypeScript component code
+- Use triple backticks with 'html' for HTML template code  
+- Use triple backticks with 'scss' for SCSS styling code
 - Each code block should be complete and functional
 - Include all imports, interfaces, and dependencies
 
@@ -770,7 +770,7 @@ Please provide the complete, full code implementation that can be directly used 
       .replace(/^\s+|\s+$/g, '')
       
       // Ensure sentences start with capital letters after line breaks
-      .replace(/\n([a-z])/g, (match, letter) => '\n' + letter.toUpperCase())
+      .replace(/\n([a-z])/g, (match: string, letter: string) => '\n' + letter.toUpperCase())
       
       // Clean up any remaining formatting issues
       .replace(/\s+\./g, '.')
