@@ -487,6 +487,9 @@ export class EnhancedAIPreviewComponent {
     
     if (!html && !css && !js) return this.sanitizer.bypassSecurityTrustResourceUrl('about:blank');
     
+    // 🎯 PROCESS ANGULAR TEMPLATE TO RENDER ACTUAL DATA
+    const processedHtml = this.processAngularTemplateNew(html, js);
+    
     const fullHtml = `
       <!DOCTYPE html>
       <html lang="en">
@@ -642,7 +645,7 @@ export class EnhancedAIPreviewComponent {
         <body>
           <!-- 🚀 ENHANCED PREVIEW CONTAINER -->
           <div class="component-preview">
-            ${html}
+            ${processedHtml}
           </div>
           
           <!-- 🔧 FRAMEWORK SCRIPTS -->
@@ -847,57 +850,9 @@ export class EnhancedAIPreviewComponent {
       .replace(/@include\s+[\w-]+[^;]*;/g, ''); // Remove includes
   }
   
-  // 🎯 UNIVERSAL ANGULAR TEMPLATE RENDERER - Process ANY Angular template dynamically
-  private processAngularTemplate(html: string, chatResponseData?: any): string {
-    
-    // 🎯 STEP 1: Extract mock data from TypeScript code or generate generic data
-    let mockData = this.extractMockDataFromContext(chatResponseData) || this.generateGenericMockData(html);
-    
-    
-    // 🎯 STEP 2: Process *ngFor directives dynamically
-    html = this.processNgForDirectives(html, mockData);
-    
-    // 🎯 STEP 3: Process template bindings dynamically
-    html = this.processTemplateBindings(html, mockData);
-    
-    
-    return html;
-  }
+  // 🎯 OLD METHOD REMOVED - Using new comprehensive processAngularTemplate method
   
-  // 🎯 EXTRACT MOCK DATA FROM CHAT RESPONSE - Dynamic data extraction
-  private extractMockDataFromContext(chatResponseData?: any): any[] | null {
-    if (!chatResponseData) return null;
-    
-    // Try to find array data in the response
-    const response = typeof chatResponseData === 'string' ? chatResponseData : JSON.stringify(chatResponseData);
-    
-    // Look for array definitions in TypeScript code
-    const arrayMatches = response.match(/(\w+)\s*=\s*\[([\s\S]*?)\]/g);
-    if (arrayMatches) {
-      for (const match of arrayMatches) {
-        try {
-          const arrayContent = match.match(/\[([\s\S]*?)\]/)?.[1];
-          if (arrayContent) {
-            // Try to parse as JSON-like structure
-            const cleanedContent = arrayContent
-              .replace(/'/g, '"')
-              .replace(/(\w+):/g, '"$1":')
-              .replace(/,\s*}/g, '}');
-            
-            const parsedData = JSON.parse(`[${cleanedContent}]`);
-            if (parsedData.length > 0) {
-              console.log('✅ Extracted mock data from chat response:', parsedData);
-              return parsedData;
-            }
-          }
-        } catch (e) {
-          console.log('⚠️ Could not parse extracted data, will generate generic');
-        }
-      }
-    }
-    
-    return null;
-  }
+  // 🎯 OLD HELPER METHOD REMOVED
   
   // 🎯 GENERATE GENERIC MOCK DATA - Based on template analysis
   private generateGenericMockData(html: string): any[] {
@@ -1205,7 +1160,7 @@ export class EnhancedAIPreviewComponent {
       
       if (needsAngularProcessing) {
         console.log('🎯 SMART PREVIEW: Detected Angular template syntax, processing...');
-        html = this.processAngularTemplate(html, typescriptCode);
+        html = this.processAngularTemplateNew(html, typescriptCode);
       }
       return html;
     }
@@ -1706,5 +1661,241 @@ export class EnhancedAIPreviewComponent {
         </div>
       </div>
     `;
+  }
+
+  /**
+   * 🎯 PROCESS ANGULAR TEMPLATE TO RENDER ACTUAL DATA
+   * Converts Angular template syntax to actual HTML with mock data
+   */
+  private processAngularTemplateNew(html: string, typescript: string): string {
+    if (!html || !typescript) return html;
+
+    try {
+      // Extract mock data from TypeScript component
+      const mockData = this.extractMockDataFromTypeScript(typescript);
+      
+      // Process Angular template syntax
+      let processedHtml = html;
+
+      // Handle *ngFor loops
+      processedHtml = this.processNgFor(processedHtml, mockData);
+      
+      // Handle interpolation {{ }}
+      processedHtml = this.processInterpolation(processedHtml, mockData);
+      
+      // Handle property binding [src], [alt], etc.
+      processedHtml = this.processPropertyBinding(processedHtml, mockData);
+      
+      // Handle style binding [style.background-image]
+      processedHtml = this.processStyleBinding(processedHtml, mockData);
+      
+      // Clean up Angular-specific attributes
+      processedHtml = this.cleanAngularAttributes(processedHtml);
+
+      console.log('🎯 Processed Angular template:', processedHtml.substring(0, 200) + '...');
+      return processedHtml;
+      
+    } catch (error) {
+      console.error('❌ Error processing Angular template:', error);
+      return html; // Return original HTML if processing fails
+    }
+  }
+
+  /**
+   * Extract mock data from TypeScript component
+   */
+  private extractMockDataFromTypeScript(typescript: string): any {
+    const mockData: any = {};
+    
+    try {
+      // Extract arrays (like products = [...])
+      const arrayMatches = typescript.match(/(\w+):\s*\w+\[\]\s*=\s*\[([\s\S]*?)\];/g);
+      if (arrayMatches) {
+        arrayMatches.forEach(match => {
+          const nameMatch = match.match(/(\w+):/);
+          if (nameMatch) {
+            const arrayName = nameMatch[1];
+            // Extract objects from the array
+            const objectMatches = match.match(/\{[\s\S]*?\}/g);
+            if (objectMatches) {
+              mockData[arrayName] = objectMatches.map(objStr => {
+                return this.parseObjectString(objStr);
+              });
+            }
+          }
+        });
+      }
+
+      // Extract simple properties
+      const propMatches = typescript.match(/(\w+):\s*(string|number|boolean)\s*=\s*['"`]?([^'"`;\n]+)['"`]?;/g);
+      if (propMatches) {
+        propMatches.forEach(match => {
+          const parts = match.match(/(\w+):\s*(string|number|boolean)\s*=\s*['"`]?([^'"`;\n]+)['"`]?;/);
+          if (parts) {
+            const [, name, type, value] = parts;
+            mockData[name] = type === 'number' ? parseFloat(value) : value.replace(/['"`]/g, '');
+          }
+        });
+      }
+
+      console.log('🎯 Extracted mock data:', mockData);
+      return mockData;
+      
+    } catch (error) {
+      console.error('❌ Error extracting mock data:', error);
+      return {};
+    }
+  }
+
+  /**
+   * Parse object string to actual object
+   */
+  private parseObjectString(objStr: string): any {
+    try {
+      // Simple object parsing for common patterns
+      const obj: any = {};
+      const props = objStr.match(/(\w+):\s*['"`]?([^'"`\n,}]+)['"`]?/g);
+      if (props) {
+        props.forEach(prop => {
+          const match = prop.match(/(\w+):\s*['"`]?([^'"`\n,}]+)['"`]?/);
+          if (match) {
+            const [, key, value] = match;
+            // Try to parse as number, otherwise keep as string
+            obj[key] = isNaN(Number(value)) ? value.replace(/['"`]/g, '') : Number(value);
+          }
+        });
+      }
+      return obj;
+    } catch (error) {
+      return {};
+    }
+  }
+
+  /**
+   * Process *ngFor directives
+   */
+  private processNgFor(html: string, mockData: any): string {
+    const ngForRegex = /(<[^>]*\*ngFor="let\s+(\w+)\s+of\s+(\w+)"[^>]*>)([\s\S]*?)(<\/[^>]+>)/g;
+    
+    return html.replace(ngForRegex, (match, openTag, itemVar, arrayVar, content, closeTag) => {
+      const array = mockData[arrayVar] || [];
+      if (!Array.isArray(array) || array.length === 0) {
+        return `<!-- No data for ${arrayVar} -->`;
+      }
+
+      // Remove *ngFor from opening tag
+      const cleanOpenTag = openTag.replace(/\*ngFor="[^"]*"/, '').replace(/\s+/g, ' ');
+      
+      // Generate repeated content
+      return array.map(item => {
+        let itemContent = content;
+        
+        // Replace item properties (e.g., product.name -> actual name)
+        Object.keys(item).forEach(key => {
+          const regex = new RegExp(`${itemVar}\\.${key}`, 'g');
+          itemContent = itemContent.replace(regex, item[key]);
+        });
+        
+        return cleanOpenTag + itemContent + closeTag;
+      }).join('\n');
+    });
+  }
+
+  /**
+   * Process interpolation {{ }}
+   */
+  private processInterpolation(html: string, mockData: any): string {
+    return html.replace(/\{\{\s*([^}]+)\s*\}\}/g, (match, expression) => {
+      const trimmed = expression.trim();
+      
+      // Handle simple property access
+      if (mockData[trimmed]) {
+        return mockData[trimmed];
+      }
+      
+      // Handle object property access (e.g., product.name)
+      const parts = trimmed.split('.');
+      if (parts.length === 2) {
+        const [obj, prop] = parts;
+        if (mockData[obj] && mockData[obj][prop]) {
+          return mockData[obj][prop];
+        }
+      }
+      
+      // Return placeholder if not found
+      return `[${trimmed}]`;
+    });
+  }
+
+  /**
+   * Process property binding [src], [alt], etc.
+   */
+  private processPropertyBinding(html: string, mockData: any): string {
+    return html.replace(/\[(\w+)\]="([^"]+)"/g, (match, attr, expression) => {
+      // Handle simple expressions like product.imageUrl
+      const parts = expression.split('.');
+      if (parts.length === 2) {
+        const [obj, prop] = parts;
+        if (mockData[obj] && mockData[obj][prop]) {
+          return `${attr}="${mockData[obj][prop]}"`;
+        }
+      }
+      
+      // Handle string concatenation like "'url(' + product.imageUrl + ')'"
+      if (expression.includes('+')) {
+        let result = expression;
+        Object.keys(mockData).forEach(key => {
+          if (typeof mockData[key] === 'object') {
+            Object.keys(mockData[key]).forEach(subKey => {
+              result = result.replace(`${key}.${subKey}`, mockData[key][subKey]);
+            });
+          }
+        });
+        // Evaluate simple string concatenation
+        result = result.replace(/'/g, '').replace(/\s*\+\s*/g, '');
+        return `${attr}="${result}"`;
+      }
+      
+      return `${attr}="[${expression}]"`;
+    });
+  }
+
+  /**
+   * Process style binding [style.property]
+   */
+  private processStyleBinding(html: string, mockData: any): string {
+    return html.replace(/\[style\.([^\]]+)\]="([^"]+)"/g, (match, styleProp, expression) => {
+      // Handle expressions like "'url(' + product.imageUrl + ')'"
+      if (expression.includes('+')) {
+        let result = expression;
+        Object.keys(mockData).forEach(key => {
+          if (typeof mockData[key] === 'object') {
+            Object.keys(mockData[key]).forEach(subKey => {
+              result = result.replace(`${key}.${subKey}`, mockData[key][subKey]);
+            });
+          }
+        });
+        // Clean up the expression
+        result = result.replace(/'/g, '').replace(/\s*\+\s*/g, '');
+        return `style="${styleProp}: ${result}"`;
+      }
+      
+      return `style="${styleProp}: [${expression}]"`;
+    });
+  }
+
+  /**
+   * Clean up Angular-specific attributes
+   */
+  private cleanAngularAttributes(html: string): string {
+    return html
+      .replace(/\*ngFor="[^"]*"/g, '')
+      .replace(/\*ngIf="[^"]*"/g, '')
+      .replace(/\(click\)="[^"]*"/g, '')
+      .replace(/\(change\)="[^"]*"/g, '')
+      .replace(/mat-card-avatar/g, 'class="mat-card-avatar"')
+      .replace(/mat-card-image/g, 'class="mat-card-image"')
+      .replace(/\s+/g, ' ')
+      .replace(/\s>/g, '>');
   }
 }

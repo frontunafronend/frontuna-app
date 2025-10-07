@@ -629,98 +629,86 @@ Please provide the complete, full code implementation that can be directly used 
   }
 
   /**
-   * 🎨 BULLETPROOF TEXT FORMATTING - Final solution that ALWAYS works
+   * 🎨 PROFESSIONAL TEXT FORMATTING - Clean, readable AI responses
    */
   private formatTextContent(content: string): string {
-    console.log('🔧 Original content:', content.substring(0, 200));
+    console.log('🔧 Formatting AI response for better readability');
     
-    // 🧹 STEP 1: ULTRA AGGRESSIVE cleanup - remove ALL markdown artifacts and emojis
-    let formatted = content
-      .replace(/\*+/g, '') // Remove ALL asterisks
-      .replace(/#+\s*/g, '') // Remove ALL hash headers
-      .replace(/`+/g, '') // Remove ALL backticks
-      .replace(/_{2,}/g, '') // Remove underscores
-      .replace(/\[|\]/g, '') // Remove brackets
-      .replace(/📝\s*/g, '') // Remove document emoji
-      .replace(/🔧\s*/g, '') // Remove wrench emoji
-      .replace(/📋\s*/g, '') // Remove clipboard emoji
-      .replace(/\s+/g, ' ') // Normalize all whitespace
+    let formatted = content;
+    
+    // 🧹 STEP 1: Clean up markdown artifacts while preserving structure
+    formatted = formatted
+      .replace(/\*{2,}/g, '') // Remove multiple asterisks but keep single ones for emphasis
+      .replace(/#{1,6}\s*/g, '') // Remove markdown headers
+      .replace(/`{3}[\w]*\n?[\s\S]*?`{3}/g, '\n\n**[Code generated - see Monaco editor]**\n\n') // Replace code blocks
+      .replace(/`([^`]+)`/g, '$1') // Remove inline code backticks
+      .replace(/\s+/g, ' ') // Normalize whitespace
       .trim();
     
-    console.log('🧹 After cleanup:', formatted.substring(0, 200));
-    
-    // 🔧 STEP 2: Split into sentences and process each one
-    const sentences = formatted.split(/([.!?])\s+/);
-    let processedSentences = [];
-    
-    for (let i = 0; i < sentences.length; i++) {
-      let sentence = sentences[i];
-      
-      // Skip punctuation marks
-      if (sentence.match(/^[.!?]$/)) {
-        if (processedSentences.length > 0) {
-          processedSentences[processedSentences.length - 1] += sentence;
-        }
-        continue;
-      }
-      
-      // 🔢 BULLETPROOF: Handle numbered items with FORCED line breaks
-      if (sentence.match(/\b(\d+)\.\s+/)) {
-        sentence = sentence.replace(/\b(\d+)\.\s+([^.]+)/g, (match, num, text) => {
-          return `\n\n\n**${num}. ${text.trim()}**\n\n`;
-        });
-      }
-      
-      // 🔧 Handle Step indicators - clean format
-      if (sentence.match(/Step\s+\d+/i)) {
-        sentence = sentence.replace(/Step\s+(\d+):\s*/gi, '\n\n\nStep $1:\n\n');
-      }
-      
-      // 📋 Handle bullet points
-      if (sentence.match(/^\s*•/) || sentence.match(/^\s*-\s/)) {
-        sentence = '\n\n• ' + sentence.replace(/^\s*[•-]\s*/, '').trim() + '\n';
-      }
-      
-      processedSentences.push(sentence);
-    }
-    
-    formatted = processedSentences.join(' ');
-    
-    // 🔧 STEP 3: FORCE numbered item formatting with HTML structure
-    for (let pass = 0; pass < 3; pass++) {
-      // Pass 1: Handle "1. Something" patterns with HTML wrapper
-      formatted = formatted.replace(/(\s|^)(\d+)\.\s+([^.\n]+)/g, '\n\n\n<div class="numbered-item-wrapper"><strong data-starts-with-number="true">$2. $3</strong></div>\n\n');
-      
-      // Pass 2: Handle "• 1. Something" patterns
-      formatted = formatted.replace(/•\s*(\d+)\.\s+([^.\n]+)/g, '\n\n\n<div class="numbered-item-wrapper"><strong data-starts-with-number="true">$1. $2</strong></div>\n\n');
-      
-      // Pass 3: Handle any remaining numbered patterns
-      formatted = formatted.replace(/(\d+)\s*\.\s*([A-Z][^.\n]{10,})/g, '\n\n\n<div class="numbered-item-wrapper"><strong data-starts-with-number="true">$1. $2</strong></div>\n\n');
-    }
-    
-    // 📝 STEP 4: Handle code mentions - clean format
+    // 🎯 STEP 2: Structure the content with proper sections
     formatted = formatted
-      .replace(/Code generated - see Monaco editor/gi, '\n\nCode generated - see Monaco editor\n\n')
-      .replace(/see Monaco editor/gi, '\n\nCode generated - see Monaco editor\n\n');
+      // Add proper spacing around "Step" sections
+      .replace(/Step\s+(\d+):\s*/gi, '\n\n**Step $1:**\n')
+      
+      // Format component file names nicely
+      .replace(/([\w-]+\.component\.(ts|html|scss))/gi, '\n\n**$1**\n')
+      
+      // Format section headers
+      .replace(/\b(TypeScript|HTML|SCSS|Summary|Conclusion|Implementation|Requirements?)(\s+[A-Z])/gi, '\n\n**$1**$2')
+      
+      // Handle "First, let's..." and similar introductory phrases
+      .replace(/\b(First|Next|Then|Finally),?\s+/gi, '\n\n**$1,** ')
+      
+      // Format technical terms consistently
+      .replace(/\b(Angular|Material|Component|TypeScript|HTML|SCSS|standalone)\b/g, '**$1**');
     
-    // 📋 STEP 5: Handle file names and sections - clean format
+    // 🎨 STEP 3: Create clean bullet points and lists
     formatted = formatted
-      .replace(/(component\.(ts|html|scss))/gi, '\n\n$1\n\n')
-      .replace(/(Setup|Create|Using|Example|Conclusion)/gi, '\n\n$1\n\n');
+      // Convert dashes to proper bullet points
+      .replace(/^\s*-\s+/gm, '• ')
+      .replace(/\n\s*-\s+/g, '\n• ')
+      
+      // Add spacing around bullet points
+      .replace(/([.!?])\s*•/g, '$1\n\n•')
+      .replace(/•\s*([A-Z])/g, '• $1');
     
-    // 🎨 STEP 6: Format technical terms
+    // 🔧 STEP 4: Handle code generation mentions
     formatted = formatted
-      .replace(/\b(Angular|Material|Component|TypeScript|HTML|SCSS)\b/g, '**$1**');
+      .replace(/Code generated\s*-\s*Code generated\s*-\s*see Monaco editor/gi, '**Code generated** - see Monaco editor')
+      .replace(/Code generated\s*-\s*see Monaco editor/gi, '**Code generated** - see Monaco editor')
+      .replace(/see Monaco editor/gi, '**Code generated** - see Monaco editor');
     
-    // 🧹 STEP 7: Final cleanup and normalization
+    // 📝 STEP 5: Improve sentence flow and readability
     formatted = formatted
-      .replace(/\n{4,}/g, '\n\n\n') // Max 3 line breaks
-      .replace(/^\n+/, '') // Remove leading newlines
-      .replace(/\n+$/, '') // Remove trailing newlines
-      .replace(/\s{2,}/g, ' ') // Multiple spaces to single
-      .trim();
+      // Add proper spacing after periods
+      .replace(/\.([A-Z])/g, '. $1')
+      
+      // Fix spacing around parentheses
+      .replace(/\(\s+/g, '(')
+      .replace(/\s+\)/g, ')')
+      
+      // Ensure proper spacing around commas
+      .replace(/,([A-Za-z])/g, ', $1')
+      
+      // Clean up multiple spaces
+      .replace(/\s{2,}/g, ' ');
     
-    console.log('✅ Final formatted:', formatted.substring(0, 300));
+    // 🧹 STEP 6: Final cleanup and normalization
+    formatted = formatted
+      // Normalize line breaks (max 2 consecutive)
+      .replace(/\n{3,}/g, '\n\n')
+      
+      // Remove leading/trailing whitespace
+      .replace(/^\s+|\s+$/g, '')
+      
+      // Ensure sentences start with capital letters after line breaks
+      .replace(/\n([a-z])/g, (match, letter) => '\n' + letter.toUpperCase())
+      
+      // Clean up any remaining formatting issues
+      .replace(/\s+\./g, '.')
+      .replace(/\s+,/g, ',');
+    
+    console.log('✅ Professional formatting applied');
     
     return formatted;
   }
