@@ -2081,7 +2081,25 @@ export class EnhancedAIPreviewComponent {
       dataSourceArray.forEach((item, index) => {
         tableHtml += `    <tr class="mat-row" style="border-bottom: 1px solid #e0e0e0;">\n`;
         columns.forEach(column => {
-          const value = item[column] || '';
+          let value = item[column] || '';
+          
+          // Special handling for complex columns like 'productDetail'
+          if (column === 'productDetail' || column === 'productdetail') {
+            // Create a card-like display for product details
+            value = `
+              <div class="product-card" style="max-width: 300px; margin: 10px auto; padding: 16px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f9f9f9;">
+                <h4 style="margin: 0 0 8px 0; color: #333; font-size: 16px;">${item.name || 'Product Name'}</h4>
+                <p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">${item.description || 'Product description'}</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="color: #4f46e5; font-size: 16px;">$${item.price || '0'}</strong>
+                  <button style="background: #4f46e5; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px;">Add to Cart</button>
+                </div>
+              </div>
+            `;
+          } else if (column === 'price' && typeof value === 'number') {
+            value = `$${value}`;
+          }
+          
           tableHtml += `      <td class="mat-cell" style="padding: 16px;">${value}</td>\n`;
         });
         tableHtml += '    </tr>\n';
