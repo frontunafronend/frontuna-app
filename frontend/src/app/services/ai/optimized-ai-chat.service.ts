@@ -30,6 +30,7 @@ import {
 
 import { EnvironmentService } from '../core/environment.service';
 import { NotificationService } from '../notification/notification.service';
+import { AIPageStructureGuardService } from './ai-page-structure-guard.service';
 
 // 🎯 SIMPLIFIED INTERFACES
 export interface ChatMessage {
@@ -93,6 +94,7 @@ export class OptimizedAIChatService {
   private readonly http = inject(HttpClient);
   private readonly environmentService = inject(EnvironmentService);
   private readonly notificationService = inject(NotificationService);
+  private readonly pageGuard = inject(AIPageStructureGuardService);
 
   // 🎯 SINGLE SOURCE OF TRUTH - No redundant subjects
   private readonly _messages = signal<ChatMessage[]>([]);
@@ -411,6 +413,30 @@ export class OptimizedAIChatService {
         .replace(/```[\w]*\n?[\s\S]*?```/g, '\n**[Code generated - see Monaco editor]**\n')
         .replace(/\n{3,}/g, '\n\n') // Remove excessive line breaks
         .trim();
+      
+      // 🛡️ AI GUARD: Check if page structure needs improvement
+      const lastUserMessage = this._messages().slice().reverse().find(m => m.type === 'user');
+      if (lastUserMessage && extractedCode) {
+        const guardResult = this.pageGuard.guardPageStructure(
+          htmlCode || '', 
+          extractedCode, 
+          lastUserMessage.content
+        );
+        
+        if (guardResult.needsImprovement) {
+          console.log('🛡️ AI Guard: Improving page structure...');
+          console.log(`📊 Completeness score: ${guardResult.completenessScore}/100`);
+          
+          // Update the HTML code with improved version
+          if (guardResult.improvedHtml) {
+            htmlCode = guardResult.improvedHtml;
+            
+            // Add guard suggestions to the formatted content
+            const guardSuggestions = guardResult.suggestions.slice(0, 3).map(s => `• ${s}`).join('\n');
+            formattedContent += `\n\n**🛡️ AI Guard Enhanced This Page:**\n${guardSuggestions}\n\n**Completeness Score: ${guardResult.completenessScore}/100**`;
+          }
+        }
+      }
       
       // 📝 FORMAT TEXT CONTENT FOR BETTER READABILITY
       formattedContent = this.formatTextContent(formattedContent);
