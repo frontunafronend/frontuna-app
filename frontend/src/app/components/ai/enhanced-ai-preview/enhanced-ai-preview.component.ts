@@ -1894,23 +1894,26 @@ export class EnhancedAIPreviewComponent {
         ];
       }
       
-      // Process Angular template syntax in the correct order
-      let processedHtml = html;
-
-      // 🔧 CRITICAL FIX: Fix Bootstrap grid structure before processing
-      processedHtml = this.fixBootstrapGridStructure(processedHtml);
+      // 🚀 USE FRAMEWORK RENDERER INSTEAD OF CUSTOM PROCESSING
+      console.log('🚀 Using native framework rendering...');
       
-      processedHtml = this.processNgForSimple(processedHtml, mockData);
-      processedHtml = this.processMatTableDirectives(processedHtml, mockData);
-      processedHtml = this.processInterpolation(processedHtml, mockData);
-      processedHtml = this.processPropertyBinding(processedHtml, mockData);
-      processedHtml = this.processStyleBinding(processedHtml, mockData);
-      processedHtml = this.cleanAngularAttributes(processedHtml);
+      // Detect framework type
+      const framework = this.detectFramework(typescript, html);
       
-      // Final cleanup: Remove any remaining brackets around unresolved expressions
-      processedHtml = processedHtml.replace(/\[([^\]]+)\]/g, '$1');
-
-      return processedHtml;
+      // Create framework component for rendering
+      const frameworkComponent: FrameworkComponent = {
+        framework,
+        typescript,
+        html,
+        css: this.editorState.buffers().scss || '',
+        mockData: this.extractMockDataFromTypeScript(typescript)
+      };
+      
+      // Store for framework renderer to use
+      (window as any).pendingFrameworkComponent = frameworkComponent;
+      
+      // Return original HTML - let the framework handle the rendering
+      return html;
       
     } catch (error) {
       console.error('❌ Error processing Angular template:', error);
@@ -1919,119 +1922,45 @@ export class EnhancedAIPreviewComponent {
   }
 
   /**
-   * 🔧 CRITICAL FIX: Fix Bootstrap Grid Structure
-   * Ensures proper HTML structure with balanced opening/closing tags
+   * 🔍 DETECT FRAMEWORK TYPE
+   * Automatically detect which framework is being used
    */
-  private fixBootstrapGridStructure(html: string): string {
-    console.log('🔧 Fixing Bootstrap grid structure and HTML balance...');
+  private detectFramework(typescript: string, html: string): 'angular' | 'react' | 'vue' {
+    // Check for Angular patterns
+    if (typescript.includes('@Component') || typescript.includes('Angular') || html.includes('*ngFor') || html.includes('{{')) {
+      return 'angular';
+    }
     
-    // First, fix the *ngFor placement issue
-    let fixedHtml = html.replace(/<div class="row"([^>]*?)\*ngFor="([^"]*)"([^>]*?)>([\s\S]*?)<\/div>/g, 
-      (match: string, beforeAttrs: string, ngForValue: string, afterAttrs: string, content: string) => {
-        console.log('🎯 Moving *ngFor from row to column elements...');
-        
-        // Move *ngFor to column elements
-        const fixedContent = content.replace(/<div class="col[^"]*"([^>]*?)>/g, (colMatch: string, colAttrs: string) => {
-          const cleanColAttrs = colAttrs.trim();
-          const ngForAttr = `*ngFor="${ngForValue}"`;
-          return colMatch.replace('>', ` ${ngForAttr}>`);
-        });
-        
-        const cleanBeforeAttrs = beforeAttrs.trim();
-        const cleanAfterAttrs = afterAttrs.trim();
-        const allAttrs = [cleanBeforeAttrs, cleanAfterAttrs].filter(a => a && a.length > 0).join(' ').trim();
-        
-        return `<div class="row"${allAttrs ? ' ' + allAttrs : ''}>${fixedContent}</div>`;
-      }
-    );
+    // Check for React patterns
+    if (typescript.includes('React') || typescript.includes('JSX') || html.includes('className') || typescript.includes('useState')) {
+      return 'react';
+    }
     
-    // 🔧 CRITICAL: Fix missing closing tags that cause nesting
-    // This is the main issue - cards are nesting because closing </div> tags are missing
-    fixedHtml = this.balanceHtmlTags(fixedHtml);
+    // Check for Vue patterns
+    if (typescript.includes('Vue') || html.includes('v-for') || html.includes('v-if') || typescript.includes('defineComponent')) {
+      return 'vue';
+    }
     
-    console.log('✅ Bootstrap grid structure and HTML balance fixed');
-    return fixedHtml;
+    // Default to Angular since we're in an Angular app
+    return 'angular';
   }
 
+  // 🚀 REMOVED: All custom HTML processing methods
+  // Now using FrameworkRendererService for native framework support
+  // This includes: processNgForSimple, processMatTableDirectives, processInterpolation, etc.
+  
   /**
-   * 🔧 BALANCE HTML TAGS
-   * Ensures all opening tags have corresponding closing tags
+   * 🚀 FRAMEWORK RENDERER INTEGRATION
+   * The FrameworkRendererService handles all template processing natively
    */
-  private balanceHtmlTags(html: string): string {
-    console.log('🔧 Balancing HTML tags...');
-    
-    // Stack to track opening tags
-    const tagStack: string[] = [];
-    const selfClosingTags = ['img', 'br', 'hr', 'input', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr'];
-    
-    // Find all tags
-    const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g;
-    const tags: Array<{tag: string, isClosing: boolean, isSelfClosing: boolean, fullMatch: string, index: number}> = [];
-    
-    let match;
-    while ((match = tagRegex.exec(html)) !== null) {
-      const fullTag = match[0];
-      const tagName = match[1].toLowerCase();
-      const isClosing = fullTag.startsWith('</');
-      const isSelfClosing = selfClosingTags.includes(tagName) || fullTag.endsWith('/>');
-      
-      tags.push({
-        tag: tagName,
-        isClosing,
-        isSelfClosing,
-        fullMatch: fullTag,
-        index: match.index
-      });
-    }
-    
-    // Build balanced HTML
-    let result = '';
-    let lastIndex = 0;
-    const openTags: string[] = [];
-    
-    for (const tagInfo of tags) {
-      // Add content before this tag
-      result += html.substring(lastIndex, tagInfo.index);
-      
-      if (tagInfo.isClosing) {
-        // Closing tag
-        if (openTags.length > 0 && openTags[openTags.length - 1] === tagInfo.tag) {
-          openTags.pop();
-          result += tagInfo.fullMatch;
-        } else {
-          // Orphaned closing tag - skip it
-          console.log(`⚠️ Skipping orphaned closing tag: ${tagInfo.fullMatch}`);
-        }
-      } else if (tagInfo.isSelfClosing) {
-        // Self-closing tag
-        result += tagInfo.fullMatch;
-      } else {
-        // Opening tag
-        openTags.push(tagInfo.tag);
-        result += tagInfo.fullMatch;
-      }
-      
-      lastIndex = tagInfo.index + tagInfo.fullMatch.length;
-    }
-    
-    // Add remaining content
-    result += html.substring(lastIndex);
-    
-    // Close any remaining open tags
-    while (openTags.length > 0) {
-      const tagToClose = openTags.pop();
-      result += `</${tagToClose}>`;
-      console.log(`🔧 Added missing closing tag: </${tagToClose}>`);
-    }
-    
-    console.log('✅ HTML tags balanced successfully');
-    return result;
+  private integrateWithFrameworkRenderer(): void {
+    console.log('🚀 Framework renderer integration ready');
+    // Future: Add iframe-based component rendering here
   }
 
-  /**
-   * Simple and reliable *ngFor processing - FIXED for Bootstrap grid structure
-   */
-  private processNgForSimple(html: string, mockData: any): string {
+  // 🗑️ DEPRECATED: Custom processing methods removed
+  // Keeping extractMockDataFromTypeScript for framework renderer
+  private processNgForSimple_DEPRECATED(html: string, mockData: any): string {
     // Use a more precise regex that handles nested structures better
     const ngForRegex = /<(\w+)([^>]*?)\*ngFor="let\s+(\w+)\s+of\s+(\w+)"([^>]*?)>([\s\S]*?)<\/\1>/g;
     
