@@ -591,8 +591,10 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   // 🚀 REACTIVE PREVIEW RESPONSE - Updates automatically when editor buffers change
   previewResponse = computed(() => {
     const buffers = this.editorState.buffers();
+    const messages = this.optimizedAIChat.messages();
     
-    if (!buffers.html && !buffers.scss && !buffers.typescript) {
+    // Don't show preview if no messages (fresh conversation) or all buffers are empty
+    if (messages.length === 0 || (!buffers.html && !buffers.scss && !buffers.typescript)) {
       return null;
     }
     
@@ -2400,52 +2402,62 @@ USER REQUEST: `;
   startNewConversation() {
     console.log('🔄 Starting new conversation - clearing all state');
     
-    // Clear chat messages
+    // 1. Clear chat messages FIRST
     this.optimizedAIChat.clearMessages();
     
-    // Clear editor buffers
+    // 2. Clear editor buffers completely
     this.editorState.clearBuffers();
     
-    // Reset preview
+    // 3. Force editor state update
+    this.editorState.updateBuffer('typescript', '');
+    this.editorState.updateBuffer('html', '');
+    this.editorState.updateBuffer('scss', '');
+    
+    // 4. Reset preview with longer delay to ensure clearing
     this.showPreview.set(false);
     setTimeout(() => {
       this.showPreview.set(true);
-    }, 100);
+    }, 200);
     
-    // Reset current message
+    // 5. Reset current message
     this.currentMessage = '';
     
-    // Start fresh session with API
+    // 6. Start fresh session with API
     this.optimizedAIChat.startFreshConversation();
     
-    // Show success notification
+    // 7. Show success notification
     this.notificationService.showSuccess('🚀 New conversation started - Fresh session with AI');
     
-    console.log('✅ New conversation started successfully');
+    console.log('✅ New conversation started successfully - all state cleared');
   }
 
   clearChatHistory() {
     console.log('🧹 Clearing chat history and preview');
     
-    // Clear chat messages
+    // 1. Clear chat messages FIRST
     this.optimizedAIChat.clearMessages();
     
-    // Clear editor buffers to prevent old content showing in preview
+    // 2. Clear editor buffers completely
     this.editorState.clearBuffers();
     
-    // Force preview reset
+    // 3. Force editor state update to empty
+    this.editorState.updateBuffer('typescript', '');
+    this.editorState.updateBuffer('html', '');
+    this.editorState.updateBuffer('scss', '');
+    
+    // 4. Force preview reset with longer delay
     this.showPreview.set(false);
     setTimeout(() => {
       this.showPreview.set(true);
-    }, 100);
+    }, 200);
     
-    // Reset current message
+    // 5. Reset current message
     this.currentMessage = '';
     
-    // Show success notification
+    // 6. Show success notification
     this.notificationService.showSuccess('🧹 Chat history cleared');
     
-    console.log('✅ Chat history cleared successfully');
+    console.log('✅ Chat history and preview cleared successfully');
   }
 
   exportChat() {
