@@ -437,7 +437,11 @@ export class OptimizedAIChatService {
           
           // Update the HTML code block with improved version
           if (guardResult.improvedHtml && htmlBlock) {
+            console.log('🛡️ AI Guard: Updating HTML block with enhanced version');
+            console.log('📝 Original HTML length:', htmlBlock.code.length);
             htmlBlock.code = guardResult.improvedHtml;
+            console.log('📝 Enhanced HTML length:', htmlBlock.code.length);
+            console.log('🎯 Enhanced HTML preview:', guardResult.improvedHtml.substring(0, 200) + '...');
             
             // Add guard suggestions to the formatted content
             const guardSuggestions = guardResult.suggestions.slice(0, 3).map(s => `• ${s}`).join('\n');
