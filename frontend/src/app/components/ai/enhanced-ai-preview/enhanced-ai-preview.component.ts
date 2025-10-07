@@ -1917,7 +1917,7 @@ export class EnhancedAIPreviewComponent {
    * Simple and reliable *ngFor processing
    */
   private processNgForSimple(html: string, mockData: any): string {
-    // Enhanced regex to find *ngFor directives with proper attribute handling
+    // More robust regex to handle Bootstrap grid and nested elements
     const ngForRegex = /<(\w+)([^>]*?)\*ngFor="let\s+(\w+)\s+of\s+(\w+)"([^>]*?)>([\s\S]*?)<\/\1>/g;
     
     return html.replace(ngForRegex, (match: string, tagName: string, beforeAttrs: string, itemVar: string, arrayVar: string, afterAttrs: string, content: string) => {
@@ -1971,12 +1971,16 @@ export class EnhancedAIPreviewComponent {
           return match;
         });
         
-        // Create the element with processed content
+        // Create the element with processed content - ensure proper HTML structure
         const cleanBeforeAttrs = beforeAttrs.replace(/\*ngFor="[^"]*"/, '').replace(/^\s+|\s+$/g, '');
         const cleanAfterAttrs = afterAttrs.replace(/^\s+|\s+$/g, '');
-        const allAttrs = [cleanBeforeAttrs, cleanAfterAttrs].filter(a => a && a.length > 0).join(' ');
+        const allAttrs = [cleanBeforeAttrs, cleanAfterAttrs].filter(a => a && a.length > 0).join(' ').trim();
         
-        return `<${tagName}${allAttrs ? ' ' + allAttrs : ''}>${processedContent}</${tagName}>`;
+        // Ensure proper spacing and structure
+        const elementStart = `<${tagName}${allAttrs ? ' ' + allAttrs : ''}>`;
+        const elementEnd = `</${tagName}>`;
+        
+        return elementStart + processedContent + elementEnd;
       }).join('\n');
     });
   }

@@ -225,7 +225,20 @@ interface AICopilotGuards {
           </div>
           
           <!-- Chat Messages Container -->
-          <div class="chat-messages-container" #chatContainer>
+          <div class="chat-messages-container" 
+               #chatContainer
+               (scroll)="onChatScroll($event)">
+            
+            <!-- Back to Top Button -->
+            <button mat-fab 
+                    class="back-to-top-btn"
+                    color="accent"
+                    [class.visible]="showBackToTop()"
+                    (click)="scrollToTop()"
+                    matTooltip="Back to top"
+                    matTooltipPosition="left">
+              <mat-icon>keyboard_arrow_up</mat-icon>
+            </button>
             <!-- Welcome Message -->
             <div class="chat-message ai-message welcome-message" *ngIf="chatMessages().length === 0">
               <div class="message-avatar">
@@ -508,6 +521,36 @@ interface AICopilotGuards {
       </button>
     </mat-menu>
   `,
+  styles: [`
+    .back-to-top-btn {
+      position: fixed !important;
+      bottom: 80px !important;
+      right: 20px !important;
+      z-index: 1000 !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transition: all 0.3s ease !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .back-to-top-btn.visible {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateY(0) !important;
+    }
+    
+    .back-to-top-btn:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    .chat-messages-container {
+      position: relative;
+      max-height: 600px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+  `],
   styleUrls: ['./ai-copilot-ultimate.component.scss']
 })
 export class AICopilotUltimateComponent implements OnInit, OnDestroy {
@@ -547,6 +590,10 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   
   // 🎯 NEW: Angular Material Toggle Feature
   useAngularMaterial = signal(false); // Default disabled - HTML/Bootstrap mode
+  
+  // 🎯 NEW: Back to Top Feature
+  showBackToTop = signal(false); // Show/hide back to top button
+  @ViewChild('chatContainer', { static: false }) chatContainer!: ElementRef;
   
   // 🎯 COMPUTED VALUES
   currentModel = computed(() => this.selectedModel);
@@ -2420,6 +2467,25 @@ USER REQUEST: `;
       this.showPreview.set(true);
       console.log('🔄 Preview refreshed - reactive computed will handle the update');
     }, 50);
+  }
+
+  // 🎯 NEW: BACK TO TOP FUNCTIONALITY
+  scrollToTop() {
+    if (this.chatContainer?.nativeElement) {
+      this.chatContainer.nativeElement.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }
+
+  // 🎯 SCROLL EVENT HANDLER - Call this on scroll to show/hide back to top button
+  onChatScroll(event: Event) {
+    const element = event.target as HTMLElement;
+    if (element) {
+      // Show button when scrolled down more than 300px
+      this.showBackToTop.set(element.scrollTop > 300);
+    }
   }
 
   createPreviewResponse(): AIResponse | null {
