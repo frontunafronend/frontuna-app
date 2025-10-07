@@ -1900,7 +1900,7 @@ export class EnhancedAIPreviewComponent {
     // Simple regex to find *ngFor directives
     const ngForRegex = /<(\w+)([^>]*)\*ngFor="let\s+(\w+)\s+of\s+(\w+)"([^>]*?)>([\s\S]*?)<\/\1>/g;
     
-    return html.replace(ngForRegex, (match, tagName, beforeAttrs, itemVar, arrayVar, afterAttrs, content) => {
+    return html.replace(ngForRegex, (match: string, tagName: string, beforeAttrs: string, itemVar: string, arrayVar: string, afterAttrs: string, content: string) => {
       // Find the array in mockData
       const dataArray = mockData[arrayVar] || [];
       
@@ -1913,7 +1913,7 @@ export class EnhancedAIPreviewComponent {
         let processedContent = content;
         
         // Replace interpolation {{ item.property }}
-        processedContent = processedContent.replace(/\{\{\s*(\w+)\.(\w+)\s*\}\}/g, (match, varName, propName) => {
+        processedContent = processedContent.replace(/\{\{\s*(\w+)\.(\w+)\s*\}\}/g, (match: string, varName: string, propName: string) => {
           if (varName === itemVar && item[propName] !== undefined) {
             return item[propName];
           }
@@ -1921,7 +1921,7 @@ export class EnhancedAIPreviewComponent {
         });
         
         // Replace property bindings [src]="item.property"
-        processedContent = processedContent.replace(/\[(\w+)\]="(\w+)\.(\w+)"/g, (match, attr, varName, propName) => {
+        processedContent = processedContent.replace(/\[(\w+)\]="(\w+)\.(\w+)"/g, (match: string, attr: string, varName: string, propName: string) => {
           if (varName === itemVar && item[propName] !== undefined) {
             return `${attr}="${item[propName]}"`;
           }
@@ -1929,7 +1929,7 @@ export class EnhancedAIPreviewComponent {
         });
         
         // Replace alt bindings alt="{{ item.property }}"
-        processedContent = processedContent.replace(/alt="\{\{\s*(\w+)\.(\w+)\s*\}\}"/g, (match, varName, propName) => {
+        processedContent = processedContent.replace(/alt="\{\{\s*(\w+)\.(\w+)\s*\}\}"/g, (match: string, varName: string, propName: string) => {
           if (varName === itemVar && item[propName] !== undefined) {
             return `alt="${item[propName]}"`;
           }
