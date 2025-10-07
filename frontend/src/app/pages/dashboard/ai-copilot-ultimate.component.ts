@@ -208,6 +208,20 @@ interface AICopilotGuards {
                 </span>
               </mat-slide-toggle>
             </div>
+            
+            <!-- 🎯 NEW: Angular Material Toggle -->
+            <div class="angular-material-toggle" style="margin-left: 16px;">
+              <mat-slide-toggle 
+                [checked]="useAngularMaterial()"
+                (change)="useAngularMaterial.set($event.checked)"
+                color="accent"
+                matTooltip="Use Angular Material components (when disabled, generates simple HTML/Bootstrap components)">
+                <span class="toggle-label">
+                  <mat-icon>{{ useAngularMaterial() ? 'widgets' : 'code' }}</mat-icon>
+                  Angular Material
+                </span>
+              </mat-slide-toggle>
+            </div>
           </div>
           
           <!-- Chat Messages Container -->
@@ -236,7 +250,8 @@ interface AICopilotGuards {
                   <br>• Full TypeScript, HTML, SCSS code ready to use
                   <br>• Automatic framework context and best practices
                   <br>• Ensures production-ready, standalone components
-                  <br>• Mock data toggle above controls realistic sample data inclusion
+                  <br>• <strong>Mock Data toggle:</strong> Include realistic sample data
+                  <br>• <strong>Angular Material toggle:</strong> Choose Material Design or HTML/Bootstrap
                   <br><br>
                   <strong>Try asking me anything:</strong> 
                   <br>• "Create a social media post card with likes and comments"
@@ -349,6 +364,9 @@ interface AICopilotGuards {
                   Press Enter to send, Shift+Enter for new line
                   <span *ngIf="includeMockData()" class="mock-data-indicator">
                     • Mock data enabled
+                  </span>
+                  <span *ngIf="!useAngularMaterial()" class="html-mode-indicator">
+                    • HTML/Bootstrap mode
                   </span>
                 </mat-hint>
               </mat-form-field>
@@ -526,6 +544,9 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   
   // 🎯 NEW: Mock Data Toggle Feature
   includeMockData = signal(true); // Default enabled
+  
+  // 🎯 NEW: Angular Material Toggle Feature
+  useAngularMaterial = signal(true); // Default enabled
   
   // 🎯 COMPUTED VALUES
   currentModel = computed(() => this.selectedModel);
@@ -725,9 +746,15 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
   private enhancePromptWithContext(originalMessage: string): string {
     let enhancedMessage = originalMessage;
     
-    // Add Angular framework context
+    // Add Angular framework context with conditional Material Design
+    const materialContext = this.useAngularMaterial() ? 
+      'Use Angular Material components for UI elements when appropriate.' : 
+      'Use simple HTML elements with Bootstrap classes for styling. Avoid Angular Material components.';
+    
     const frameworkContext = `
 IMPORTANT CONTEXT: Use Angular 17+ with standalone components, TypeScript, and modern practices.
+
+STYLING APPROACH: ${materialContext}
 
 UNIVERSAL COMPONENT CREATION: Accept and implement ANY component request - from simple buttons to complex dashboards, forms, tables, cards, layouts, animations, or any creative UI element. Be flexible and comprehensive in your interpretation.
 
@@ -763,6 +790,15 @@ USER REQUEST: `;
     this.includeMockData.set(!this.includeMockData());
     const status = this.includeMockData() ? 'enabled' : 'disabled';
     this.notificationService.showInfo(`Mock data ${status} for future requests`);
+  }
+  
+  /**
+   * 🎯 TOGGLE ANGULAR MATERIAL SETTING
+   */
+  toggleAngularMaterial() {
+    this.useAngularMaterial.set(!this.useAngularMaterial());
+    const status = this.useAngularMaterial() ? 'Angular Material' : 'HTML/Bootstrap';
+    this.notificationService.showInfo(`Switched to ${status} mode for future requests`);
   }
   
   exportChat() {

@@ -634,7 +634,7 @@ Please try again in a moment. If the problem persists, check the server logs.`;
 
 🚀 FRAMEWORK CONTEXT:
 - Framework: Angular 17+ (Latest) with Standalone Components
-- Styling: SCSS with Angular Material (when appropriate)
+- Styling: SCSS with flexible UI framework support
 - TypeScript: Latest version with strict typing
 - Build: Angular CLI with Vite optimization
 - Architecture: Modern, production-ready components
@@ -648,7 +648,7 @@ Please try again in a moment. If the problem persists, check the server logs.`;
 - Include complete SCSS styles with responsive design
 - Make code production-ready and fully functional
 - Add proper error handling and type safety
-- Use Angular Material when it enhances the component
+- Use appropriate UI framework (Angular Material, Bootstrap, or custom CSS)
 - Follow Angular best practices and modern conventions
 - Include realistic mock data when beneficial
 - Support any UI pattern or component type
