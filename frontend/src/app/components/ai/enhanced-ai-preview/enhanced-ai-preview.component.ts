@@ -1863,14 +1863,19 @@ export class EnhancedAIPreviewComponent {
       const mockData = this.extractMockDataFromTypeScript(typescript);
       
       if (Object.keys(mockData).length === 0) {
-        console.log('⚠️ No mock data extracted, returning original HTML');
-        return html;
+        // Create default data if none found
+        mockData.products = [
+          { id: 1, name: 'Eco-friendly Water Bottle', description: 'A durable, eco-friendly water bottle designed to last a lifetime.', price: 25, imageUrl: 'https://via.placeholder.com/300x200/4f46e5/ffffff?text=Product+1' },
+          { id: 2, name: 'Wireless Earbuds', description: 'Experience true wireless freedom and crystal clear sound.', price: 75, imageUrl: 'https://via.placeholder.com/300x200/7c3aed/ffffff?text=Product+2' },
+          { id: 3, name: 'Organic Cotton T-shirt', description: 'Soft, sustainable, and perfect for everyday wear.', price: 35, imageUrl: 'https://via.placeholder.com/300x200/ec4899/ffffff?text=Product+3' },
+          { id: 4, name: 'Smartwatch Fitness Tracker', description: 'Keep track of your fitness goals and stay connected on the go.', price: 120, imageUrl: 'https://via.placeholder.com/300x200/06b6d4/ffffff?text=Product+4' }
+        ];
       }
       
       // Process Angular template syntax in the correct order
       let processedHtml = html;
 
-      processedHtml = this.processNgFor(processedHtml, mockData);
+      processedHtml = this.processNgForSimple(processedHtml, mockData);
       processedHtml = this.processMatTableDirectives(processedHtml, mockData);
       processedHtml = this.processInterpolation(processedHtml, mockData);
       processedHtml = this.processPropertyBinding(processedHtml, mockData);
@@ -1886,6 +1891,59 @@ export class EnhancedAIPreviewComponent {
       console.error('❌ Error processing Angular template:', error);
       return html; // Return original HTML if processing fails
     }
+  }
+
+  /**
+   * Simple and reliable *ngFor processing
+   */
+  private processNgForSimple(html: string, mockData: any): string {
+    // Simple regex to find *ngFor directives
+    const ngForRegex = /<(\w+)([^>]*)\*ngFor="let\s+(\w+)\s+of\s+(\w+)"([^>]*?)>([\s\S]*?)<\/\1>/g;
+    
+    return html.replace(ngForRegex, (match, tagName, beforeAttrs, itemVar, arrayVar, afterAttrs, content) => {
+      // Find the array in mockData
+      const dataArray = mockData[arrayVar] || [];
+      
+      if (dataArray.length === 0) {
+        return '<!-- No data for ' + arrayVar + ' -->';
+      }
+      
+      // Generate repeated elements
+      return dataArray.map((item: any, index: number) => {
+        let processedContent = content;
+        
+        // Replace interpolation {{ item.property }}
+        processedContent = processedContent.replace(/\{\{\s*(\w+)\.(\w+)\s*\}\}/g, (match, varName, propName) => {
+          if (varName === itemVar && item[propName] !== undefined) {
+            return item[propName];
+          }
+          return match;
+        });
+        
+        // Replace property bindings [src]="item.property"
+        processedContent = processedContent.replace(/\[(\w+)\]="(\w+)\.(\w+)"/g, (match, attr, varName, propName) => {
+          if (varName === itemVar && item[propName] !== undefined) {
+            return `${attr}="${item[propName]}"`;
+          }
+          return match;
+        });
+        
+        // Replace alt bindings alt="{{ item.property }}"
+        processedContent = processedContent.replace(/alt="\{\{\s*(\w+)\.(\w+)\s*\}\}"/g, (match, varName, propName) => {
+          if (varName === itemVar && item[propName] !== undefined) {
+            return `alt="${item[propName]}"`;
+          }
+          return match;
+        });
+        
+        // Create the element with processed content
+        const cleanBeforeAttrs = beforeAttrs.replace(/\*ngFor="[^"]*"/, '').trim();
+        const cleanAfterAttrs = afterAttrs.trim();
+        const allAttrs = [cleanBeforeAttrs, cleanAfterAttrs].filter(a => a).join(' ');
+        
+        return `<${tagName}${allAttrs ? ' ' + allAttrs : ''}>${processedContent}</${tagName}>`;
+      }).join('\n');
+    });
   }
 
   /**
