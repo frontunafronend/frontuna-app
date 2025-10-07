@@ -1693,6 +1693,10 @@ export class EnhancedAIPreviewComponent {
       processedHtml = this.processNgFor(processedHtml, mockData);
       console.log('✅ After *ngFor:', processedHtml.substring(0, 300));
       
+      console.log('🔧 Step 1.5: Processing Angular Material table directives...');
+      processedHtml = this.processMatTableDirectives(processedHtml, mockData);
+      console.log('✅ After mat-table processing:', processedHtml.substring(0, 300));
+      
       console.log('🔧 Step 2: Processing interpolation {{ }}...');
       processedHtml = this.processInterpolation(processedHtml, mockData);
       console.log('✅ After interpolation:', processedHtml.substring(0, 300));
@@ -1862,6 +1866,63 @@ export class EnhancedAIPreviewComponent {
   }
 
   /**
+   * Process Angular Material table directives
+   */
+  private processMatTableDirectives(html: string, mockData: any): string {
+    console.log('🔧 Processing Angular Material table directives...');
+    
+    // Find the dataSource and displayedColumns
+    let dataSourceArray: any[] = [];
+    let displayedColumns: string[] = [];
+    
+    // Extract dataSource from [dataSource]="products"
+    const dataSourceMatch = html.match(/\[dataSource\]="(\w+)"/);
+    if (dataSourceMatch) {
+      const dataSourceName = dataSourceMatch[1];
+      dataSourceArray = mockData[dataSourceName] || [];
+      console.log(`📊 Found dataSource: ${dataSourceName} with ${dataSourceArray.length} items`);
+    }
+    
+    // Extract displayedColumns from TypeScript (this should be in the component)
+    // For now, let's extract from the template structure
+    const columnMatches = html.match(/matColumnDef="(\w+)"/g);
+    if (columnMatches) {
+      displayedColumns = columnMatches.map(match => {
+        const colMatch = match.match(/matColumnDef="(\w+)"/);
+        return colMatch ? colMatch[1] : '';
+      }).filter(col => col);
+      console.log('📋 Found columns:', displayedColumns);
+    }
+    
+    // Process *matHeaderRowDef
+    html = html.replace(/\*matHeaderRowDef="[^"]*"/g, '');
+    
+    // Process *matRowDef - this is the key part that creates multiple rows
+    const matRowRegex = /<tr[^>]*\*matRowDef="[^"]*"[^>]*>([\s\S]*?)<\/tr>/g;
+    html = html.replace(matRowRegex, (match, rowContent) => {
+      console.log('🔧 Processing *matRowDef...');
+      
+      if (dataSourceArray.length === 0) {
+        return '<!-- No data for table rows -->';
+      }
+      
+      // Generate a row for each item in the dataSource
+      return dataSourceArray.map((item, index) => {
+        console.log(`🔧 Creating row ${index + 1} for:`, item);
+        return `<tr class="mat-row">${rowContent}</tr>`;
+      }).join('\n');
+    });
+    
+    // Process *matCellDef - replace with actual data
+    html = html.replace(/\*matCellDef="let (\w+)"/g, (match, varName) => {
+      return ''; // Remove the directive, we'll handle the data in interpolation
+    });
+    
+    console.log('✅ Mat-table directives processed');
+    return html;
+  }
+
+  /**
    * Process *ngFor directives
    */
   private processNgFor(html: string, mockData: any): string {
@@ -1921,6 +1982,10 @@ export class EnhancedAIPreviewComponent {
   private processInterpolation(html: string, mockData: any): string {
     console.log('🔧 Processing interpolation with mockData:', mockData);
     
+    // First, let's find what arrays we have available
+    const availableArrays = Object.keys(mockData).filter(key => Array.isArray(mockData[key]));
+    console.log('📋 Available arrays:', availableArrays);
+    
     return html.replace(/\{\{\s*([^}]+)\s*\}\}/g, (match, expression) => {
       const trimmed = expression.trim();
       console.log(`🔍 Processing interpolation: ${trimmed}`);
@@ -1931,11 +1996,25 @@ export class EnhancedAIPreviewComponent {
         return mockData[trimmed];
       }
       
-      // Handle object property access (e.g., product.name)
+      // Handle object property access (e.g., product.name, product.id, product.price)
       const parts = trimmed.split('.');
       if (parts.length === 2) {
         const [obj, prop] = parts;
         console.log(`🔍 Looking for ${obj}.${prop}`);
+        
+        // For Angular Material tables, we need to use the first item from the array
+        // since we can't actually iterate in static HTML
+        for (const arrayName of availableArrays) {
+          const arrayData = mockData[arrayName];
+          if (arrayData && arrayData.length > 0) {
+            const firstItem = arrayData[0];
+            if (firstItem && firstItem.hasOwnProperty(prop)) {
+              const value = firstItem[prop];
+              console.log(`✅ Found property in ${arrayName}[0].${prop} = ${value}`);
+              return value;
+            }
+          }
+        }
         
         // Check if we have an array with this name
         const arrayData = mockData[obj + 's'] || mockData[obj]; // Try both singular and plural
@@ -2021,10 +2100,22 @@ export class EnhancedAIPreviewComponent {
     return html
       .replace(/\*ngFor="[^"]*"/g, '')
       .replace(/\*ngIf="[^"]*"/g, '')
+      .replace(/\*matHeaderRowDef="[^"]*"/g, '')
+      .replace(/\*matRowDef="[^"]*"/g, '')
+      .replace(/\*matCellDef="[^"]*"/g, '')
+      .replace(/\*matHeaderCellDef[^>]*>/g, '>')
       .replace(/\(click\)="[^"]*"/g, '')
       .replace(/\(change\)="[^"]*"/g, '')
+      .replace(/\[dataSource\]="[^"]*"/g, '')
+      .replace(/matColumnDef="[^"]*"/g, '')
       .replace(/mat-card-avatar/g, 'class="mat-card-avatar"')
       .replace(/mat-card-image/g, 'class="mat-card-image"')
+      .replace(/mat-table/g, 'class="mat-table"')
+      .replace(/mat-header-cell/g, 'class="mat-header-cell"')
+      .replace(/mat-cell/g, 'class="mat-cell"')
+      .replace(/mat-header-row/g, 'class="mat-header-row"')
+      .replace(/mat-row/g, 'class="mat-row"')
+      .replace(/mat-button/g, 'class="mat-button"')
       .replace(/\s+/g, ' ')
       .replace(/\s>/g, '>');
   }

@@ -112,3 +112,4 @@ uploads/exports/*
 # Temporary files
 tmp/
 temp/
+.vercel
