@@ -2445,6 +2445,94 @@ USER REQUEST: `;
     this.notificationService.showInfo('All code cleared');
   }
 
+  // 🎯 NEW: PROFESSIONAL CONVERSATION MANAGEMENT
+  startNewConversation() {
+    console.log('🔄 Starting new conversation - clearing all state');
+    
+    // Clear chat messages
+    this.optimizedAIChat.clearMessages();
+    
+    // Clear editor buffers
+    this.editorState.clearBuffers();
+    
+    // Reset preview
+    this.showPreview.set(false);
+    setTimeout(() => {
+      this.showPreview.set(true);
+    }, 100);
+    
+    // Reset current message
+    this.currentMessage = '';
+    
+    // Start fresh session with API
+    this.optimizedAIChat.startFreshConversation();
+    
+    // Show success notification
+    this.notificationService.showSuccess('🚀 New conversation started - Fresh session with AI');
+    
+    console.log('✅ New conversation started successfully');
+  }
+
+  clearChatHistory() {
+    console.log('🧹 Clearing chat history and preview');
+    
+    // Clear chat messages
+    this.optimizedAIChat.clearMessages();
+    
+    // Clear editor buffers to prevent old content showing in preview
+    this.editorState.clearBuffers();
+    
+    // Force preview reset
+    this.showPreview.set(false);
+    setTimeout(() => {
+      this.showPreview.set(true);
+    }, 100);
+    
+    // Reset current message
+    this.currentMessage = '';
+    
+    // Show success notification
+    this.notificationService.showSuccess('🧹 Chat history cleared');
+    
+    console.log('✅ Chat history cleared successfully');
+  }
+
+  exportChat() {
+    console.log('📤 Exporting chat history');
+    
+    const messages = this.optimizedAIChat.messages();
+    if (messages.length === 0) {
+      this.notificationService.showWarning('No chat history to export');
+      return;
+    }
+    
+    // Create export data
+    const exportData = {
+      timestamp: new Date().toISOString(),
+      model: this.selectedModel,
+      messageCount: messages.length,
+      messages: messages.map(msg => ({
+        type: msg.type,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        code: msg.code || null,
+        codeLanguage: msg.codeLanguage || null
+      }))
+    };
+    
+    // Create and download file
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ai-chat-export-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    this.notificationService.showSuccess('💾 Chat exported successfully');
+    console.log('✅ Chat exported successfully');
+  }
+
   onCodeChange(language: string, value: string) {
     this.editorState.updateBuffer(language as any, value);
     

@@ -788,4 +788,33 @@ Please provide the complete, full code implementation that can be directly used 
     
     return formatted;
   }
+
+  /**
+   * 🧹 CLEAR MESSAGES - Professional conversation clearing
+   */
+  clearMessages(): void {
+    console.log('🧹 Clearing all chat messages');
+    this._messages.set([]);
+    console.log('✅ Chat messages cleared successfully');
+  }
+
+  /**
+   * 🚀 START FRESH CONVERSATION - New session with API
+   */
+  startFreshConversation(): void {
+    console.log('🚀 Starting fresh conversation with API');
+    
+    // Clear existing messages
+    this.clearMessages();
+    
+    // Reset session if needed
+    if (this._currentSession()) {
+      this._currentSession.set({
+        ...this._currentSession()!,
+        lastActivity: new Date()
+      });
+    }
+    
+    console.log('✅ Fresh conversation started successfully');
+  }
 }
