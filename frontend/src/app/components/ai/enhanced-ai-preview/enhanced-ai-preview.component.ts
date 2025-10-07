@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, computed, inject, effect } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed, inject, effect, ViewContainerRef, ComponentRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -13,6 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { FrameworkRendererService, FrameworkComponent } from '../../services/framework-renderer/framework-renderer.service';
 
 import { CodeDisplayComponent } from '@app/components/shared/code-display/code-display.component';
 import { EditorStateService } from '@app/services/editor-state.service';
@@ -413,6 +414,7 @@ export class EnhancedAIPreviewComponent {
 
   private readonly sanitizer = inject(DomSanitizer);
   private readonly editorState = inject(EditorStateService);
+  private readonly frameworkRenderer = inject(FrameworkRendererService);
 
   // State
   activeTabIndex = 3; // 🔧 DEFAULT TO PREVIEW TAB (index 3) instead of TypeScript (index 0)
@@ -1895,6 +1897,9 @@ export class EnhancedAIPreviewComponent {
       // Process Angular template syntax in the correct order
       let processedHtml = html;
 
+      // 🔧 CRITICAL FIX: Fix Bootstrap grid structure before processing
+      processedHtml = this.fixBootstrapGridStructure(processedHtml);
+      
       processedHtml = this.processNgForSimple(processedHtml, mockData);
       processedHtml = this.processMatTableDirectives(processedHtml, mockData);
       processedHtml = this.processInterpolation(processedHtml, mockData);
@@ -1911,6 +1916,51 @@ export class EnhancedAIPreviewComponent {
       console.error('❌ Error processing Angular template:', error);
       return html; // Return original HTML if processing fails
     }
+  }
+
+  /**
+   * 🔧 CRITICAL FIX: Fix Bootstrap Grid Structure
+   * Moves *ngFor from row to column elements for proper side-by-side layout
+   */
+  private fixBootstrapGridStructure(html: string): string {
+    console.log('🔧 Fixing Bootstrap grid structure...');
+    
+    // Pattern: <div class="row" *ngFor="..."> should become <div class="row"> with *ngFor on columns
+    const wrongPattern = /<div class="row"([^>]*?)\*ngFor="([^"]*)"([^>]*?)>([\s\S]*?)<\/div>/g;
+    
+    const fixedHtml = html.replace(wrongPattern, (match: string, beforeAttrs: string, ngForValue: string, afterAttrs: string, content: string) => {
+      console.log('🎯 Found incorrect Bootstrap grid structure, fixing...');
+      console.log('📝 Original ngFor:', ngForValue);
+      
+      // Extract the column elements and add *ngFor to them
+      const columnPattern = /<div class="col[^"]*"([^>]*?)>/g;
+      
+      let fixedContent = content.replace(columnPattern, (colMatch: string, colAttrs: string) => {
+        // Add *ngFor to the column element
+        const cleanColAttrs = colAttrs.trim();
+        const ngForAttr = `*ngFor="${ngForValue}"`;
+        
+        if (cleanColAttrs) {
+          return colMatch.replace('>', ` ${ngForAttr}>`);
+        } else {
+          return colMatch.replace('>', ` ${ngForAttr}>`);
+        }
+      });
+      
+      // Create the fixed row without *ngFor
+      const cleanBeforeAttrs = beforeAttrs.trim();
+      const cleanAfterAttrs = afterAttrs.trim();
+      const allAttrs = [cleanBeforeAttrs, cleanAfterAttrs].filter(a => a && a.length > 0).join(' ').trim();
+      
+      const fixedRow = `<div class="row"${allAttrs ? ' ' + allAttrs : ''}>${fixedContent}</div>`;
+      
+      console.log('✅ Fixed Bootstrap grid structure');
+      console.log('📝 Fixed structure preview:', fixedRow.substring(0, 200));
+      
+      return fixedRow;
+    });
+    
+    return fixedHtml;
   }
 
   /**
