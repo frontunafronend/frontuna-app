@@ -112,9 +112,9 @@ export class OptimizedAIChatService {
 
   // 🔧 CONFIGURATION
   private readonly API_BASE = `${this.environmentService.apiUrl}/ai/copilot`;
-  private readonly TIMEOUT_MS = 15000; // 15 seconds - reduced from 45s
-  private readonly MAX_RETRIES = 0; // No retries for faster response
-  private readonly DEBOUNCE_MS = 100; // Reduced debounce for faster response
+  private readonly TIMEOUT_MS = 60000; // 60 seconds - increased for complex requests
+  private readonly MAX_RETRIES = 1; // Allow 1 retry for timeout recovery
+  private readonly DEBOUNCE_MS = 100; // Keep fast debounce
 
   // 🎯 REQUEST DEDUPLICATION - Prevent duplicate calls
   private activeRequests = new Map<string, Observable<any>>();
@@ -470,6 +470,13 @@ export class OptimizedAIChatService {
         console.log(`  ${index + 1}. ${block.language}: ${block.code.length} characters`);
         if (block.language === 'html') {
           console.log(`     HTML Preview: ${block.code.substring(0, 150)}...`);
+          
+          // 🛡️ CRITICAL: Verify if this is enhanced Bootstrap HTML
+          if (block.code.includes('<!DOCTYPE html>') && block.code.includes('<nav')) {
+            console.log('✅ CONFIRMED: Enhanced Bootstrap HTML detected in codeBlocks');
+          } else if (block.code.includes('<div') && !block.code.includes('<nav')) {
+            console.log('❌ WARNING: Only component HTML detected - Bootstrap enhancement may have failed');
+          }
         }
       });
     }

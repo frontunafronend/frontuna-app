@@ -369,8 +369,8 @@ export class AIPageStructureGuardService {
     console.log('🛡️ AI Guard: Analyzing page structure for user request:', userRequest);
     
     // Enhanced Bootstrap home page detection
-    const isBootstrapHomeRequest = /bootstrap.*home.*page|home.*page.*bootstrap|bootstrap.*layout|bootstrap.*container|wrapped.*page.*home|homepage.*bootstrap|bootstrap.*index/i.test(userRequest);
-    const hasContainerRequest = /container|wrapped|homepage|home.*page/i.test(userRequest);
+    const isBootstrapHomeRequest = /bootstrap.*home.*page|home.*page.*bootstrap|bootstrap.*layout|bootstrap.*container|wrapped.*page.*home|homepage.*bootstrap|bootstrap.*index|bootstrap.*mock|mock.*bootstrap|bootstrap.*skeleton|skeleton.*bootstrap/i.test(userRequest);
+    const hasContainerRequest = /container|wrapped|homepage|home.*page|mock.*home|home.*mock/i.test(userRequest);
     
     // Check if HTML only contains table/cards without proper page structure
     const hasOnlyTableOrCards = (html.includes('mat-table') || html.includes('mat-card')) && 
@@ -380,6 +380,11 @@ export class AIPageStructureGuardService {
     
     if (isBootstrapHomeRequest || (hasContainerRequest && hasOnlyTableOrCards)) {
       console.log('🛡️ AI Guard: Detected Bootstrap home page request or incomplete structure');
+      console.log('🔍 Detection details:');
+      console.log('  - isBootstrapHomeRequest:', isBootstrapHomeRequest);
+      console.log('  - hasContainerRequest:', hasContainerRequest);
+      console.log('  - hasOnlyTableOrCards:', hasOnlyTableOrCards);
+      console.log('  - Original HTML length:', html.length);
       
       const validation = this.validateBootstrapHomePage(html, typescript);
       
@@ -389,6 +394,10 @@ export class AIPageStructureGuardService {
         
         const enhancedCardContent = this.enhanceCardContentForBootstrap(html);
         const completeHomePage = this.generateCompleteBootstrapHomePage(enhancedCardContent);
+        
+        console.log('✅ AI Guard: Generated complete Bootstrap home page');
+        console.log('📏 Enhanced HTML length:', completeHomePage.length);
+        console.log('🔍 Enhanced HTML preview:', completeHomePage.substring(0, 200) + '...');
         
         return {
           needsImprovement: true,
