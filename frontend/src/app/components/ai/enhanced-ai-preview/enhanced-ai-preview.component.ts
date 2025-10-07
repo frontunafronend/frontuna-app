@@ -1695,6 +1695,9 @@ export class EnhancedAIPreviewComponent {
       processedHtml = this.processPropertyBinding(processedHtml, mockData);
       processedHtml = this.processStyleBinding(processedHtml, mockData);
       processedHtml = this.cleanAngularAttributes(processedHtml);
+      
+      // Final cleanup: Remove any remaining brackets around unresolved expressions
+      processedHtml = processedHtml.replace(/\[([^\]]+)\]/g, '$1');
 
       return processedHtml;
       
@@ -1997,6 +2000,10 @@ export class EnhancedAIPreviewComponent {
           const regex = new RegExp(`${ngForMatch.itemVar}\\.${key}`, 'g');
           const value = item[key];
           itemContent = itemContent.replace(regex, value);
+          
+          // Also handle interpolation brackets {{ item.property }}
+          const interpolationRegex = new RegExp(`\\{\\{\\s*${ngForMatch.itemVar}\\.${key}\\s*\\}\\}`, 'g');
+          itemContent = itemContent.replace(interpolationRegex, value);
         });
         
         // Create clean opening tag (remove *ngFor)
@@ -2088,7 +2095,7 @@ export class EnhancedAIPreviewComponent {
       }
     }
     
-    return `[${expression}]`;
+    return expression; // Return the expression without brackets if not resolved
   }
 
   /**
