@@ -522,15 +522,27 @@ interface AICopilotGuards {
     </mat-menu>
   `,
   styles: [`
+    .chat-messages-container {
+      position: relative;
+      max-height: 600px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+    
     .back-to-top-btn {
-      position: fixed !important;
-      bottom: 80px !important;
-      right: 20px !important;
-      z-index: 1000 !important;
+      position: absolute !important;
+      bottom: 16px !important;
+      right: 16px !important;
+      z-index: 100 !important;
       opacity: 0 !important;
       visibility: hidden !important;
       transition: all 0.3s ease !important;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      background: rgba(255, 255, 255, 0.95) !important;
+      backdrop-filter: blur(8px) !important;
     }
     
     .back-to-top-btn.visible {
@@ -542,13 +554,7 @@ interface AICopilotGuards {
     .back-to-top-btn:hover {
       transform: translateY(-2px) !important;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
-    }
-    
-    .chat-messages-container {
-      position: relative;
-      max-height: 600px;
-      overflow-y: auto;
-      scroll-behavior: smooth;
+      background: rgba(255, 255, 255, 1) !important;
     }
   `],
   styleUrls: ['./ai-copilot-ultimate.component.scss']
