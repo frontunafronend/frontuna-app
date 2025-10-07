@@ -5,7 +5,7 @@
  * Instead of manual template processing, this service provides actual framework execution
  */
 
-import { Injectable, ComponentRef, ViewContainerRef, Compiler, NgModule, Component, Injector, createEnvironmentInjector, EnvironmentInjector } from '@angular/core';
+import { Injectable, ComponentRef, ViewContainerRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface FrameworkComponent {
@@ -28,10 +28,7 @@ export interface RenderResult {
 })
 export class FrameworkRendererService {
   
-  constructor(
-    private compiler: Compiler,
-    private injector: Injector
-  ) {}
+  constructor() {}
 
   /**
    * 🎯 RENDER COMPONENT NATIVELY
@@ -65,14 +62,14 @@ export class FrameworkRendererService {
 
   /**
    * 🅰️ ANGULAR NATIVE RENDERING
-   * Compile and render Angular component dynamically
+   * Simplified Angular component rendering
    */
   private async renderAngularComponent(
     component: FrameworkComponent, 
     container: ViewContainerRef
   ): Promise<RenderResult> {
     try {
-      console.log('🅰️ Compiling Angular component dynamically...');
+      console.log('🅰️ Creating Angular component...');
       
       // Extract component class from TypeScript
       const componentClass = this.extractAngularComponentClass(component.typescript);
@@ -86,24 +83,12 @@ export class FrameworkRendererService {
         imports: [CommonModule]
       })(componentClass);
 
-      // Create dynamic module
-      const dynamicModule = NgModule({
-        declarations: [],
-        imports: [CommonModule],
-        providers: []
-      })(class {});
-
-      // Compile the module and component
-      const moduleFactory = await this.compiler.compileModuleAsync(dynamicModule);
-      const moduleRef = moduleFactory.create(this.injector);
-      
-      // Create component
-      const componentFactory = await this.compiler.compileComponentAsync(dynamicComponent);
-      const componentRef = container.createComponent(componentFactory, 0, moduleRef.injector);
+      // Create component directly
+      const componentRef = container.createComponent(dynamicComponent);
       
       // Inject mock data if available
-      if (component.mockData) {
-        Object.assign(componentRef.instance, component.mockData);
+      if (component.mockData && componentRef.instance) {
+        Object.assign(componentRef.instance as any, component.mockData);
       }
       
       // Trigger change detection
