@@ -1914,10 +1914,10 @@ export class EnhancedAIPreviewComponent {
   }
 
   /**
-   * Simple and reliable *ngFor processing
+   * Simple and reliable *ngFor processing - FIXED for Bootstrap grid structure
    */
   private processNgForSimple(html: string, mockData: any): string {
-    // More robust regex to handle Bootstrap grid and nested elements
+    // Use a more precise regex that handles nested structures better
     const ngForRegex = /<(\w+)([^>]*?)\*ngFor="let\s+(\w+)\s+of\s+(\w+)"([^>]*?)>([\s\S]*?)<\/\1>/g;
     
     return html.replace(ngForRegex, (match: string, tagName: string, beforeAttrs: string, itemVar: string, arrayVar: string, afterAttrs: string, content: string) => {
@@ -1928,8 +1928,11 @@ export class EnhancedAIPreviewComponent {
         return '<!-- No data for ' + arrayVar + ' -->';
       }
       
+      console.log(`🔧 Processing *ngFor for ${arrayVar} with ${dataArray.length} items`);
+      console.log(`📝 Original content structure:`, content.substring(0, 200));
+      
       // Generate repeated elements
-      return dataArray.map((item: any, index: number) => {
+      const repeatedElements = dataArray.map((item: any, index: number) => {
         let processedContent = content;
         
         // Replace interpolation {{ item.property }}
@@ -1952,17 +1955,6 @@ export class EnhancedAIPreviewComponent {
           return match;
         });
         
-        // Replace complex style bindings like [style.background-image]="'url(' + crypto.imageUrl + ')'"
-        processedContent = processedContent.replace(/\[style\.([^\]]+)\]="[^"]*(\w+)\.(\w+)[^"]*"/g, (match: string, styleProp: string, varName: string, propName: string) => {
-          if (varName === itemVar && item[propName] !== undefined) {
-            if (styleProp === 'background-image') {
-              return `style="${styleProp}: url(${item[propName]})"`;
-            }
-            return `style="${styleProp}: ${item[propName]}"`;
-          }
-          return match;
-        });
-        
         // Replace alt bindings alt="{{ item.property }}"
         processedContent = processedContent.replace(/alt="\{\{\s*(\w+)\.(\w+)\s*\}\}"/g, (match: string, varName: string, propName: string) => {
           if (varName === itemVar && item[propName] !== undefined) {
@@ -1971,17 +1963,27 @@ export class EnhancedAIPreviewComponent {
           return match;
         });
         
-        // Create the element with processed content - ensure proper HTML structure
-        const cleanBeforeAttrs = beforeAttrs.replace(/\*ngFor="[^"]*"/, '').replace(/^\s+|\s+$/g, '');
-        const cleanAfterAttrs = afterAttrs.replace(/^\s+|\s+$/g, '');
+        // Clean and combine attributes
+        const cleanBeforeAttrs = beforeAttrs.replace(/\*ngFor="[^"]*"/, '').trim();
+        const cleanAfterAttrs = afterAttrs.trim();
         const allAttrs = [cleanBeforeAttrs, cleanAfterAttrs].filter(a => a && a.length > 0).join(' ').trim();
         
-        // Ensure proper spacing and structure
+        // 🔧 CRITICAL FIX: Create complete, self-contained element
         const elementStart = `<${tagName}${allAttrs ? ' ' + allAttrs : ''}>`;
         const elementEnd = `</${tagName}>`;
         
-        return elementStart + processedContent + elementEnd;
-      }).join('\n');
+        const completeElement = elementStart + processedContent + elementEnd;
+        
+        console.log(`✅ Generated element ${index + 1}:`, completeElement.substring(0, 150));
+        
+        return completeElement;
+      });
+      
+      // Join all elements with proper spacing
+      const result = repeatedElements.join('\n');
+      console.log(`🎯 Final result structure:`, result.substring(0, 300));
+      
+      return result;
     });
   }
 
