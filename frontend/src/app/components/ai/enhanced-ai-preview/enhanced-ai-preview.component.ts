@@ -1689,31 +1689,13 @@ export class EnhancedAIPreviewComponent {
       // Process Angular template syntax in the correct order
       let processedHtml = html;
 
-      console.log('🔧 Step 1: Processing *ngFor loops...');
       processedHtml = this.processNgFor(processedHtml, mockData);
-      console.log('✅ After *ngFor:', processedHtml.substring(0, 300));
-      
-      console.log('🔧 Step 1.5: Processing Angular Material table directives...');
       processedHtml = this.processMatTableDirectives(processedHtml, mockData);
-      console.log('✅ After mat-table processing:', processedHtml.substring(0, 300));
-      
-      console.log('🔧 Step 2: Processing interpolation {{ }}...');
       processedHtml = this.processInterpolation(processedHtml, mockData);
-      console.log('✅ After interpolation:', processedHtml.substring(0, 300));
-      
-      console.log('🔧 Step 3: Processing property binding...');
       processedHtml = this.processPropertyBinding(processedHtml, mockData);
-      console.log('✅ After property binding:', processedHtml.substring(0, 300));
-      
-      console.log('🔧 Step 4: Processing style binding...');
       processedHtml = this.processStyleBinding(processedHtml, mockData);
-      console.log('✅ After style binding:', processedHtml.substring(0, 300));
-      
-      console.log('🔧 Step 5: Cleaning Angular attributes...');
       processedHtml = this.cleanAngularAttributes(processedHtml);
-      console.log('✅ After cleanup:', processedHtml.substring(0, 300));
 
-      console.log('🎯 Final processed template:', processedHtml);
       return processedHtml;
       
     } catch (error) {
@@ -1926,52 +1908,45 @@ export class EnhancedAIPreviewComponent {
    * Process *ngFor directives
    */
   private processNgFor(html: string, mockData: any): string {
-    console.log('🔧 Processing *ngFor with mockData:', mockData);
+    // Find and process *ngFor directives with proper tag matching
+    const ngForPattern = /<(\w+)([^>]*\*ngFor="let\s+(\w+)\s+of\s+(\w+)"[^>]*)>([\s\S]*?)<\/\1>/g;
     
-    const ngForRegex = /(<[^>]*\*ngFor="let\s+(\w+)\s+of\s+(\w+)"[^>]*>)([\s\S]*?)(<\/[^>]+>)/g;
-    
-    return html.replace(ngForRegex, (match, openTag, itemVar, arrayVar, content, closeTag) => {
-      console.log(`🔍 Processing *ngFor: let ${itemVar} of ${arrayVar}`);
-      
+    return html.replace(ngForPattern, (match, tagName, attributes, itemVar, arrayVar, content) => {
       let array = mockData[arrayVar];
       
       // If no direct match, try to find the array by looking for similar names
       if (!array) {
-        const possibleNames = [arrayVar, arrayVar + 's', arrayVar.slice(0, -1)]; // Try singular/plural variations
+        const possibleNames = [arrayVar, arrayVar + 's', arrayVar.slice(0, -1)];
         for (const name of possibleNames) {
           if (mockData[name] && Array.isArray(mockData[name])) {
             array = mockData[name];
-            console.log(`✅ Found array with name: ${name}`);
             break;
           }
         }
       }
       
       if (!Array.isArray(array) || array.length === 0) {
-        console.log(`❌ No array data found for ${arrayVar}`);
         return `<!-- No data for ${arrayVar} -->`;
       }
 
-      console.log(`✅ Processing ${array.length} items for ${arrayVar}`);
-
-      // Remove *ngFor from opening tag
-      const cleanOpenTag = openTag.replace(/\*ngFor="[^"]*"/, '').replace(/\s+/g, ' ');
+      // Remove *ngFor from attributes
+      const cleanAttributes = attributes.replace(/\*ngFor="[^"]*"/, '').trim();
       
       // Generate repeated content
       return array.map((item, index) => {
         let itemContent = content;
-        
-        console.log(`🔧 Processing item ${index}:`, item);
         
         // Replace item properties (e.g., product.name -> actual name)
         Object.keys(item).forEach(key => {
           const regex = new RegExp(`${itemVar}\\.${key}`, 'g');
           const value = item[key];
           itemContent = itemContent.replace(regex, value);
-          console.log(`🔄 Replaced ${itemVar}.${key} with ${value}`);
         });
         
-        return cleanOpenTag + itemContent + closeTag;
+        // Create clean opening tag
+        const openTag = cleanAttributes ? `<${tagName} ${cleanAttributes}>` : `<${tagName}>`;
+        
+        return openTag + itemContent + `</${tagName}>`;
       }).join('\n');
     });
   }
@@ -1980,20 +1955,14 @@ export class EnhancedAIPreviewComponent {
    * Process interpolation {{ }}
    */
   private processInterpolation(html: string, mockData: any): string {
-    console.log('🔧 Processing interpolation with mockData:', mockData);
-    
-    // First, let's find what arrays we have available
     const availableArrays = Object.keys(mockData).filter(key => Array.isArray(mockData[key]));
-    console.log('📋 Available arrays:', availableArrays);
     
     return html.replace(/\{\{\s*([^}]+)\s*\}\}/g, (match, expression) => {
       const trimmed = expression.trim();
-      console.log(`🔍 Processing interpolation: ${trimmed}`);
       
       // Handle pipes (e.g., element.price | currency)
       if (trimmed.includes('|')) {
         const [propertyPart, pipePart] = trimmed.split('|').map((s: string) => s.trim());
-        console.log(`🔧 Processing pipe: ${propertyPart} | ${pipePart}`);
         
         // Get the base value first
         let baseValue = this.resolvePropertyValue(propertyPart, mockData, availableArrays);
@@ -2005,13 +1974,11 @@ export class EnhancedAIPreviewComponent {
           baseValue = typeof baseValue === 'number' ? baseValue.toFixed(2) : baseValue;
         }
         
-        console.log(`✅ Pipe result: ${baseValue}`);
         return baseValue;
       }
       
       // Handle regular property access
-      const value = this.resolvePropertyValue(trimmed, mockData, availableArrays);
-      return value;
+      return this.resolvePropertyValue(trimmed, mockData, availableArrays);
     });
   }
 
@@ -2021,7 +1988,6 @@ export class EnhancedAIPreviewComponent {
   private resolvePropertyValue(expression: string, mockData: any, availableArrays: string[]): any {
     // Handle simple property access
     if (mockData[expression]) {
-      console.log(`✅ Found direct property: ${expression} = ${mockData[expression]}`);
       return mockData[expression];
     }
     
@@ -2029,7 +1995,6 @@ export class EnhancedAIPreviewComponent {
     const parts = expression.split('.');
     if (parts.length === 2) {
       const [obj, prop] = parts;
-      console.log(`🔍 Looking for ${obj}.${prop}`);
       
       // For Angular Material tables, we need to use the first item from the array
       // since we can't actually iterate in static HTML
@@ -2038,9 +2003,7 @@ export class EnhancedAIPreviewComponent {
         if (arrayData && arrayData.length > 0) {
           const firstItem = arrayData[0];
           if (firstItem && firstItem.hasOwnProperty(prop)) {
-            const value = firstItem[prop];
-            console.log(`✅ Found property in ${arrayName}[0].${prop} = ${value}`);
-            return value;
+            return firstItem[prop];
           }
         }
       }
@@ -2048,19 +2011,15 @@ export class EnhancedAIPreviewComponent {
       // Check if we have an array with this name
       const arrayData = mockData[obj + 's'] || mockData[obj]; // Try both singular and plural
       if (Array.isArray(arrayData) && arrayData.length > 0) {
-        const value = arrayData[0][prop]; // Use first item for template processing
-        console.log(`✅ Found array property: ${obj}.${prop} = ${value}`);
-        return value;
+        return arrayData[0][prop]; // Use first item for template processing
       }
       
       // Check direct object access
       if (mockData[obj] && mockData[obj][prop]) {
-        console.log(`✅ Found object property: ${obj}.${prop} = ${mockData[obj][prop]}`);
         return mockData[obj][prop];
       }
     }
     
-    console.log(`❌ Could not resolve: ${expression}`);
     return `[${expression}]`;
   }
 
