@@ -630,28 +630,40 @@ Please try again in a moment. If the problem persists, check the server logs.`;
    */
   private enhanceMessageWithFrameworkContext(originalMessage: string): string {
     const frameworkContext = `
-🎯 FRAMEWORK CONTEXT:
-- Framework: Angular 17+ (Latest)
-- Architecture: Standalone Components
-- Styling: SCSS with Angular Material
-- TypeScript: Latest version
-- Build: Angular CLI with Vite
+🎯 UNIVERSAL COMPONENT GENERATOR - ANGULAR 17+
 
-🚀 CODE REQUIREMENTS:
-- Provide COMPLETE, FULL implementation code
+🚀 FRAMEWORK CONTEXT:
+- Framework: Angular 17+ (Latest) with Standalone Components
+- Styling: SCSS with Angular Material (when appropriate)
+- TypeScript: Latest version with strict typing
+- Build: Angular CLI with Vite optimization
+- Architecture: Modern, production-ready components
+
+✨ UNIVERSAL CODE GENERATION:
+- Accept ANY component request (cards, forms, tables, dashboards, etc.)
+- Generate COMPLETE, FULL implementation code
 - Include ALL necessary imports and dependencies
-- Generate TypeScript component class with full logic
-- Include complete HTML template with all elements
-- Provide complete SCSS styles with responsive design
+- Create TypeScript component class with full logic
+- Provide complete HTML template with all elements
+- Include complete SCSS styles with responsive design
 - Make code production-ready and fully functional
-- Include proper error handling and type safety
-- Use Angular Material components when appropriate
-- Follow Angular best practices and conventions
+- Add proper error handling and type safety
+- Use Angular Material when it enhances the component
+- Follow Angular best practices and modern conventions
+- Include realistic mock data when beneficial
+- Support any UI pattern or component type
+
+🎯 FLEXIBLE REQUIREMENTS:
+- Interpret the user's request creatively and comprehensively
+- Generate components for any use case (business, personal, creative)
+- Support any complexity level (simple to advanced)
+- Adapt to any design requirements or specifications
+- Create responsive, accessible, and performant components
 
 📋 USER REQUEST:
 ${originalMessage}
 
-Please provide the complete, full code implementation that can be directly used in an Angular 17+ standalone component project.`;
+Please provide the complete, full code implementation that can be directly used in an Angular 17+ standalone component project. Be creative and comprehensive in your interpretation of the request.`;
 
     return frameworkContext;
   }

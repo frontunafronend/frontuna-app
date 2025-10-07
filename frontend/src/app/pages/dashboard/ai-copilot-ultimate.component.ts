@@ -224,20 +224,26 @@ interface AICopilotGuards {
                 </div>
                 <div class="message-text">
                   🚀 <strong>Welcome to AI Copilot Ultimate v3.0!</strong><br><br>
-                  I'm your optimized AI coding assistant. I can help you with:
-                  <br>• 📝 Generate complete components with TypeScript, HTML & SCSS
-                  <br>• 🔧 Debug and optimize your existing code
-                  <br>• 🎨 Create responsive designs and animations
-                  <br>• 🧪 Write tests and documentation
-                  <br>• 🚀 Implement best practices and patterns
+                  I'm your universal AI coding assistant. Ask me to create <strong>ANY</strong> component:
+                  <br>• 🎯 <strong>ANY Component Type:</strong> Cards, forms, tables, dashboards, buttons, layouts, animations
+                  <br>• 🎨 <strong>ANY Design Style:</strong> Material Design, custom themes, creative layouts
+                  <br>• 📱 <strong>ANY Complexity:</strong> Simple widgets to complex business applications
+                  <br>• 🔧 <strong>ANY Use Case:</strong> E-commerce, social media, productivity, games, portfolios
+                  <br>• ✨ <strong>Creative Freedom:</strong> Describe your vision - I'll bring it to life!
                   <br><br>
-                  <strong>🎯 Auto-Enhanced Prompts:</strong>
-                  <br>• Every message automatically includes Angular 17+ framework context
-                  <br>• Always requests complete, full code implementation
+                  <strong>🎯 Universal Code Generation:</strong>
+                  <br>• Every request gets complete Angular 17+ implementation
+                  <br>• Full TypeScript, HTML, SCSS code ready to use
+                  <br>• Automatic framework context and best practices
                   <br>• Ensures production-ready, standalone components
                   <br>• Mock data toggle above controls realistic sample data inclusion
                   <br><br>
-                  <strong>Try asking me:</strong> "Create a responsive card component with animations"
+                  <strong>Try asking me anything:</strong> 
+                  <br>• "Create a social media post card with likes and comments"
+                  <br>• "Build a cryptocurrency dashboard with charts"
+                  <br>• "Make a recipe card with ingredients and steps"
+                  <br>• "Design a music player with playlist"
+                  <br>• Or literally ANY component you can imagine!
                 </div>
                 <div class="message-actions">
                   <button mat-button class="suggestion-btn" (click)="sendSuggestion('Create a responsive card component with hover animations')">
@@ -722,6 +728,8 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     // Add Angular framework context
     const frameworkContext = `
 IMPORTANT CONTEXT: Use Angular 17+ with standalone components, TypeScript, and modern practices.
+
+UNIVERSAL COMPONENT CREATION: Accept and implement ANY component request - from simple buttons to complex dashboards, forms, tables, cards, layouts, animations, or any creative UI element. Be flexible and comprehensive in your interpretation.
 
 `;
     
