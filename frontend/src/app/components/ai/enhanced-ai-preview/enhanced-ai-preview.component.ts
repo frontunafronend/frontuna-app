@@ -1854,57 +1854,63 @@ export class EnhancedAIPreviewComponent {
    * Process Angular Material table directives
    */
   private processMatTableDirectives(html: string, mockData: any): string {
-    console.log('🔧 Processing Angular Material table directives...');
-    
-    // Find the dataSource and displayedColumns
-    let dataSourceArray: any[] = [];
-    let displayedColumns: string[] = [];
-    
-    // Extract dataSource from [dataSource]="products"
-    const dataSourceMatch = html.match(/\[dataSource\]="(\w+)"/);
-    if (dataSourceMatch) {
-      const dataSourceName = dataSourceMatch[1];
-      dataSourceArray = mockData[dataSourceName] || [];
-      console.log(`📊 Found dataSource: ${dataSourceName} with ${dataSourceArray.length} items`);
+    // Check if this is a mat-table
+    if (!html.includes('mat-table') && !html.includes('matColumnDef')) {
+      return html;
     }
     
-    // Extract displayedColumns from TypeScript (this should be in the component)
-    // For now, let's extract from the template structure
+    // Find the dataSource array in mockData
+    let dataSourceArray: any[] = [];
+    const availableArrays = Object.keys(mockData).filter(key => Array.isArray(mockData[key]));
+    if (availableArrays.length > 0) {
+      dataSourceArray = mockData[availableArrays[0]];
+    }
+    
+    if (dataSourceArray.length === 0) {
+      return html;
+    }
+    
+    // Get column names from the first item or from matColumnDef
+    let columns: string[] = [];
     const columnMatches = html.match(/matColumnDef="(\w+)"/g);
     if (columnMatches) {
-      displayedColumns = columnMatches.map(match => {
+      columns = columnMatches.map(match => {
         const colMatch = match.match(/matColumnDef="(\w+)"/);
         return colMatch ? colMatch[1] : '';
       }).filter(col => col);
-      console.log('📋 Found columns:', displayedColumns);
+    } else {
+      columns = Object.keys(dataSourceArray[0]);
     }
     
-    // Process *matHeaderRowDef
-    html = html.replace(/\*matHeaderRowDef="[^"]*"/g, '');
+    // Replace the entire table with a simple, working HTML table
+    const tableRegex = /<table[^>]*>[\s\S]*?<\/table>/g;
     
-    // Process *matRowDef - this is the key part that creates multiple rows
-    const matRowRegex = /<tr[^>]*\*matRowDef="[^"]*"[^>]*>([\s\S]*?)<\/tr>/g;
-    html = html.replace(matRowRegex, (match, rowContent) => {
-      console.log('🔧 Processing *matRowDef...');
+    let processedHtml = html.replace(tableRegex, () => {
+      let tableHtml = '<table class="mat-table mat-elevation-z8" style="width: 100%;">\n';
       
-      if (dataSourceArray.length === 0) {
-        return '<!-- No data for table rows -->';
-      }
+      // Generate header row
+      tableHtml += '  <thead>\n    <tr class="mat-header-row">\n';
+      columns.forEach(column => {
+        tableHtml += `      <th class="mat-header-cell" style="padding: 16px; text-align: left; font-weight: 500;">${column.toUpperCase()}</th>\n`;
+      });
+      tableHtml += '    </tr>\n  </thead>\n';
       
-      // Generate a row for each item in the dataSource
-      return dataSourceArray.map((item, index) => {
-        console.log(`🔧 Creating row ${index + 1} for:`, item);
-        return `<tr class="mat-row">${rowContent}</tr>`;
-      }).join('\n');
+      // Generate data rows
+      tableHtml += '  <tbody>\n';
+      dataSourceArray.forEach((item, index) => {
+        tableHtml += `    <tr class="mat-row" style="border-bottom: 1px solid #e0e0e0;">\n`;
+        columns.forEach(column => {
+          const value = item[column] || '';
+          tableHtml += `      <td class="mat-cell" style="padding: 16px;">${value}</td>\n`;
+        });
+        tableHtml += '    </tr>\n';
+      });
+      tableHtml += '  </tbody>\n</table>';
+      
+      return tableHtml;
     });
     
-    // Process *matCellDef - replace with actual data
-    html = html.replace(/\*matCellDef="let (\w+)"/g, (match, varName) => {
-      return ''; // Remove the directive, we'll handle the data in interpolation
-    });
-    
-    console.log('✅ Mat-table directives processed');
-    return html;
+    return processedHtml;
   }
 
   /**
