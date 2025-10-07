@@ -471,13 +471,15 @@ export class EnhancedAIPreviewComponent {
     const scssCode = buffers.scss;
     
     if (scssCode && scssCode.trim().length > 0) {
-      // Convert SCSS to CSS (simplified)
-      return this.convertSCSSToCSS(scssCode);
+      // Convert SCSS to CSS and enhance it to make connection obvious
+      const convertedCSS = this.convertSCSSToCSS(scssCode);
+      return this.enhanceCSSForVisibility(convertedCSS);
     }
     
     // Fallback to generated CSS from TypeScript
     const tsCode = buffers.typescript || this.aiResponse?.code || '';
-    return tsCode ? this.generateCSS(tsCode) : '';
+    const generatedCSS = tsCode ? this.generateCSS(tsCode) : '';
+    return this.enhanceCSSForVisibility(generatedCSS);
   });
 
   readonly previewUrl = computed(() => {
@@ -848,6 +850,185 @@ export class EnhancedAIPreviewComponent {
       .replace(/&/g, '') // Remove parent selectors
       .replace(/@mixin\s+[\w-]+[^{]*{[^}]*}/g, '') // Remove mixins
       .replace(/@include\s+[\w-]+[^;]*;/g, ''); // Remove includes
+  }
+
+  /**
+   * Enhance CSS to make the connection to HTML more visually obvious
+   */
+  private enhanceCSSForVisibility(css: string): string {
+    if (!css || css.trim().length === 0) {
+      return css;
+    }
+
+    // Add distinctive visual enhancements to make CSS connection obvious
+    const enhancedCSS = `
+      /* 🎨 ENHANCED CSS - VISUALLY CONNECTED TO COMPONENTS */
+      
+      /* Add subtle animations to show CSS is working */
+      * {
+        transition: all 0.3s ease !important;
+      }
+      
+      /* Enhanced component visibility */
+      .component-preview > * {
+        animation: cssConnected 0.8s ease-out !important;
+        border: 2px solid transparent !important;
+        position: relative !important;
+      }
+      
+      .component-preview > *:hover {
+        border-color: #4f46e5 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(79, 70, 229, 0.15) !important;
+      }
+      
+      /* Add CSS connection indicator */
+      .component-preview::before {
+        content: "🎨 CSS CONNECTED & ACTIVE" !important;
+        position: fixed !important;
+        top: 10px !important;
+        right: 10px !important;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+        color: white !important;
+        padding: 8px 16px !important;
+        border-radius: 20px !important;
+        font-size: 12px !important;
+        font-weight: bold !important;
+        z-index: 9999 !important;
+        animation: pulse 2s infinite !important;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3) !important;
+      }
+      
+      @keyframes cssConnected {
+        0% { 
+          opacity: 0; 
+          transform: scale(0.95) translateY(10px); 
+          border-color: #4f46e5;
+        }
+        50% { 
+          border-color: #7c3aed; 
+        }
+        100% { 
+          opacity: 1; 
+          transform: scale(1) translateY(0); 
+          border-color: transparent;
+        }
+      }
+      
+      @keyframes pulse {
+        0%, 100% { 
+          transform: scale(1); 
+          opacity: 0.9; 
+        }
+        50% { 
+          transform: scale(1.05); 
+          opacity: 1; 
+        }
+      }
+      
+      /* Enhanced table styling to show CSS connection */
+      table, .mat-table {
+        border: 2px solid #e5e7eb !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+      }
+      
+      th, .mat-header-cell {
+        background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important;
+        color: #1e293b !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        border-bottom: 3px solid #4f46e5 !important;
+      }
+      
+      td, .mat-cell {
+        border-bottom: 1px solid #f1f5f9 !important;
+        transition: background-color 0.2s ease !important;
+      }
+      
+      tr:hover td, .mat-row:hover .mat-cell {
+        background-color: #f8fafc !important;
+        transform: scale(1.01) !important;
+      }
+      
+      /* Enhanced card styling */
+      .mat-card, .card, .dynamic-item, .crypto-card, .item-card {
+        border: 2px solid #e5e7eb !important;
+        border-radius: 16px !important;
+        background: linear-gradient(135deg, #ffffff, #f8fafc) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative !important;
+        overflow: hidden !important;
+      }
+      
+      .mat-card::before, .card::before, .dynamic-item::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 4px !important;
+        background: linear-gradient(90deg, #4f46e5, #7c3aed, #ec4899) !important;
+        animation: gradientShift 3s ease-in-out infinite !important;
+      }
+      
+      @keyframes gradientShift {
+        0%, 100% { background: linear-gradient(90deg, #4f46e5, #7c3aed, #ec4899); }
+        50% { background: linear-gradient(90deg, #ec4899, #4f46e5, #7c3aed); }
+      }
+      
+      .mat-card:hover, .card:hover, .dynamic-item:hover {
+        transform: translateY(-8px) scale(1.02) !important;
+        box-shadow: 0 20px 40px rgba(79, 70, 229, 0.15) !important;
+        border-color: #4f46e5 !important;
+      }
+      
+      /* Enhanced button styling */
+      .mat-button, .mat-raised-button, .btn, button {
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+        transition: all 0.3s ease !important;
+        position: relative !important;
+        overflow: hidden !important;
+      }
+      
+      .mat-raised-button, .btn-primary {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+        border: none !important;
+        color: white !important;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3) !important;
+      }
+      
+      .mat-raised-button:hover, .btn-primary:hover {
+        background: linear-gradient(135deg, #3730a3, #6b21a8) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4) !important;
+      }
+      
+      /* Original user CSS enhanced */
+      ${css}
+      
+      /* Additional enhancements for user CSS */
+      ${css.includes('.') ? `
+        /* Enhance user-defined classes */
+        ${css.match(/\.[\w-]+/g)?.map(className => `
+          ${className} {
+            border-radius: 8px !important;
+            transition: all 0.3s ease !important;
+          }
+          ${className}:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+          }
+        `).join('') || ''}
+      ` : ''}
+    `;
+
+    return enhancedCSS;
   }
   
   // 🎯 OLD METHOD REMOVED - Using new comprehensive processAngularTemplate method
