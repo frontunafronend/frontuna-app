@@ -1668,31 +1668,48 @@ export class EnhancedAIPreviewComponent {
    * Converts Angular template syntax to actual HTML with mock data
    */
   private processAngularTemplateNew(html: string, typescript: string): string {
-    if (!html || !typescript) return html;
+    if (!html || !typescript) {
+      console.log('❌ Missing HTML or TypeScript for processing');
+      return html;
+    }
 
     try {
+      console.log('🚀 Starting Angular template processing...');
+      console.log('📝 Original HTML:', html.substring(0, 300));
+      console.log('📝 TypeScript code:', typescript.substring(0, 500));
+      
       // Extract mock data from TypeScript component
       const mockData = this.extractMockDataFromTypeScript(typescript);
       
-      // Process Angular template syntax
+      if (Object.keys(mockData).length === 0) {
+        console.log('⚠️ No mock data extracted, returning original HTML');
+        return html;
+      }
+      
+      // Process Angular template syntax in the correct order
       let processedHtml = html;
 
-      // Handle *ngFor loops
+      console.log('🔧 Step 1: Processing *ngFor loops...');
       processedHtml = this.processNgFor(processedHtml, mockData);
+      console.log('✅ After *ngFor:', processedHtml.substring(0, 300));
       
-      // Handle interpolation {{ }}
+      console.log('🔧 Step 2: Processing interpolation {{ }}...');
       processedHtml = this.processInterpolation(processedHtml, mockData);
+      console.log('✅ After interpolation:', processedHtml.substring(0, 300));
       
-      // Handle property binding [src], [alt], etc.
+      console.log('🔧 Step 3: Processing property binding...');
       processedHtml = this.processPropertyBinding(processedHtml, mockData);
+      console.log('✅ After property binding:', processedHtml.substring(0, 300));
       
-      // Handle style binding [style.background-image]
+      console.log('🔧 Step 4: Processing style binding...');
       processedHtml = this.processStyleBinding(processedHtml, mockData);
+      console.log('✅ After style binding:', processedHtml.substring(0, 300));
       
-      // Clean up Angular-specific attributes
+      console.log('🔧 Step 5: Cleaning Angular attributes...');
       processedHtml = this.cleanAngularAttributes(processedHtml);
+      console.log('✅ After cleanup:', processedHtml.substring(0, 300));
 
-      console.log('🎯 Processed Angular template:', processedHtml.substring(0, 200) + '...');
+      console.log('🎯 Final processed template:', processedHtml);
       return processedHtml;
       
     } catch (error) {
@@ -1708,43 +1725,116 @@ export class EnhancedAIPreviewComponent {
     const mockData: any = {};
     
     try {
-      // Extract arrays (like products = [...])
+      console.log('🔍 Extracting mock data from TypeScript:', typescript.substring(0, 500));
+      
+      // Extract arrays (like products: Product[] = [...])
       const arrayMatches = typescript.match(/(\w+):\s*\w+\[\]\s*=\s*\[([\s\S]*?)\];/g);
       if (arrayMatches) {
         arrayMatches.forEach(match => {
           const nameMatch = match.match(/(\w+):/);
           if (nameMatch) {
             const arrayName = nameMatch[1];
+            console.log(`🎯 Found array: ${arrayName}`);
+            
             // Extract objects from the array
             const objectMatches = match.match(/\{[\s\S]*?\}/g);
             if (objectMatches) {
               mockData[arrayName] = objectMatches.map(objStr => {
                 return this.parseObjectString(objStr);
               });
+              console.log(`✅ Parsed ${arrayName}:`, mockData[arrayName]);
             }
           }
         });
       }
 
-      // Extract simple properties
-      const propMatches = typescript.match(/(\w+):\s*(string|number|boolean)\s*=\s*['"`]?([^'"`;\n]+)['"`]?;/g);
-      if (propMatches) {
-        propMatches.forEach(match => {
-          const parts = match.match(/(\w+):\s*(string|number|boolean)\s*=\s*['"`]?([^'"`;\n]+)['"`]?;/);
-          if (parts) {
-            const [, name, type, value] = parts;
-            mockData[name] = type === 'number' ? parseFloat(value) : value.replace(/['"`]/g, '');
-          }
-        });
+      // If no arrays found, create sample data based on the interface
+      if (Object.keys(mockData).length === 0) {
+        console.log('🔧 No arrays found, generating sample data...');
+        
+        // Look for interface definitions to understand structure
+        const interfaceMatch = typescript.match(/interface\s+(\w+)\s*\{([^}]+)\}/);
+        if (interfaceMatch) {
+          const [, interfaceName, interfaceBody] = interfaceMatch;
+          console.log(`📋 Found interface: ${interfaceName}`);
+          
+          // Generate sample array based on interface
+          const sampleItems = this.generateSampleDataFromInterface(interfaceBody);
+          
+          // Try to find the array property name (usually plural of interface name)
+          const arrayName = interfaceName.toLowerCase() + 's';
+          mockData[arrayName] = sampleItems;
+          console.log(`✅ Generated sample data for ${arrayName}:`, mockData[arrayName]);
+        }
       }
 
-      console.log('🎯 Extracted mock data:', mockData);
+      console.log('🎯 Final extracted mock data:', mockData);
       return mockData;
       
     } catch (error) {
       console.error('❌ Error extracting mock data:', error);
       return {};
     }
+  }
+
+  /**
+   * Generate sample data from interface definition
+   */
+  private generateSampleDataFromInterface(interfaceBody: string): any[] {
+    const sampleItems = [];
+    
+    // Parse interface properties
+    const properties: any = {};
+    const propMatches = interfaceBody.match(/(\w+):\s*(string|number|boolean)/g);
+    
+    if (propMatches) {
+      propMatches.forEach(prop => {
+        const match = prop.match(/(\w+):\s*(string|number|boolean)/);
+        if (match) {
+          const [, name, type] = match;
+          properties[name] = type;
+        }
+      });
+    }
+    
+    // Generate 3 sample items
+    for (let i = 0; i < 3; i++) {
+      const item: any = {};
+      
+      Object.keys(properties).forEach(prop => {
+        const type = properties[prop];
+        
+        switch (prop.toLowerCase()) {
+          case 'id':
+            item[prop] = i + 1;
+            break;
+          case 'name':
+          case 'title':
+            item[prop] = ['Eco-friendly Water Bottle', 'Wireless Charging Pad', 'Bluetooth Headphones'][i] || `Product ${i + 1}`;
+            break;
+          case 'description':
+            item[prop] = ['A sustainable water bottle for everyday use.', 'Fast charging with sleek design.', 'Premium sound quality with noise cancellation.'][i] || `Description for item ${i + 1}`;
+            break;
+          case 'price':
+            item[prop] = [25, 45, 150][i] || (Math.random() * 100 + 10);
+            break;
+          case 'imageurl':
+          case 'image':
+            item[prop] = `https://via.placeholder.com/300x200/4f46e5/ffffff?text=Product+${i + 1}`;
+            break;
+          default:
+            if (type === 'number') {
+              item[prop] = Math.floor(Math.random() * 100) + 1;
+            } else {
+              item[prop] = `Value ${i + 1}`;
+            }
+        }
+      });
+      
+      sampleItems.push(item);
+    }
+    
+    return sampleItems;
   }
 
   /**
@@ -1775,25 +1865,49 @@ export class EnhancedAIPreviewComponent {
    * Process *ngFor directives
    */
   private processNgFor(html: string, mockData: any): string {
+    console.log('🔧 Processing *ngFor with mockData:', mockData);
+    
     const ngForRegex = /(<[^>]*\*ngFor="let\s+(\w+)\s+of\s+(\w+)"[^>]*>)([\s\S]*?)(<\/[^>]+>)/g;
     
     return html.replace(ngForRegex, (match, openTag, itemVar, arrayVar, content, closeTag) => {
-      const array = mockData[arrayVar] || [];
+      console.log(`🔍 Processing *ngFor: let ${itemVar} of ${arrayVar}`);
+      
+      let array = mockData[arrayVar];
+      
+      // If no direct match, try to find the array by looking for similar names
+      if (!array) {
+        const possibleNames = [arrayVar, arrayVar + 's', arrayVar.slice(0, -1)]; // Try singular/plural variations
+        for (const name of possibleNames) {
+          if (mockData[name] && Array.isArray(mockData[name])) {
+            array = mockData[name];
+            console.log(`✅ Found array with name: ${name}`);
+            break;
+          }
+        }
+      }
+      
       if (!Array.isArray(array) || array.length === 0) {
+        console.log(`❌ No array data found for ${arrayVar}`);
         return `<!-- No data for ${arrayVar} -->`;
       }
+
+      console.log(`✅ Processing ${array.length} items for ${arrayVar}`);
 
       // Remove *ngFor from opening tag
       const cleanOpenTag = openTag.replace(/\*ngFor="[^"]*"/, '').replace(/\s+/g, ' ');
       
       // Generate repeated content
-      return array.map(item => {
+      return array.map((item, index) => {
         let itemContent = content;
+        
+        console.log(`🔧 Processing item ${index}:`, item);
         
         // Replace item properties (e.g., product.name -> actual name)
         Object.keys(item).forEach(key => {
           const regex = new RegExp(`${itemVar}\\.${key}`, 'g');
-          itemContent = itemContent.replace(regex, item[key]);
+          const value = item[key];
+          itemContent = itemContent.replace(regex, value);
+          console.log(`🔄 Replaced ${itemVar}.${key} with ${value}`);
         });
         
         return cleanOpenTag + itemContent + closeTag;
@@ -1805,11 +1919,15 @@ export class EnhancedAIPreviewComponent {
    * Process interpolation {{ }}
    */
   private processInterpolation(html: string, mockData: any): string {
+    console.log('🔧 Processing interpolation with mockData:', mockData);
+    
     return html.replace(/\{\{\s*([^}]+)\s*\}\}/g, (match, expression) => {
       const trimmed = expression.trim();
+      console.log(`🔍 Processing interpolation: ${trimmed}`);
       
       // Handle simple property access
       if (mockData[trimmed]) {
+        console.log(`✅ Found direct property: ${trimmed} = ${mockData[trimmed]}`);
         return mockData[trimmed];
       }
       
@@ -1817,12 +1935,24 @@ export class EnhancedAIPreviewComponent {
       const parts = trimmed.split('.');
       if (parts.length === 2) {
         const [obj, prop] = parts;
+        console.log(`🔍 Looking for ${obj}.${prop}`);
+        
+        // Check if we have an array with this name
+        const arrayData = mockData[obj + 's'] || mockData[obj]; // Try both singular and plural
+        if (Array.isArray(arrayData) && arrayData.length > 0) {
+          const value = arrayData[0][prop]; // Use first item for template processing
+          console.log(`✅ Found array property: ${obj}.${prop} = ${value}`);
+          return value;
+        }
+        
+        // Check direct object access
         if (mockData[obj] && mockData[obj][prop]) {
+          console.log(`✅ Found object property: ${obj}.${prop} = ${mockData[obj][prop]}`);
           return mockData[obj][prop];
         }
       }
       
-      // Return placeholder if not found
+      console.log(`❌ Could not resolve: ${trimmed}`);
       return `[${trimmed}]`;
     });
   }
