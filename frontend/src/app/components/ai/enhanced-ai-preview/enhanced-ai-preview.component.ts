@@ -1946,54 +1946,6 @@ export class EnhancedAIPreviewComponent {
     return 'angular';
   }
 
-  /**
-   * 🔧 PROCESS TEMPLATE INTERPOLATION - Handle {{ }} bindings
-   */
-  private processInterpolation(html: string, mockData: any): string {
-    console.log('🔧 Processing template interpolation...');
-    
-    let processedHtml = html;
-    
-    // Process all {{ variable.property }} patterns
-    const interpolationPattern = /\{\{\s*(\w+)\.(\w+)\s*\}\}/g;
-    processedHtml = processedHtml.replace(interpolationPattern, (match, objectName, propertyName) => {
-      console.log(`🔧 Processing interpolation: ${match}`);
-      
-      // Check if we have data for this object
-      if (mockData[objectName] && Array.isArray(mockData[objectName]) && mockData[objectName].length > 0) {
-        const firstItem = mockData[objectName][0];
-        if (firstItem[propertyName] !== undefined) {
-          console.log(`✅ Replaced ${match} with ${firstItem[propertyName]}`);
-          return firstItem[propertyName];
-        }
-      }
-      
-      // Check for single object data
-      if (mockData[objectName] && !Array.isArray(mockData[objectName])) {
-        const value = mockData[objectName][propertyName];
-        if (value !== undefined) {
-          console.log(`✅ Replaced ${match} with ${value}`);
-          return value;
-        }
-      }
-      
-      // Fallback to generic values
-      const fallbackValues: { [key: string]: string } = {
-        title: 'Sample Title',
-        description: 'Sample description text',
-        name: 'Sample Name',
-        price: '$99.99',
-        imageUrl: 'https://via.placeholder.com/300x200/4f46e5/ffffff?text=Sample',
-        icon: 'fas fa-star'
-      };
-      
-      const fallback = fallbackValues[propertyName] || `Sample ${propertyName}`;
-      console.log(`⚠️ Using fallback for ${match}: ${fallback}`);
-      return fallback;
-    });
-    
-    return processedHtml;
-  }
   
   /**
    * 🔧 PROCESS PROPERTY BINDINGS - Handle [src], [class], etc.
