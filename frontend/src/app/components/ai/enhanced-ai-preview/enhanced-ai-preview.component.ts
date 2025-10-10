@@ -1894,26 +1894,27 @@ export class EnhancedAIPreviewComponent {
         ];
       }
       
-      // 🚀 USE FRAMEWORK RENDERER INSTEAD OF CUSTOM PROCESSING
-      console.log('🚀 Using native framework rendering...');
+      // 🚀 PROCESS ANGULAR TEMPLATE WITH MOCK DATA
+      console.log('🚀 Processing Angular template with mock data...');
       
-      // Detect framework type
-      const framework = this.detectFramework(typescript, html);
+      let processedHtml = html;
       
-      // Create framework component for rendering
-      const frameworkComponent: FrameworkComponent = {
-        framework,
-        typescript,
-        html,
-        css: this.editorState.buffers().scss || '',
-        mockData: this.extractMockDataFromTypeScript(typescript)
-      };
+      // Step 1: Process *ngFor directives
+      processedHtml = this.processNgFor(processedHtml, mockData);
       
-      // Store for framework renderer to use
-      (window as any).pendingFrameworkComponent = frameworkComponent;
+      // Step 2: Process template interpolation ({{ }})
+      processedHtml = this.processInterpolation(processedHtml, mockData);
       
-      // Return original HTML - let the framework handle the rendering
-      return html;
+      // Step 3: Process property bindings ([src], [class], etc.)
+      processedHtml = this.processPropertyBindings(processedHtml, mockData);
+      
+      // Step 4: Process pipes (currency, number, etc.)
+      processedHtml = this.processPipes(processedHtml, mockData);
+      
+      console.log('✅ Angular template processing completed');
+      console.log('📝 Processed HTML preview:', processedHtml.substring(0, 300) + '...');
+      
+      return processedHtml;
       
     } catch (error) {
       console.error('❌ Error processing Angular template:', error);
@@ -1945,9 +1946,144 @@ export class EnhancedAIPreviewComponent {
     return 'angular';
   }
 
-  // 🚀 REMOVED: All custom HTML processing methods
-  // Now using FrameworkRendererService for native framework support
-  // This includes: processNgForSimple, processMatTableDirectives, processInterpolation, etc.
+  /**
+   * 🔧 PROCESS TEMPLATE INTERPOLATION - Handle {{ }} bindings
+   */
+  private processInterpolation(html: string, mockData: any): string {
+    console.log('🔧 Processing template interpolation...');
+    
+    let processedHtml = html;
+    
+    // Process all {{ variable.property }} patterns
+    const interpolationPattern = /\{\{\s*(\w+)\.(\w+)\s*\}\}/g;
+    processedHtml = processedHtml.replace(interpolationPattern, (match, objectName, propertyName) => {
+      console.log(`🔧 Processing interpolation: ${match}`);
+      
+      // Check if we have data for this object
+      if (mockData[objectName] && Array.isArray(mockData[objectName]) && mockData[objectName].length > 0) {
+        const firstItem = mockData[objectName][0];
+        if (firstItem[propertyName] !== undefined) {
+          console.log(`✅ Replaced ${match} with ${firstItem[propertyName]}`);
+          return firstItem[propertyName];
+        }
+      }
+      
+      // Check for single object data
+      if (mockData[objectName] && !Array.isArray(mockData[objectName])) {
+        const value = mockData[objectName][propertyName];
+        if (value !== undefined) {
+          console.log(`✅ Replaced ${match} with ${value}`);
+          return value;
+        }
+      }
+      
+      // Fallback to generic values
+      const fallbackValues: { [key: string]: string } = {
+        title: 'Sample Title',
+        description: 'Sample description text',
+        name: 'Sample Name',
+        price: '$99.99',
+        imageUrl: 'https://via.placeholder.com/300x200/4f46e5/ffffff?text=Sample',
+        icon: 'fas fa-star'
+      };
+      
+      const fallback = fallbackValues[propertyName] || `Sample ${propertyName}`;
+      console.log(`⚠️ Using fallback for ${match}: ${fallback}`);
+      return fallback;
+    });
+    
+    return processedHtml;
+  }
+  
+  /**
+   * 🔧 PROCESS PROPERTY BINDINGS - Handle [src], [class], etc.
+   */
+  private processPropertyBindings(html: string, mockData: any): string {
+    console.log('🔧 Processing property bindings...');
+    
+    let processedHtml = html;
+    
+    // Process [src] bindings
+    const srcPattern = /\[src\]="(\w+)\.(\w+)"/g;
+    processedHtml = processedHtml.replace(srcPattern, (match, objectName, propertyName) => {
+      console.log(`🔧 Processing [src] binding: ${match}`);
+      
+      if (mockData[objectName] && Array.isArray(mockData[objectName]) && mockData[objectName].length > 0) {
+        const firstItem = mockData[objectName][0];
+        if (firstItem[propertyName]) {
+          console.log(`✅ Replaced [src] with ${firstItem[propertyName]}`);
+          return `src="${firstItem[propertyName]}"`;
+        }
+      }
+      
+      const fallback = 'https://via.placeholder.com/300x200/4f46e5/ffffff?text=Image';
+      console.log(`⚠️ Using fallback for [src]: ${fallback}`);
+      return `src="${fallback}"`;
+    });
+    
+    // Process [class] bindings
+    const classPattern = /\[class\]="(\w+)\.(\w+)"/g;
+    processedHtml = processedHtml.replace(classPattern, (match, objectName, propertyName) => {
+      console.log(`🔧 Processing [class] binding: ${match}`);
+      
+      if (mockData[objectName] && Array.isArray(mockData[objectName]) && mockData[objectName].length > 0) {
+        const firstItem = mockData[objectName][0];
+        if (firstItem[propertyName]) {
+          console.log(`✅ Replaced [class] with ${firstItem[propertyName]}`);
+          return `class="${firstItem[propertyName]}"`;
+        }
+      }
+      
+      return 'class="sample-class"';
+    });
+    
+    return processedHtml;
+  }
+  
+  /**
+   * 🔧 PROCESS PIPES - Handle currency, number, etc.
+   */
+  private processPipes(html: string, mockData: any): string {
+    console.log('🔧 Processing pipes...');
+    
+    let processedHtml = html;
+    
+    // Process currency pipe
+    const currencyPattern = /\{\{\s*(\w+)\.(\w+)\s*\|\s*currency\s*\}\}/g;
+    processedHtml = processedHtml.replace(currencyPattern, (match, objectName, propertyName) => {
+      console.log(`🔧 Processing currency pipe: ${match}`);
+      
+      if (mockData[objectName] && Array.isArray(mockData[objectName]) && mockData[objectName].length > 0) {
+        const firstItem = mockData[objectName][0];
+        if (firstItem[propertyName] !== undefined) {
+          const value = `$${firstItem[propertyName]}`;
+          console.log(`✅ Replaced currency pipe with ${value}`);
+          return value;
+        }
+      }
+      
+      return '$99.99';
+    });
+    
+    // Process number pipe
+    const numberPattern = /\{\{\s*(\w+)\.(\w+)\s*\|\s*number:'1\.0-2'\s*\}\}/g;
+    processedHtml = processedHtml.replace(numberPattern, (match, objectName, propertyName) => {
+      console.log(`🔧 Processing number pipe: ${match}`);
+      
+      if (mockData[objectName] && Array.isArray(mockData[objectName]) && mockData[objectName].length > 0) {
+        const firstItem = mockData[objectName][0];
+        if (firstItem[propertyName] !== undefined) {
+          const value = `${firstItem[propertyName]}.00`;
+          console.log(`✅ Replaced number pipe with ${value}`);
+          return value;
+        }
+      }
+      
+      return '0.00';
+    });
+    
+    return processedHtml;
+  }
   
   /**
    * 🚀 FRAMEWORK RENDERER INTEGRATION
@@ -2040,7 +2176,9 @@ export class EnhancedAIPreviewComponent {
     try {
       console.log('🔍 Extracting mock data from TypeScript:', typescript.substring(0, 500));
       
-      // Extract arrays (like products: Product[] = [...])
+      // Extract arrays (like cards: CardContent[] = [...] or this.cards = Array(4).fill(...))
+      
+      // Pattern 1: Standard array declaration
       const arrayMatches = typescript.match(/(\w+):\s*\w+\[\]\s*=\s*\[([\s\S]*?)\];/g);
       if (arrayMatches) {
         arrayMatches.forEach(match => {
@@ -2056,6 +2194,57 @@ export class EnhancedAIPreviewComponent {
                 return this.parseObjectString(objStr);
               });
               console.log(`✅ Parsed ${arrayName}:`, mockData[arrayName]);
+            }
+          }
+        });
+      }
+      
+      // Pattern 2: Array.fill() pattern (like this.cards = Array(4).fill({...}))
+      const arrayFillMatches = typescript.match(/this\.(\w+)\s*=\s*Array\(\d+\)\.fill\(\s*\{([\s\S]*?)\}\s*\);/g);
+      if (arrayFillMatches) {
+        arrayFillMatches.forEach(match => {
+          const nameMatch = match.match(/this\.(\w+)/);
+          const objectMatch = match.match(/\.fill\(\s*\{([\s\S]*?)\}\s*\)/);
+          const countMatch = match.match(/Array\((\d+)\)/);
+          
+          if (nameMatch && objectMatch && countMatch) {
+            const arrayName = nameMatch[1];
+            const objectContent = objectMatch[1];
+            const count = parseInt(countMatch[1]);
+            
+            console.log(`🎯 Found Array.fill pattern: ${arrayName} with ${count} items`);
+            console.log(`📝 Object content: ${objectContent}`);
+            
+            // Parse the object content
+            const sampleObject = this.parseObjectString(`{${objectContent}}`);
+            
+            // Create array with the specified count
+            mockData[arrayName] = Array(count).fill(null).map((_, index) => ({
+              ...sampleObject,
+              id: index + 1 // Add unique IDs
+            }));
+            
+            console.log(`✅ Generated ${arrayName} with ${count} items:`, mockData[arrayName]);
+          }
+        });
+      }
+      
+      // Pattern 3: ngOnInit assignment (this.cards = [...])
+      const ngOnInitMatches = typescript.match(/this\.(\w+)\s*=\s*\[([\s\S]*?)\];/g);
+      if (ngOnInitMatches) {
+        ngOnInitMatches.forEach(match => {
+          const nameMatch = match.match(/this\.(\w+)/);
+          if (nameMatch) {
+            const arrayName = nameMatch[1];
+            console.log(`🎯 Found ngOnInit assignment: ${arrayName}`);
+            
+            // Extract objects from the array
+            const objectMatches = match.match(/\{[\s\S]*?\}/g);
+            if (objectMatches) {
+              mockData[arrayName] = objectMatches.map(objStr => {
+                return this.parseObjectString(objStr);
+              });
+              console.log(`✅ Parsed ${arrayName} from ngOnInit:`, mockData[arrayName]);
             }
           }
         });
