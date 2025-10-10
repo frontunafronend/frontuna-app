@@ -2467,8 +2467,7 @@ USER REQUEST: `;
     // 6. Clear current message
     this.currentMessage = '';
     
-    // 7. Reset any conversation state
-    this.isGenerating.set(false);
+    // 7. Reset any conversation state (handled by service)
     
     console.log('✅ Fresh chat session started with new session ID');
   }
