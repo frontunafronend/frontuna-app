@@ -675,6 +675,15 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
     // 🎯 START WITHOUT LOADER - Fix stuck loader issue
     this.isInitializing.set(false);
     
+    // 🎯 AUTO-START NEW CHAT SESSION ON REFRESH/INIT
+    console.log('🔄 Starting fresh chat session on component initialization');
+    this.startNewChatSession();
+    
+    // Show subtle notification that a new session started (only on refresh, not on manual clear)
+    setTimeout(() => {
+      this.notificationService.showInfo('🔄 Fresh chat session started! Ready for your questions.');
+    }, 1000); // Delay to avoid overwhelming the user on page load
+    
     // 🎯 TRIGGER HEALTH CHECK to update backend status
     this.optimizedAIChat.checkHealth();
     
@@ -733,7 +742,7 @@ export class AICopilotUltimateComponent implements OnInit, OnDestroy {
             
             // 🎯 SCROLL after AI response with extra delay for content rendering
             setTimeout(() => {
-              this.scrollToBottom();
+            this.scrollToBottom();
             }, 100);
         },
         error: (error) => {
@@ -935,7 +944,7 @@ USER REQUEST: `;
       
       // Step 2: Fallback to single code block
       if (message.code && !typescriptCode) {
-        const language = message.codeLanguage?.toLowerCase() || 'typescript';
+      const language = message.codeLanguage?.toLowerCase() || 'typescript';
         const code = this.formatCodeForEditor(message.code, language);
         
         if (language.includes('typescript') || language.includes('js')) {
@@ -1036,8 +1045,8 @@ USER REQUEST: `;
         
         // 🔧 TRIGGER PREVIEW UPDATE with proper timing
         console.log('🚀 Triggering preview update after code population...');
-        setTimeout(() => {
-          this.updatePreview();
+      setTimeout(() => {
+        this.updatePreview();
         }, 100); // Reduced delay for faster response
         
         // Also trigger immediate preview refresh
@@ -2431,11 +2440,12 @@ USER REQUEST: `;
     console.log('✅ New conversation started successfully - all state cleared');
   }
 
-  clearChatHistory() {
-    console.log('🧹 Clearing chat history and preview');
+  // 🔄 START NEW CHAT SESSION - Called on init and manual clear
+  startNewChatSession() {
+    console.log('🔄 Starting completely fresh chat session...');
     
-    // 1. Clear chat messages FIRST
-    this.optimizedAIChat.clearMessages();
+    // 1. Start fresh conversation with new session ID
+    this.optimizedAIChat.startFreshConversation();
     
     // 2. Clear editor buffers completely
     this.editorState.clearBuffers();
@@ -2445,19 +2455,34 @@ USER REQUEST: `;
     this.editorState.updateBuffer('html', '');
     this.editorState.updateBuffer('scss', '');
     
-    // 4. Force preview reset with longer delay
+    // 4. Force preview reset
     this.showPreview.set(false);
     setTimeout(() => {
       this.showPreview.set(true);
     }, 200);
     
-    // 5. Reset current message
+    // 5. Reset active tab to TypeScript
+    this.activeEditorTab = 0;
+    
+    // 6. Clear current message
     this.currentMessage = '';
     
-    // 6. Show success notification
-    this.notificationService.showSuccess('🧹 Chat history cleared');
+    // 7. Reset any conversation state
+    this.isGenerating.set(false);
     
-    console.log('✅ Chat history and preview cleared successfully');
+    console.log('✅ Fresh chat session started with new session ID');
+  }
+
+  clearChatHistory() {
+    console.log('🧹 Clearing chat history and starting new session');
+    
+    // Use the same logic as starting a new session
+    this.startNewChatSession();
+    
+    // Show success notification for manual clear
+    this.notificationService.showSuccess('💬 Chat history cleared! Ready for a new conversation.');
+    
+    console.log('✅ Chat history cleared and new session started');
   }
 
   exportChat() {
@@ -2594,7 +2619,7 @@ USER REQUEST: `;
   
   private performScroll(): void {
     if (this.chatContainer?.nativeElement) {
-      const element = this.chatContainer.nativeElement;
+        const element = this.chatContainer.nativeElement;
       
       // 🎯 SMOOTH SCROLL with fallback to instant
       try {
