@@ -19,7 +19,7 @@ import { AIPromptService } from '@app/services/ai/ai-prompt.service';
 import { AISuggestion, AIPrompt, AIResponse } from '@app/models/ai.model';
 import { LoadingService } from '@app/services/ui/loading.service';
 import { InPageActionsService } from '@app/services/ui/in-page-actions.service';
-import { AICopilotStateService } from '@app/services/ai/ai-copilot-state.service';
+import { OptimizedAIChatService } from '@app/services/ai/optimized-ai-chat.service';
 import { ProfessionalLoaderComponent } from '@app/components/ui/professional-loader/professional-loader.component';
 import { Router } from '@angular/router';
 import { SuggestionPreviewDialog } from './suggestion-preview-dialog/suggestion-preview-dialog.component';
@@ -473,7 +473,7 @@ export class AICopilotPanelComponent implements OnInit {
   private readonly aiPromptService = inject(AIPromptService);
   private readonly loadingService = inject(LoadingService);
   private readonly inPageActions = inject(InPageActionsService);
-  protected readonly copilotState = inject(AICopilotStateService);
+  protected readonly copilotState = inject(OptimizedAIChatService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);

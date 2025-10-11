@@ -24,9 +24,8 @@ import { environment } from '../environments/environment';
 import { SecureAuthService } from './services/auth/secure-auth.service';
 
 // AI Services
-import { AICopilotService } from './services/ai/ai-copilot.service';
+import { OptimizedAIChatService } from './services/ai/optimized-ai-chat.service';
 import { AICodeGeneratorService } from './services/ai/ai-code-generator.service';
-import { AICopilotStateService } from './services/ai/ai-copilot-state.service';
 
 // SEO Service
 import { SeoService } from './services/seo/seo.service';
@@ -70,9 +69,8 @@ export const appConfig: ApplicationConfig = {
     SecureAuthService,
     
     // AI Services
-    AICopilotService,
+    OptimizedAIChatService,
     AICodeGeneratorService,
-    AICopilotStateService,
     
     // Core Services
     EnvironmentService,

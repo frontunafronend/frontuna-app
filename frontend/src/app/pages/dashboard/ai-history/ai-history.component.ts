@@ -19,7 +19,7 @@ import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatExpansionModule } from '@angular/material/expansion';
 
-import { AICopilotStateService, ChatMessage } from '@app/services/ai/ai-copilot-state.service';
+import { OptimizedAIChatService, ChatMessage } from '@app/services/ai/optimized-ai-chat.service';
 import { AIPromptService } from '@app/services/ai/ai-prompt.service';
 import { AIPrompt, AIResponse, AISuggestion } from '@app/models/ai.model';
 import { CodeDisplayComponent } from '@app/components/shared/code-display/code-display.component';
@@ -574,7 +574,7 @@ import { Router } from '@angular/router';
   `]
 })
 export class AIHistoryComponent implements OnInit {
-  private readonly copilotState = inject(AICopilotStateService);
+  private readonly copilotState = inject(OptimizedAIChatService);
   private readonly aiPromptService = inject(AIPromptService);
   private readonly router = inject(Router);
 

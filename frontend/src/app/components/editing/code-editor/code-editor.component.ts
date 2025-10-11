@@ -19,7 +19,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { AICodeGeneratorService, CodeGenerationRequest } from '@app/services/ai/ai-code-generator.service';
-import { AICopilotService } from '@app/services/ai/ai-copilot.service';
+import { OptimizedAIChatService } from '@app/services/ai/optimized-ai-chat.service';
 import { AIPromptService } from '@app/services/ai/ai-prompt.service';
 import { AITransformService } from '@app/services/ai/ai-transform.service';
 import { NotificationService } from '@app/services/notification/notification.service';
@@ -319,7 +319,7 @@ export class CodeEditorComponent implements OnInit, AfterViewInit {
 
   // Services
   private readonly aiCodeGenerator = inject(AICodeGeneratorService);
-  private readonly aiCopilot = inject(AICopilotService);
+  private readonly aiCopilot = inject(OptimizedAIChatService);
   private readonly aiPrompt = inject(AIPromptService);
   private readonly aiTransform = inject(AITransformService);
   private readonly notification = inject(NotificationService);
