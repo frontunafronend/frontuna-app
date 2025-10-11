@@ -628,24 +628,16 @@ export class AICopilotPanelComponent implements OnInit {
       model: 'gpt-4'
     };
 
-    // Simulate processing steps for quick actions (shorter duration)
-    this.copilotState.simulateProcessingSteps(2000).subscribe({
-      complete: () => {
-        // Make the actual API call
-        this.aiPromptService.sendPrompt(fullPrompt, type, this.context()).subscribe({
-          next: (response) => {
-            this.copilotState.completeProcessing(response, `${type.charAt(0).toUpperCase() + type.slice(1)} completed successfully!`);
-            this.copilotState.addToPromptHistory(aiPrompt);
-            this.onResponseReceived.emit(response);
-          },
-          error: (error) => {
-            console.error('❌ Quick Action Error:', error);
-            this.copilotState.handleError(
-              error.message || `Failed to ${type} code. Please try again.`,
-              false
-            );
-          }
-        });
+    // Make the actual API call directly (simplified)
+    this.aiPromptService.sendPrompt(fullPrompt, type, this.context()).subscribe({
+      next: (response) => {
+        console.log(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} completed successfully!`);
+        this.onResponseReceived.emit(response);
+      },
+      error: (error) => {
+        console.error('❌ Quick Action Error:', error);
+        // Simple error handling without state service
+        console.error(`Failed to ${type} code. Please try again.`);
       }
     });
   }
@@ -791,13 +783,8 @@ export class AICopilotPanelComponent implements OnInit {
   }
 
   getLoaderType(): 'thinking' | 'generating' | 'processing' | 'pulse' {
-    const step = this.copilotState.currentStep();
-    switch (step) {
-      case 'thinking': return 'thinking';
-      case 'generating': return 'generating';
-      case 'processing': return 'processing';
-      default: return 'pulse';
-    }
+    // Simplified loader type based on loading state
+    return this.copilotState.isLoading() ? 'thinking' : 'pulse';
   }
 
   private generateId(): string {
