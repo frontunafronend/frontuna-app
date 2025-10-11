@@ -109,13 +109,13 @@ import { ConfirmDialogComponent } from '@app/components/ui';
         </form>
 
         <!-- Professional Loading Indicator -->
-        <div *ngIf="copilotState.isProcessing()">
+        <div *ngIf="copilotState.isLoading()">
           <app-professional-loader 
             [type]="getLoaderType()"
-            [message]="copilotState.currentMessage()"
-            [subMessage]="copilotState.state().subMessage"
-            [progress]="copilotState.progress()"
-            [showProgress]="copilotState.currentStep() === 'generating'"
+            [message]="'Processing your request...'"
+            [subMessage]="'Please wait while we generate your code'"
+            [progress]="0"
+            [showProgress]="copilotState.isLoading()"
             size="normal">
           </app-professional-loader>
         </div>
@@ -489,7 +489,7 @@ export class AICopilotPanelComponent implements OnInit {
 
   // State
   readonly isCollapsed = signal<boolean>(false);
-  readonly isProcessing = computed(() => this.aiPromptService.isProcessing() || this.copilotState.isProcessing());
+  readonly isProcessing = computed(() => this.aiPromptService.isProcessing() || this.copilotState.isLoading());
   readonly suggestions = signal<AISuggestion[]>([]);
   readonly recentPrompts = signal<AIPrompt[]>([]);
 
@@ -542,13 +542,10 @@ export class AICopilotPanelComponent implements OnInit {
       event.stopPropagation();
     }
     
-    if (!this.currentPrompt.trim() || this.copilotState.isProcessing()) return;
+    if (!this.currentPrompt.trim() || this.copilotState.isLoading()) return;
 
     const prompt = this.currentPrompt.trim();
     this.currentPrompt = '';
-
-    // Start professional processing flow
-    this.copilotState.startProcessing('thinking', 'Analyzing your request', 'Understanding context and requirements');
 
     // Emit prompt sent event
     const aiPrompt: AIPrompt = {
@@ -563,27 +560,15 @@ export class AICopilotPanelComponent implements OnInit {
     
     this.onPromptSent.emit(aiPrompt);
 
-    // Simulate realistic processing steps
-    this.copilotState.simulateProcessingSteps(3000).subscribe({
-      next: (state) => {
-        // Processing step updates are handled by the state service
+    // Make the API call directly (simplified)
+    this.aiPromptService.sendPrompt(prompt, 'generate', this.context()).subscribe({
+      next: (response) => {
+        console.log('✅ Code generated successfully!');
+        this.onResponseReceived.emit(response);
       },
-      complete: () => {
-        // Now make the actual API call
-        this.aiPromptService.sendPrompt(prompt, 'generate', this.context()).subscribe({
-          next: (response) => {
-            this.copilotState.completeProcessing(response, 'Code generated successfully!');
-            this.copilotState.addToPromptHistory(aiPrompt);
-            this.onResponseReceived.emit(response);
-          },
-          error: (error) => {
-            console.error('❌ AI Copilot: Error:', error);
-            this.copilotState.handleError(
-              error.message || 'Failed to generate response. Please try again.',
-              false
-            );
-          }
-        });
+      error: (error) => {
+        console.error('❌ AI Copilot: Error:', error);
+        console.error('Failed to generate response. Please try again.');
       }
     });
   }
@@ -605,17 +590,9 @@ export class AICopilotPanelComponent implements OnInit {
       event.stopPropagation();
     }
     
-    if (this.copilotState.isProcessing()) return;
+    if (this.copilotState.isLoading()) return;
     
     const fullPrompt = this.context() ? `${prompt} for: ${this.context()}` : prompt;
-    const actionType = type === 'generate' ? 'generating' : 'processing';
-    
-    // Start professional processing flow
-    this.copilotState.startProcessing(
-      actionType, 
-      `${type.charAt(0).toUpperCase() + type.slice(1)}ing your code`,
-      `Applying ${type} optimizations`
-    );
 
     // Create AI prompt object
     const aiPrompt: AIPrompt = {
